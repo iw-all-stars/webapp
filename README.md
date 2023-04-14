@@ -16,6 +16,13 @@ yarn prisma generate
 yarn prisma db push
 ```
 
+
+##### Start databases
+
+```bash
+docker-compose up -d
+```
+
 ##### Run dev
 
 ```bash
