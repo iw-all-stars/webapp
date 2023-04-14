@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deployment
+  namespace: test
+  labels:
+    app: webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+      - name: webapp
+        image: horekk/webapp:v0.8
+        ports:
+        - containerPort: 3000
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 200m
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+           secretKeyRef:
+              name: test-secret
+              key: db-url
+        - name: NEXT_PUBLIC_CLIENTVAR
+          valueFrom:
+           secretKeyRef:
+              name: test-secret
+              key: db-url
+        - name: NEXTAUTH_SECRET
+          valueFrom:
+           secretKeyRef:
+              name: test-secret
+              key: nextauth-secret
+        - name: NEXTAUTH_URL
+          valueFrom:
+           secretKeyRef:
+              name: test-secret
+              key: nextauth-url
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp
+  namespace: test
+spec:
+  type: NodePort
+  selector:
+    app: webapp
+  ports:
+  - port: 3000
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webapp
+  namespace: test
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          service:
+            name: webapp
+            port:
+              number: 3000
+        pathType: Exact
