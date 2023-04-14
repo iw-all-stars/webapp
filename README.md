@@ -8,19 +8,24 @@
 yarn
 ```
 
+##### Create .env file
+
+```bash
+cp .env.example .env
+```
+
+##### Start databases
+
+```bash
+docker-compose up -d
+```
+
 ##### Init prisma
 
 ```bash
 yarn prisma init
 yarn prisma generate
 yarn prisma db push
-```
-
-
-##### Start databases
-
-```bash
-docker-compose up -d
 ```
 
 ##### Run dev
