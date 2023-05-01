@@ -1,5 +1,5 @@
 import { createTRPCRouter } from "~/server/api/trpc";
-import { campaignRouter } from "~/server/api/routers";
+import { campaignRouter, organizationRouter } from "~/server/api/routers";
 
 /**
  * This is the primary router for your server.
@@ -8,6 +8,7 @@ import { campaignRouter } from "~/server/api/routers";
  */
 export const appRouter = createTRPCRouter({
   campaign: campaignRouter,
+  organization: organizationRouter,
 });
 
 // export type definition of API

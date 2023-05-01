@@ -56,6 +56,36 @@ model Client {
     updatedAt DateTime  @updatedAt
 }
 
+model Category {
+    id          String   @id @default(cuid())
+    name        String   @unique
+    color       String?  @default("#000000")
+    icon        String?  @default("🍔")
+}
+
+model Organization {
+    id          String   @id @default(cuid())
+    name        String
+    description String?
+
+    userId      String
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    restaurants Restaurant[]
+}
+
+model Restaurant {
+    id          String   @id @default(cuid())
+    name        String
+    category    String?
+    address     String?
+    latitude    Float?
+    longitude   Float?
+
+    organizationId String
+    organization Organization @relation(fields: [organizationId], references: [id])
+}
+
+
 // Necessary for Next auth
 model Account {
     id                String  @id @default(cuid())
@@ -96,6 +126,7 @@ model User {
     sessions      Session[]
     Campaign      Campaign[]
     Mail          Mail[]
+    Organization  Organization[]
 }
 
 model VerificationToken {
