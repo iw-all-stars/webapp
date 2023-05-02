@@ -1,9 +1,7 @@
 import React from "react";
 import { type NextPage } from "next";
-import Head from "next/head";
 import { signIn } from "next-auth/react";
-
-import { Button, Container } from "@chakra-ui/react";
+import { Button } from "@chakra-ui/react";
 import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
