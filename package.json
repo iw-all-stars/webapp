@@ -22,6 +22,7 @@
     "@trpc/react-query": "^10.18.0",
     "@trpc/server": "^10.18.0",
     "aws-sdk": "^2.1368.0",
+    "crypto-js": "^4.1.1",
     "framer-motion": "^10.11.6",
     "luxon": "^3.3.0",
     "mongoose": "^7.0.3",
@@ -35,6 +36,7 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.1.1",
     "@types/eslint": "^8.21.3",
     "@types/luxon": "^3.3.0",
     "@types/node": "^18.15.5",

@@ -1,9 +1,11 @@
 import {
     CreateScheduleCommand,
+    DeleteScheduleCommand,
     SchedulerClient,
 } from "@aws-sdk/client-scheduler";
-import { type Post, type Story } from "@prisma/client";
+import { type Prisma, type Post, type Story } from "@prisma/client";
 import { DateTime } from "luxon";
+import { encrypt } from "~/utils/decrypte-password";
 
 const client = new SchedulerClient({
     region: process.env.AWS_REGION,
@@ -13,7 +15,15 @@ const client = new SchedulerClient({
     },
 });
 
-export const scheduleStory = async (story: Story & { posts: Post[] }) => {
+export const scheduleStory = async (
+    story: Story & { posts: Post[] },
+) => {
+    try { 
+        await deleteStorySchedule(story.id);
+    } catch(e) {
+        console.log(e)
+    }
+
     const { minute, hour, day, month, year } = DateTime.fromJSDate(
         story.publishedAt
     )
@@ -22,12 +32,6 @@ export const scheduleStory = async (story: Story & { posts: Post[] }) => {
     // need to use UTC to make a cron expression
     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     const cron = `cron(${minute} ${hour} ${day} ${month} ? ${year})`;
-
-    story.posts.sort((a, b) => a.position - b.position);
-    const posts = story.posts.map((post) => ({
-        url: post.url,
-        type: post.type,
-    }));
 
     await client.send(
         new CreateScheduleCommand({
@@ -43,12 +47,26 @@ export const scheduleStory = async (story: Story & { posts: Post[] }) => {
                 Input: JSON.stringify({
                     credentials: {
                         username: "devftn5",
-                        password: "monnouvomdPé94290",
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        password: encrypt("monnouvomdPé94290"),
                     },
                     platformKey: "instagram",
-                    posts
+                    posts: story.posts,
                 }),
             },
         })
     );
+};
+
+export const deleteStorySchedule = async (storyId: string) => {
+    return client
+        .send(
+            new DeleteScheduleCommand({
+                Name: storyId,
+            })
+        )
+        .catch((err: Error) => {
+            console.error("[CRON doesnt exist] : ", err);
+            return err;
+        });
 };

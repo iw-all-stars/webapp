@@ -129,7 +129,7 @@ const Home: NextPage = () => {
                 <Input
                     id="publishedAt"
                     placeholder="publishedAt"
-                    type="date"
+                    type="datetime-local"
                     {...register("publishedAt", {
                         required: "This is required",
                     })}

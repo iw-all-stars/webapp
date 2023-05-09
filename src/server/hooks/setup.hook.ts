@@ -1,5 +1,5 @@
 import { type Prisma, type PrismaClient } from "@prisma/client";
-import { StoryHook } from "./prisma/stories.hook";
+import { StoryHook } from "./prisma/story.hook";
 
 export interface Hook {
     useHook: (
