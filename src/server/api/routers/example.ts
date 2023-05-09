@@ -15,15 +15,21 @@ export const exampleRouter = createTRPCRouter({
       };
     }),
 
-  add: publicProcedure.mutation(({ ctx }) => {
-    return ctx.prisma.example.create({ data: {} });
+  test: publicProcedure.mutation(({ ctx }) => {
+    const res = ctx.prisma.story.findFirst({
+        include: {
+            posts: true,
+        }
+    });
   }),
 
   getAll: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.example.findMany();
+    return {
+        data: []
+    }
   }),
 
-  getSecretMessage: protectedProcedure.query(() => {
-    return "you can now see this secret message!";
-  }),
+//   getSecretMessage: protectedProcedure.query(() => {
+//     return "you can now see this secret message!";
+//   }),
 });

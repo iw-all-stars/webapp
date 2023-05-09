@@ -64,3 +64,19 @@ model VerificationToken {
 
     @@unique([identifier, token])
 }
+
+model Story {
+    id          String   @id @default(cuid())
+    name        String
+    publishedAt DateTime
+    posts       Post[]
+}
+
+model Post {
+    id  String @id @default(cuid())
+    url String
+    story Story  @relation(fields: [storyId], references: [id])
+    storyId String
+    position Int
+    type String
+}
