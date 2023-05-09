@@ -1,0 +1,31 @@
+import React from "react";
+import { type NextPage } from "next";
+import { Button } from "@chakra-ui/react";
+import { api } from "~/utils/api";
+
+const TestCampaign: NextPage = () => {
+  const addCampaign = api.campaign.createCampaign.useMutation({});
+  const getCampaign = api.campaign.getCampaigns.useQuery();
+
+  const handleExample = () => {
+    addCampaign.mutate({
+      name: "Example",
+      type: "CPC",
+    });
+  };
+
+  const handleGetCampaign = React.useCallback(() => {
+    getCampaign.refetch();
+  }, [getCampaign]);
+
+
+  return (
+    <>
+      <Button onClick={() => handleExample()}>Add Example</Button>
+      <Button onClick={handleGetCampaign}>Get Example</Button>
+      <p>{getCampaign.data?.map((campaign) => campaign.name).join(", ")}</p>
+    </>
+  )
+};
+
+export default TestCampaign;

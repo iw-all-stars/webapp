@@ -1,31 +1,63 @@
 import React from "react";
 import { type NextPage } from "next";
-import { signIn } from "next-auth/react";
-import { Button } from "@chakra-ui/react";
 import { api } from "~/utils/api";
+import { Button, Center, Flex, Skeleton, SkeletonCircle, Text, Image, Box, Grid, GridItem } from "@chakra-ui/react";
+import { useSession } from "next-auth/react";
 
 const Home: NextPage = () => {
-  const addCampaign = api.campaign.createCampaign.useMutation({});
-  const getCampaign = api.campaign.getCampaigns.useQuery();
 
-  const handleExample = () => {
-    addCampaign.mutate({
-      name: "Example",
-      type: "CPC",
-    });
+  const utils = api.useContext();
+
+  const { data: session, status: sessionStatus } = useSession();
+
+  const organizations = api.organization.getByUserId.useQuery();
+
+  const addOrganization = api.organization.add.useMutation({
+    onSuccess: () => {
+      utils.organization.getByUserId.invalidate();
+    },
+  });
+
+  const handleOrganization = () => {
+    if (session) {
+      addOrganization.mutate({
+        name: "Example",
+        userId: session.user.id,
+      });
+    }
   };
 
-  const handleGetCampaign = React.useCallback(() => {
-    getCampaign.refetch();
-  }, [getCampaign]);
-
   return (
-    <>
-      <Button onClick={() => signIn()}>Sign in</Button>
-      <Button onClick={() => handleExample()}>Add Example</Button>
-      <Button onClick={handleGetCampaign}>Get Example</Button>
-      <p>{getCampaign.data?.map((campaign) => campaign.name).join(", ")}</p>
-    </>
+    <Box h="full" w="full" mt={8}>
+      {organizations.data && (
+        organizations.data?.length ? (
+          <>
+            <Flex justifyContent="space-between">
+              <Flex alignItems="center" gap={4}>
+                <SkeletonCircle h={10} w={10} rounded="full" isLoaded={sessionStatus !== "loading"}>
+                  <Image h={10} w={10} rounded="full" src={session?.user?.image ?? ""} alt="User profile image" />
+                </SkeletonCircle>
+                <Skeleton isLoaded={sessionStatus !== "loading"} h={6}>
+                  <Text minW={28}>{session?.user.name}</Text>
+                </Skeleton>
+              </Flex>
+            </Flex>
+            <Grid templateColumns="repeat(3, 1fr)" gap={12} mt={8}>
+              {organizations.data?.map((organization) => (
+                <GridItem key={organization.id} px={7} py={4} borderRadius={10} minH={32} textColor="white" bg="gray.400">
+                  <Text fontSize="2xl" fontWeight="bold">{organization.name}</Text>
+                </GridItem>
+              ))}
+            </Grid>
+          </>
+        ) : (
+          <Flex direction="column" gap={3}>
+            <p>Vous n'avez pas encore d'organisations...</p>
+            <Button onClick={() => handleOrganization()}>Créer une organisation</Button>
+          </Flex>
+        )
+      )}
+    </Box>
   );
 };
 

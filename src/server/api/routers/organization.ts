@@ -22,4 +22,12 @@ export const organizationRouter = createTRPCRouter({
     return ctx.prisma.organization.findMany();
   }),
 
+  getByUserId: publicProcedure.query(({ ctx }) => {
+    return ctx.prisma.organization.findMany({
+      where: {
+        userId: ctx.session?.user.id,
+      }
+    });
+  }),
+
 });

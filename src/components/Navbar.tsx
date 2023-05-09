@@ -2,7 +2,6 @@ import { Box, Flex, Image, Skeleton, SkeletonCircle, Text, Icon } from "@chakra-
 import { signOut, useSession } from "next-auth/react";
 import { GoSignOut } from "react-icons/go";
 
-
 export default function Navbar() {
 
   const { data: session, status } = useSession();

@@ -12,8 +12,8 @@ export default function LayoutBase({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Navbar />
-      <main>
-        <Container maxW="container.sm">
+      <main style={{ height: "calc(100% - 97px)"}}>
+        <Container maxW="6xl" h="full">
           {children}
         </Container>
       </main>
