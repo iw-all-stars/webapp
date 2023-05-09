@@ -77,11 +77,16 @@ const Home: NextPage = () => {
         if (files.length > 0) {
             void uploadFiles().then((urls) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                setPosts(urls.map(({url, type}, i) => ({
-                    url,
-                    position: posts.length + i,
-                    type,
-                })));
+                setPosts((prevPosts) => {
+                    return [
+                        ...prevPosts,
+                        ...urls.map(({url, type}, i) => ({
+                            url,
+                            position: posts.length + i,
+                            type,
+                        }))
+                    ]
+                });
             });
         }
     }, [files]);

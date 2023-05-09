@@ -75,6 +75,7 @@ export const DragFiles = ({
                                         key={item.url}
                                         draggableId={item.url}
                                         index={index}
+                                        disableInteractiveElementBlocking={true}
                                     >
                                         {(provided, snapshot) => (
                                             <div
@@ -91,15 +92,16 @@ export const DragFiles = ({
                                                         alt="Dan Abramov"
                                                     />
                                                 ) : (
-                                                    <video
-                                                        muted={true}
-                                                        autoPlay={true}
-                                                        loop={true}
-                                                        width={50}
-                                                        height={50}
-                                                    >
-                                                        <source src={item.url} />
-                                                    </video>
+                                                    <Box>
+                                                        <video
+                                                            width={50}
+                                                            height={50}
+                                                        >
+                                                            <source
+                                                                src={item.url}
+                                                            />
+                                                        </video>
+                                                    </Box>
                                                 )}
                                             </div>
                                         )}
