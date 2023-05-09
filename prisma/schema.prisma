@@ -65,11 +65,18 @@ model VerificationToken {
     @@unique([identifier, token])
 }
 
+enum StoryStatus {
+  PUBLISHED
+  DRAFT
+  SCHEDULED
+}
+
 model Story {
     id          String   @id @default(cuid())
     name        String
     publishedAt DateTime
     posts       Post[]
+    status      StoryStatus
 }
 
 model Post {
@@ -79,4 +86,15 @@ model Post {
     storyId String
     position Int
     type String
+}
+
+enum PlatformKey {
+  TWITTER
+  INSTAGRAM
+  FACEBOOK
+}
+
+model Platform {
+    id String @id @default(cuid())
+    key PlatformKey
 }
