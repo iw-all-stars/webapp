@@ -28,7 +28,7 @@ const Home: NextPage = () => {
   };
 
   return (
-    <Box h="full" w="full" mt={8}>
+    <Box h="full" w="full" pt={8}>
       {organizations.data && (
         organizations.data?.length ? (
           <>
