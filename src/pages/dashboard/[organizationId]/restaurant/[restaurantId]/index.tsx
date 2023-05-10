@@ -9,6 +9,7 @@ const DashboardHome: NextPage = () => {
   return (
     <Box h="full" w="full" pt={8}>
       Organization {router.query.organizationId}
+      {'   '}Restaurant {router.query.restaurantId}
     </Box>
   );
 };

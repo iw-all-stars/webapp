@@ -1,26 +1,22 @@
-import { useEffect, useState } from "react";
 import { Button, Flex, Icon, Menu, MenuButton, MenuItem, MenuList, MenuDivider, Text, Skeleton, Center, Box } from "@chakra-ui/react";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
-import { type Restaurant } from "@prisma/client";
 import { BiChevronDown } from "react-icons/bi";
 import { MdAdd, MdCheck, MdSettings, MdCampaign, MdPhotoFilter, MdHome } from "react-icons/md";
+import Link from "next/link";
 
 export default function DashboardSidebar() {
 
   const router = useRouter();
 
-  const [currentRestaurant, setCurrentRestaurant] = useState<Restaurant | null>(null);
-
-  const restaurants = api.restaurant.getByOrganizationId.useQuery({
+  const { data: restaurants } = api.restaurant.getByOrganizationId.useQuery({
     organizationId: router.query.organizationId as string,
   });
 
-  useEffect(() => {
-    if (restaurants.data && restaurants.data[0]) {
-      setCurrentRestaurant(restaurants.data[0]);
-    }
-  }, [restaurants.data]);
+  const { data: currentRestaurant } = api.restaurant.getById.useQuery({
+    id: router.query.restaurantId as string,
+  });
+  
 
   const links = [
     {
@@ -57,13 +53,15 @@ export default function DashboardSidebar() {
           </Skeleton>
         </MenuButton>
         <MenuList>
-          {restaurants.data?.map((restaurant) => (
-            <MenuItem key={restaurant.id} onClick={() => setCurrentRestaurant(restaurant)}>
-              <Text>{restaurant.name}</Text>
-              {currentRestaurant?.id === restaurant.id && (
-                <Icon as={MdCheck} ml="auto" />
-              )}
-            </MenuItem>
+          {restaurants?.map((restaurant) => (
+            <Link href={`/dashboard/${router.query.organizationId as string}/restaurant/${restaurant.id}`} key={restaurant.id}>
+              <MenuItem>
+                <Text>{restaurant.name}</Text>
+                {currentRestaurant?.id === restaurant.id && (
+                  <Icon as={MdCheck} ml="auto" />
+                )}
+              </MenuItem>
+            </Link>
           ))}
           <MenuDivider />
           <MenuItem>
@@ -74,9 +72,16 @@ export default function DashboardSidebar() {
       </Menu>
       <Flex direction="column" alignItems="start" gap={4} mt={12}>
         {links.map(({ slug, name, icon }) => (
-          <Button key={slug} w="full" justifyContent="start" variant="ghost" leftIcon={<Icon as={icon} />} onClick={() => router.push(`/dashboard/${router.query.organizationId}/${slug}`)}>
-            {name}
-          </Button>
+          <Link href={`/dashboard/${router.query.organizationId as string}/${slug}`} key={slug}>
+            <Button
+              w="full"
+              justifyContent="start"
+              variant="ghost"
+              leftIcon={<Icon as={icon} w={5} h={5} />}
+            >
+              {name}
+            </Button>
+          </Link>
         ))}
       </Flex>
     </Flex>

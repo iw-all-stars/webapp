@@ -30,9 +30,13 @@ export const organizationRouter = createTRPCRouter({
       include: {
         restaurants: {
           select: {
+            id: true,
             name: true,
           }
         }
+      },
+      orderBy: {
+        createdAt: "asc",
       }
     });
   }),
