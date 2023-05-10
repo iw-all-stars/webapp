@@ -1,17 +1,19 @@
-import React, { useRef, useState } from "react";
 import { type NextPage } from "next";
 import { api } from "~/utils/api";
-import { Button, Flex, Skeleton, SkeletonCircle, Text, Image, Box, Grid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, FormControl, FormLabel, Input, ModalFooter, useDisclosure } from "@chakra-ui/react";
+import { Button, Flex, Skeleton, SkeletonCircle, Text, Image, Box, Grid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, FormControl, FormLabel, Input, ModalFooter, useDisclosure, Card, CardBody, Divider, Heading, FormErrorMessage } from "@chakra-ui/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { set } from "zod";
+import { useForm, type SubmitHandler } from "react-hook-form";
+
+type FormValues = {
+  organizationName: string;
+  restaurantName: string;
+};
 
 const Home: NextPage = () => {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
-
-  const initialRef = useRef<HTMLInputElement | undefined>(undefined);
-  const [newOrganizationName, setNewOrganizationName] = useState<string | undefined>(undefined);
+  const { register, formState: { errors }, handleSubmit, reset } = useForm<FormValues>();
 
   const router = useRouter();
   const utils = api.useContext();
@@ -22,18 +24,26 @@ const Home: NextPage = () => {
 
   const addOrganization = api.organization.add.useMutation({
     onSuccess: () => {
-      utils.organization.getByUserId.invalidate();
+      void utils.organization.getByUserId.invalidate();
     },
   });
 
-  const handleOrganization = () => {
-    if (session && newOrganizationName) {
-      addOrganization.mutate({
-        name: newOrganizationName,
+  const addRestaurant = api.restaurant.add.useMutation();
+
+  const handleOrganization: SubmitHandler<FormValues> = async ({ organizationName, restaurantName }) => {
+    if (session) {
+      const newOrganization = await addOrganization.mutateAsync({
+        name: organizationName,
         userId: session.user.id,
+      })
+
+      addRestaurant.mutate({
+        name: restaurantName,
+        organizationId: newOrganization.id,
       });
+
+      reset();
       onClose();
-      setNewOrganizationName(undefined);
     }
   };
 
@@ -54,10 +64,15 @@ const Home: NextPage = () => {
                 </Flex>
                 <Button onClick={onOpen}>Créer une organisation</Button>
               </Flex>
-              <Grid templateColumns="repeat(3, 1fr)" gap={12} mt={8}>
+              <Grid templateColumns="repeat(3, 1fr)" gap={8} mt={8}>
                 {organizations.data?.map((organization) => (
-                  <GridItem key={organization.id} px={7} py={4} borderRadius={6} minH={32} bg="gray.50" cursor="pointer" _hover={{ bg: "gray.100" }} onClick={() => router.push(`/dashboard/${organization.id}`)}>
-                    <Text fontSize="2xl" fontWeight="bold">{organization.name}</Text>
+                  <GridItem key={organization.id}>
+                    <Card variant="filled" borderRadius={6} minH={32} cursor="pointer" _hover={{ bg: "gray.200" }} onClick={() => router.push(`/dashboard/${organization.id}`)}>
+                      <CardBody display="flex" flexDirection="column" justifyContent="space-between">
+                        <Text fontSize="2xl" fontWeight="bold">{organization.name}</Text>
+                        <Text fontSize="md" color="gray.500">{organization.restaurants.length} restaurant{organization.restaurants.length > 1 ? "s" : ""}</Text>
+                      </CardBody>
+                    </Card>
                   </GridItem>
                 ))}
               </Grid>
@@ -70,27 +85,33 @@ const Home: NextPage = () => {
           )
         )}
       </Box>
-      <Modal
-        initialFocusRef={initialRef}
-        isOpen={isOpen}
-        onClose={onClose}
-      >
+      <Modal isOpen={isOpen} onClose={onClose} closeOnOverlayClick={false} onCloseComplete={() => reset()}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Créer votre organisation</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            <FormControl>
-              <FormLabel>Nom de votre organisation</FormLabel>
-              <Input onChange={(e) => setNewOrganizationName(e.target.value)} ref={initialRef} placeholder='Nom' />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme='blue' mr={3} onClick={() => handleOrganization()}>
-              Valider
-            </Button>
-            <Button onClick={onClose}>Annuler</Button>
-          </ModalFooter>
+          <form onSubmit={handleSubmit(handleOrganization)}>
+            <ModalHeader>Créer votre organisation</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody pb={6}>
+                <FormControl isInvalid={!!errors.organizationName}>
+                  <FormLabel>Nom de votre organisation</FormLabel>
+                  <Input {...register("organizationName", { required: true })} />
+                  <FormErrorMessage>Le nom de l'organisation est obligatoire !</FormErrorMessage>
+                </FormControl>
+                <Divider mt={8} mb={6} />
+                <Heading size="md">Restaurant par défaut</Heading>
+                <FormControl mt={4} isInvalid={!!errors.restaurantName}>
+                  <FormLabel>Nom de votre restaurant</FormLabel>
+                  <Input {...register("restaurantName", { required: true })} />
+                  <FormErrorMessage>Le nom du restaurant est obligatoire !</FormErrorMessage>
+                </FormControl>
+            </ModalBody>
+            <ModalFooter>
+              <Button colorScheme='blue' mr={3} type="submit">
+                Valider
+              </Button>
+              <Button onClick={onClose}>Annuler</Button>
+            </ModalFooter>
+          </form>
         </ModalContent>
       </Modal>
     </>

@@ -26,6 +26,13 @@ export const organizationRouter = createTRPCRouter({
     return ctx.prisma.organization.findMany({
       where: {
         userId: ctx.session?.user.id,
+      },
+      include: {
+        restaurants: {
+          select: {
+            name: true,
+          }
+        }
       }
     });
   }),

@@ -1,9 +1,14 @@
-import { Container } from "@chakra-ui/react";
+import { Box, Container } from "@chakra-ui/react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import Navbar from "~/components/Navbar";
 
-
 export default function LayoutBase({ children }: { children: React.ReactNode }) {
+
+  const router = useRouter();
+
+  const isDashboard = router.pathname.startsWith("/dashboard");
+
   return (
     <>
       <Head>
@@ -12,8 +17,12 @@ export default function LayoutBase({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Navbar />
-      <main style={{ height: "calc(100% - 97px)"}}>
-        <Container maxW="6xl" h="full">
+      <main style={{ height: "calc(100% - 97px)", display: "flex" }}>
+        {isDashboard && (
+          <Box h="full" w={1/6} borderRight="1px">
+          </Box>
+        )}
+        <Container maxW="6xl" h="full" w="full">
           {children}
         </Container>
       </main>
