@@ -72,7 +72,7 @@ export default function DashboardSidebar() {
       </Menu>
       <Flex direction="column" alignItems="start" gap={4} mt={12}>
         {links.map(({ slug, name, icon }) => (
-          <Link href={`/dashboard/${router.query.organizationId as string}/${slug}`} key={slug}>
+          <Link href={`/dashboard/${router.query.organizationId as string}/restaurant/${router.query.restaurantId as string}/${slug}`} key={slug}>
             <Button
               w="full"
               justifyContent="start"
