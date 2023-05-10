@@ -10,10 +10,12 @@ const campaignSchema = z.object({
   id: z.string(),
   name: z.string(),
   type: z.string(),
+  template: z.number(),
+  subject: z.string(),
+  body: z.string(),
+  url: z.string(),
   creatorId: z.string(),
   status: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
 });
 
 export const campaignRouter = createTRPCRouter({
@@ -26,13 +28,18 @@ export const campaignRouter = createTRPCRouter({
       return ctx.prisma.campaign.findUnique({ where: { id: input } });
     }),
   createCampaign: protectedProcedure
-    .input(campaignSchema.pick({ name: true, type: true }))
+    .input(campaignSchema.omit({ id: true, creatorId: true, status: true }))
     .mutation(({ ctx, input }) => {
       return ctx.prisma.campaign.create({
         data: {
           ...input,
           creatorId: ctx.session.user.id,
-          status: "DRAFT",
+          template: input.template,
+          type: input.type,
+          subject: input.subject,
+          body: input.body,
+          url: input.url,
+          status: "draft",
         },
       });
     }),

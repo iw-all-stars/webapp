@@ -46,12 +46,15 @@ model Mail {
 
 model Client {
     id        String    @id @default(cuid())
+    email     String    @unique
     name      String
     firstname String?
-    email     String?   @unique
     phone     String?
     image     String?
-    status    String
+    address   String?
+    city      String?
+    state     String?
+    zip       String?
     lastLogin DateTime?
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
@@ -59,19 +62,19 @@ model Client {
 }
 
 model Category {
-    id          String   @id @default(cuid())
-    name        String   @unique
-    color       String?  @default("#000000")
-    icon        String?  @default("🍔")
+    id    String  @id @default(cuid())
+    name  String  @unique
+    color String? @default("#000000")
+    icon  String? @default("🍔")
 }
 
 model Organization {
-    id          String   @id @default(cuid())
+    id          String  @id @default(cuid())
     name        String
     description String?
 
     userId      String
-    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
     restaurants Restaurant[]
 
     createdAt   DateTime @default(now())
@@ -79,12 +82,12 @@ model Organization {
 }
 
 model Restaurant {
-    id          String   @id @default(cuid())
-    name        String
-    category    String?
-    address     String?
-    latitude    Float?
-    longitude   Float?
+    id        String  @id @default(cuid())
+    name      String
+    category  String?
+    address   String?
+    latitude  Float?
+    longitude Float?
 
     organizationId String
     organization Organization @relation(fields: [organizationId], references: [id])
@@ -92,7 +95,6 @@ model Restaurant {
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
 }
-
 
 // Necessary for Next auth
 model Account {
@@ -122,14 +124,14 @@ model Session {
 }
 
 model User {
-    id            String     @id @default(cuid())
+    id            String         @id @default(cuid())
     name          String?
-    email         String?    @unique
+    email         String?        @unique
     emailVerified DateTime?
     image         String?
     lastLogin     DateTime?
-    createdAt     DateTime   @default(now())
-    updatedAt     DateTime   @updatedAt
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
     accounts      Account[]
     sessions      Session[]
     Campaign      Campaign[]
