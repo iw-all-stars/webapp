@@ -15,9 +15,9 @@ datasource db {
 }
 
 model Campaign {
-    id        String   @id @default(cuid())
+    id        String   @id @default(uuid()) @db.Uuid
     name      String
-    creatorId String
+    creatorId String   @db.Uuid
     type      String
     status    String
     template  Int
@@ -31,9 +31,9 @@ model Campaign {
 }
 
 model Mail {
-    id         String   @id @default(cuid())
-    clientId   String
-    campaignId String
+    id         String   @id @default(uuid()) @db.Uuid
+    clientId   String   @db.Uuid
+    campaignId String   @db.Uuid
     rate       Int?
     opened     Boolean  @default(false)
     unsub      Boolean  @default(false)
@@ -45,7 +45,7 @@ model Mail {
 }
 
 model Client {
-    id        String    @id @default(cuid())
+    id        String    @id @default(uuid()) @db.Uuid
     email     String    @unique
     name      String
     firstname String?
@@ -62,18 +62,18 @@ model Client {
 }
 
 model Category {
-    id    String  @id @default(cuid())
+    id    String  @id @default(uuid()) @db.Uuid
     name  String  @unique
     color String? @default("#000000")
     icon  String? @default("🍔")
 }
 
 model Organization {
-    id          String  @id @default(cuid())
+    id          String  @id @default(uuid()) @db.Uuid
     name        String
     description String?
 
-    userId      String
+    userId      String  @db.Uuid
     user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
     restaurants Restaurant[]
 
@@ -82,14 +82,14 @@ model Organization {
 }
 
 model Restaurant {
-    id        String  @id @default(cuid())
+    id        String  @id @default(uuid()) @db.Uuid
     name      String
     category  String?
     address   String?
     latitude  Float?
     longitude Float?
 
-    organizationId String
+    organizationId String @db.Uuid
     organization Organization @relation(fields: [organizationId], references: [id])
 
     createdAt   DateTime @default(now())
@@ -98,8 +98,8 @@ model Restaurant {
 
 // Necessary for Next auth
 model Account {
-    id                String  @id @default(cuid())
-    userId            String
+    id                String  @id @default(uuid()) @db.Uuid
+    userId            String  @db.Uuid
     type              String
     provider          String
     providerAccountId String
@@ -116,15 +116,15 @@ model Account {
 }
 
 model Session {
-    id           String   @id @default(cuid())
+    id           String   @id @default(uuid()) @db.Uuid
     sessionToken String   @unique
-    userId       String
+    userId       String   @db.Uuid
     expires      DateTime
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-    id            String         @id @default(cuid())
+    id            String         @id @default(uuid()) @db.Uuid
     name          String?
     email         String?        @unique
     emailVerified DateTime?

@@ -23,12 +23,12 @@ const Home: NextPage = () => {
   const organizations = api.organization.getByUserId.useQuery();
 
   const addOrganization = api.organization.add.useMutation({
-    onSuccess: () => {
-      utils.organization.getByUserId.invalidate();
-    },
+    onSuccess: () => utils.organization.getByUserId.invalidate(),
   });
 
-  const addRestaurant = api.restaurant.add.useMutation();
+  const addRestaurant = api.restaurant.add.useMutation({
+    onSuccess: () => utils.organization.getByUserId.invalidate(),
+  });
 
   const handleOrganization: SubmitHandler<FormValues> = async ({ organizationName, restaurantName }) => {
     if (session) {

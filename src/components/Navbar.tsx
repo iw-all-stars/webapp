@@ -1,5 +1,6 @@
 import { Box, Flex, Image, Skeleton, SkeletonCircle, Text, Icon } from "@chakra-ui/react";
 import { signOut, useSession } from "next-auth/react";
+import Link from "next/link";
 import { GoSignOut } from "react-icons/go";
 
 export default function Navbar() {
@@ -8,7 +9,11 @@ export default function Navbar() {
 
   return (
     <Flex px={8} py={7} alignItems="center" justifyContent="space-between" borderBottom="1px solid black">
-      <Box>Logo</Box>
+      <Link href="/">
+        <Box>
+          Logo
+        </Box>
+      </Link>
       <Flex alignItems="center" gap={6}>
         Links
         <Flex alignItems="center" gap={4}>
