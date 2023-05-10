@@ -22,4 +22,18 @@ export const restaurantRouter = createTRPCRouter({
     return ctx.prisma.restaurant.findMany();
   }),
 
+  getByOrganizationId: publicProcedure
+    .input(
+      z.object({
+        organizationId: z.string()
+      })
+    )
+    .query(({ ctx, input }) => {
+      return ctx.prisma.restaurant.findMany({
+        where: {
+          organizationId: input.organizationId
+        }
+      });
+    })
+
 });

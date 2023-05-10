@@ -1,6 +1,7 @@
-import { Box, Container } from "@chakra-ui/react";
+import { Container } from "@chakra-ui/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import DashboardSidebar from "~/components/DashboardSidebar";
 import Navbar from "~/components/Navbar";
 
 export default function LayoutBase({ children }: { children: React.ReactNode }) {
@@ -18,10 +19,7 @@ export default function LayoutBase({ children }: { children: React.ReactNode }) 
       </Head>
       <Navbar />
       <main style={{ height: "calc(100% - 97px)", display: "flex" }}>
-        {isDashboard && (
-          <Box h="full" w={1/6} borderRight="1px">
-          </Box>
-        )}
+        {isDashboard && <DashboardSidebar />}
         <Container maxW="6xl" h="full" w="full">
           {children}
         </Container>
