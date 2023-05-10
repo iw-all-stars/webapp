@@ -1,17 +1,13 @@
 import { z } from "zod";
 
-import {
-  createTRPCRouter,
-  publicProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const organizationRouter = createTRPCRouter({
-
   add: publicProcedure
     .input(
       z.object({
         name: z.string(),
-        userId: z.string()
+        userId: z.string(),
       })
     )
     .mutation(({ ctx, input }) => {
@@ -40,5 +36,6 @@ export const organizationRouter = createTRPCRouter({
       }
     });
   }),
-
 });
+
+export default organizationRouter;

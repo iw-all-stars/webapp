@@ -4,12 +4,15 @@ import { Button } from "@chakra-ui/react";
 import { api } from "~/utils/api";
 
 const TestCampaign: NextPage = () => {
-  const addCampaign = api.campaign.createCampaign.useMutation({});
+  const getClients = api.clients.getClients.useQuery();
   const getCampaign = api.campaign.getCampaigns.useQuery();
+  const getMails = api.mail.getMails.useQuery();
 
-  const getClients = api.client.getClients.useQuery();
-  const addClient = api.client.createClient.useMutation();
-  const updateClient = api.client.updateClient.useMutation();
+  const addCampaign = api.campaign.createCampaign.useMutation({});
+  const addClient = api.clients.createClient.useMutation();
+  const updateClient = api.clients.updateClient.useMutation();
+  const createMail = api.mail.createMail.useMutation();
+  const sendMail = api.mail.sendMail.useMutation();
 
   const handleExample = () => {
     addCampaign.mutate({
@@ -38,26 +41,55 @@ const TestCampaign: NextPage = () => {
   }, []);
 
   const handleUpdateClient = React.useCallback(() => {
-    // find client id
     const clientId = getClients.data?.[0].id;
     if (!clientId) return;
-  
+
     updateClient.mutate({
       id: clientId,
-      name: "Test updated",
-      email: "updated@gmail.com",
+      name: "Arizona",
+      email: "test@gmail.com",
     });
   }, [getClients.data, updateClient]);
 
+  const handleCreateMail = React.useCallback(() => {
+    getCampaign.refetch();
+    const campaignId = getCampaign.data?.[0].id;
+    console.log(campaignId);
+    if (!campaignId) return;
+
+    createMail.mutate({
+      campaignId: campaignId,
+      clientId: getClients.data?.[0].id,
+    });
+    getMails.refetch();
+  }, []);
+
+  const handleSendMail = React.useCallback(() => {
+    const mailId = getMails.data?.[0].id;
+    if (!mailId) return;
+
+    sendMail.mutate(mailId);
+    getMails.refetch();
+  }, [getMails]);
+
   return (
     <>
-      <Button onClick={handleExample}>Add Example</Button>
-      <Button onClick={handleGetCampaign}>Get Example</Button>
+      <Button onClick={handleExample}>Add Campagne</Button>
+      <Button onClick={handleGetCampaign}>Get Campagne</Button>
       <Button onClick={handleGetClients}>Get Clients</Button>
       <Button onClick={handleClient}>Create a Client</Button>
       <Button onClick={handleUpdateClient}>Update a Client</Button>
-      <p>{getCampaign.data?.map((campaign) => campaign.name).join(", ")}</p>
-      <p>{getClients.data?.map((client) => client.name).join(", ")}</p>
+      <Button onClick={handleCreateMail}>Create a Mail</Button>
+      <Button onClick={handleSendMail}>Send Mail</Button>
+      <p>
+        Campagnes:{" "}
+        {getCampaign.data?.map((campaign) => campaign.name).join(", ")}
+      </p>
+      <p>Clients: {getClients.data?.map((client) => client.name).join(", ")}</p>
+      <p>Mails: {getMails.data?.map((mail) => mail.id).join(", ")}</p>
+      <p>
+        Status du mail: {getMails.data?.map((mail) => mail.status).join(", ")}
+      </p>
     </>
   );
 };

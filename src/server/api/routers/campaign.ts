@@ -55,3 +55,5 @@ export const campaignRouter = createTRPCRouter({
       return ctx.prisma.campaign.delete({ where: { id: input } });
     }),
 });
+
+export default campaignRouter;
