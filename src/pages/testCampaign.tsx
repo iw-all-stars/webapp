@@ -22,6 +22,7 @@ const TestCampaign: NextPage = () => {
       subject: "Example",
       body: "Example",
       url: "https://example.com",
+      restaurantId: "7e85237d-1012-445e-9817-dfc852205428", // TODO: replace with restaurantId
     });
   };
 

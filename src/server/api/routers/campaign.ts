@@ -15,6 +15,7 @@ const campaignSchema = z.object({
   body: z.string(),
   url: z.string(),
   creatorId: z.string(),
+  restaurantId: z.string(),
   status: z.string(),
 });
 
@@ -34,6 +35,7 @@ export const campaignRouter = createTRPCRouter({
         data: {
           ...input,
           creatorId: ctx.session.user.id,
+          restaurantId: input.restaurantId,
           template: input.template,
           type: input.type,
           subject: input.subject,

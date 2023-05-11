@@ -1,4 +1,4 @@
-import { Button, Flex, Icon, Menu, MenuButton, MenuItem, MenuList, MenuDivider, Text, Skeleton, Center, Box } from "@chakra-ui/react";
+import { Button, Flex, Icon, Menu, MenuButton, MenuItem, MenuList, MenuDivider, Text, Skeleton, Center } from "@chakra-ui/react";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { BiChevronDown } from "react-icons/bi";
@@ -11,10 +11,14 @@ export default function DashboardSidebar() {
 
   const { data: restaurants } = api.restaurant.getByOrganizationId.useQuery({
     organizationId: router.query.organizationId as string,
+  }, {
+    enabled: !!router.query.organizationId,
   });
 
   const { data: currentRestaurant } = api.restaurant.getById.useQuery({
     id: router.query.restaurantId as string,
+  }, {
+    enabled: !!router.query.restaurantId,
   });
   
 
