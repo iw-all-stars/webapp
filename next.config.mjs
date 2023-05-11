@@ -6,7 +6,7 @@
 
 /** @type {import("next").NextConfig} */
 const config = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   swcMinify: true,
   output: "standalone",
 
@@ -19,6 +19,9 @@ const config = {
   i18n: {
     locales: ["en"],
     defaultLocale: "en",
+  },
+  images: {
+    domains: ['challengesem2.s3.eu-west-3.amazonaws.com', 'lh3.googleusercontent.com'],
   },
 };
 export default config;

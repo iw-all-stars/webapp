@@ -1,9 +1,33 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
+import {
+    Box,
+    Button,
+    Card, CardBody, Divider,
+    Flex,
+    FormControl,
+    FormErrorMessage,
+    FormLabel,
+    Grid, GridItem,
+    Heading,
+    Image,
+    Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    Skeleton, SkeletonCircle, Text,
+    useDisclosure
+} from "@chakra-ui/react";
 import { type NextPage } from "next";
-import { api } from "~/utils/api";
-import { Button, Flex, Skeleton, SkeletonCircle, Text, Image, Box, Grid, GridItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, FormControl, FormLabel, Input, ModalFooter, useDisclosure, Card, CardBody, Divider, Heading, FormErrorMessage } from "@chakra-ui/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
+import { type CreatePost } from "~/server/api/routers/story";
+import { api } from "~/utils/api";
 
 type FormValues = {
   organizationName: string;
@@ -11,6 +35,9 @@ type FormValues = {
 };
 
 const Home: NextPage = () => {
+    const [files, setFiles] = useState<File[]>([]);
+    const [posts, setPosts] = useState<CreatePost[]>([]);
+    const [hidePublishAt, setHidePublishAt] = useState<boolean>(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { register, formState: { errors }, handleSubmit, reset } = useForm<FormValues>();

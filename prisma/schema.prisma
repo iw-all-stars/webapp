@@ -148,3 +148,39 @@ model VerificationToken {
 
     @@unique([identifier, token])
 }
+
+enum StoryStatus {
+  PUBLISHED
+  DRAFT
+  SCHEDULED
+  ERROR
+  NOW
+}
+
+model Story {
+    id          String   @id @default(uuid()) @db.Uuid
+    name        String
+    publishedAt DateTime?
+    posts       Post[]
+    status      StoryStatus
+}
+
+model Post {
+    id  String @id @default(uuid()) @db.Uuid
+    url String
+    story Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+    storyId String @db.Uuid
+    position Int
+    type String
+}
+
+enum PlatformKey {
+  TWITTER
+  INSTAGRAM
+  FACEBOOK
+}
+
+model Platform {
+    id String @id @default(uuid()) @db.Uuid
+    key PlatformKey
+}
