@@ -69,12 +69,14 @@ enum StoryStatus {
   PUBLISHED
   DRAFT
   SCHEDULED
+  ERROR
+  NOW
 }
 
 model Story {
     id          String   @id @default(cuid())
     name        String
-    publishedAt DateTime
+    publishedAt DateTime?
     posts       Post[]
     status      StoryStatus
 }
@@ -82,7 +84,7 @@ model Story {
 model Post {
     id  String @id @default(cuid())
     url String
-    story Story  @relation(fields: [storyId], references: [id])
+    story Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
     storyId String
     position Int
     type String

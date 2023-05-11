@@ -1,9 +1,9 @@
 import {
     CreateScheduleCommand,
     DeleteScheduleCommand,
-    SchedulerClient,
+    SchedulerClient
 } from "@aws-sdk/client-scheduler";
-import { type Prisma, type Post, type Story } from "@prisma/client";
+import { type Post, type Story } from "@prisma/client";
 import { DateTime } from "luxon";
 import { encrypt } from "~/utils/decrypte-password";
 
@@ -15,14 +15,17 @@ const client = new SchedulerClient({
     },
 });
 
-export const scheduleStory = async (
-    story: Story & { posts: Post[] },
-) => {
-    try { 
+export const scheduleStory = async (story: Story & { posts: Post[] }) => {
+    console.log('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩')
+    console.log('SCHEULLEEEEE')
+    console.log('🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦')
+    try {
         await deleteStorySchedule(story.id);
-    } catch(e) {
-        console.log(e)
+    } catch (e) {
+        console.log(e);
     }
+
+    if (!story.publishedAt) return;
 
     const { minute, hour, day, month, year } = DateTime.fromJSDate(
         story.publishedAt
@@ -33,29 +36,19 @@ export const scheduleStory = async (
     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     const cron = `cron(${minute} ${hour} ${day} ${month} ? ${year})`;
 
-    await client.send(
-        new CreateScheduleCommand({
-            Name: story.id,
-            ScheduleExpression: cron,
-            FlexibleTimeWindow: {
-                Mode: "OFF",
-            },
-            State: "ENABLED",
-            Target: {
-                Arn: process.env.ARN_LAMBDA_FUNCTION_PUBLISH_POST ?? "",
-                RoleArn: process.env.ROLE_ARN_EVENT_BRIDGE_SCHEDULER ?? "",
-                Input: JSON.stringify({
-                    credentials: {
-                        username: "devftn5",
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        password: encrypt("monnouvomdPé94290"),
-                    },
-                    platformKey: "instagram",
-                    posts: story.posts,
-                }),
-            },
-        })
-    );
+    await _sendSchedule(client, {
+        ...story,
+        callbackUrl: 'https://fdfd-94-228-190-38.ngrok-free.app/api/webhooks/publish',
+        credentials: {
+            username: "devftn5",
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            password: encrypt("monnouvomdPé94290"),
+        },
+        storyId: story.id,
+        restaurantId: 'story.restaurantId',
+        organizationId: 'story.organizationId',
+        platformKey: PlatformKeys.INSTAGRAM,
+    }, cron);
 };
 
 export const deleteStorySchedule = async (storyId: string) => {
@@ -70,3 +63,42 @@ export const deleteStorySchedule = async (storyId: string) => {
             return err;
         });
 };
+
+type Credentials = {
+    username: string;
+    password: string;
+};
+
+enum PlatformKeys {
+    INSTAGRAM = "instagram",
+    FACEBOOK = "facebook", // not implemented
+    TIKTOK = "tiktok", // not implemented
+}
+
+export type EventPublishPost = {
+    storyId: string;
+    restaurantId: string;
+    organizationId: string;
+    credentials: Credentials;
+    platformKey: PlatformKeys;
+    posts: Post[];
+    callbackUrl: string;
+};
+
+const _sendSchedule = (client: SchedulerClient, event: EventPublishPost, cron : string) => {
+    return client.send(
+        new CreateScheduleCommand({
+            Name: event.storyId,
+            ScheduleExpression: cron,
+            FlexibleTimeWindow: {
+                Mode: "OFF",
+            },
+            State: "ENABLED",
+            Target: {
+                Arn: process.env.ARN_LAMBDA_FUNCTION_PUBLISH_POST ?? "",
+                RoleArn: process.env.ROLE_ARN_EVENT_BRIDGE_SCHEDULER ?? "",
+                Input: JSON.stringify(event),
+            },
+        })
+    );
+}

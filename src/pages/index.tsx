@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import {
+    Box,
     Button,
     FormControl,
     FormErrorMessage,
     FormLabel,
     Input,
+    Select,
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { useEffect, useState } from "react";
@@ -12,15 +14,22 @@ import { useForm } from "react-hook-form";
 import { type CreatePost, type CreateStory } from "~/server/api/routers/story";
 import { api } from "~/utils/api";
 import { DragFiles } from "./components/dragFiles.component";
+import { StoryStatus } from "@prisma/client";
 
 const Home: NextPage = () => {
     const [files, setFiles] = useState<File[]>([]);
     const [posts, setPosts] = useState<CreatePost[]>([]);
+    const [hidePublishAt, setHidePublishAt] = useState<boolean>(false);
 
     const addStory = api.story.create.useMutation({});
+    const deleteStory = api.story.delete.useMutation({});
 
     function createStory(data: CreateStory) {
         addStory.mutate(data);
+    }
+
+    function deleteById(id: string) {
+        deleteStory.mutate({ id });
     }
 
     const {
@@ -28,7 +37,15 @@ const Home: NextPage = () => {
         register,
         setValue,
         formState: { errors, isSubmitting },
+        watch,
+        getValues,
+        resetField,
     } = useForm<CreateStory>();
+
+    useEffect(() => {
+        resetField("publishedAt");
+        setHidePublishAt(getValues("status") === StoryStatus.DRAFT);
+    }, [watch("status")]);
 
     const uploadFiles = async () => {
         const urlsWithFiles = await Promise.all(
@@ -69,7 +86,7 @@ const Home: NextPage = () => {
 
         return s3UrlsWithFiles.map(({ url, file }) => ({
             url: url.split("?")[0] ?? "never",
-            type: file.type.split('/')[0] as 'image' | 'video',
+            type: file.type.split("/")[0] as "image" | "video",
         }));
     };
 
@@ -80,12 +97,12 @@ const Home: NextPage = () => {
                 setPosts((prevPosts) => {
                     return [
                         ...prevPosts,
-                        ...urls.map(({url, type}, i) => ({
+                        ...urls.map(({ url, type }, i) => ({
                             url,
                             position: posts.length + i,
                             type,
-                        }))
-                    ]
+                        })),
+                    ];
                 });
             });
         }
@@ -103,64 +120,97 @@ const Home: NextPage = () => {
 
     useEffect(() => {
         setValue("posts", posts);
-    }, [posts])
+    }, [posts]);
 
     return (
-        <form onSubmit={handleSubmit(createStory)}>
-            <FormControl isInvalid={!!errors.name}>
-                <FormLabel htmlFor="name">story name</FormLabel>
-                <Input
-                    id="name"
-                    placeholder="name"
-                    {...register("name", {
-                        required: "This is required",
-                        minLength: {
-                            value: 4,
-                            message: "Minimum length should be 4",
-                        },
-                    })}
+        <Box>
+            <form onSubmit={handleSubmit(createStory)}>
+                <FormControl isInvalid={!!errors.name}>
+                    <FormLabel htmlFor="name">story name</FormLabel>
+                    <Input
+                        id="name"
+                        placeholder="name"
+                        {...register("name", {
+                            required: "This is required",
+                            minLength: {
+                                value: 4,
+                                message: "Minimum length should be 4",
+                            },
+                        })}
+                    />
+                    <FormErrorMessage>
+                        {errors.name && errors.name.message}
+                    </FormErrorMessage>
+                </FormControl>
+
+                <FormControl>
+                    <Select
+                        {...register("status", {
+                            required: "This is required",
+                        })}
+                    >
+                        {[
+                            StoryStatus.NOW,
+                            StoryStatus.SCHEDULED,
+                            StoryStatus.DRAFT,
+                        ].map((status) => (
+                            <option
+                                selected={status === StoryStatus.NOW}
+                                key={status}
+                                value={status}
+                            >
+                                {status}
+                            </option>
+                        ))}
+                    </Select>
+                </FormControl>
+
+                <FormControl
+                    isInvalid={!!errors.publishedAt}
+                    hidden={hidePublishAt}
+                >
+                    <FormLabel htmlFor="name">published at</FormLabel>
+                    <Input
+                        id="publishedAt"
+                        placeholder="publishedAt"
+                        type="datetime-local"
+                        {...register("publishedAt", {})}
+                    />
+                    <FormErrorMessage>
+                        {errors.publishedAt && errors.publishedAt.message}
+                    </FormErrorMessage>
+                </FormControl>
+                <DragFiles
+                    files={files}
+                    handleDrop={handleDrop}
+                    handleDragOver={handleDragOver}
+                    posts={posts}
+                    setPosts={setPosts}
                 />
-                <FormErrorMessage>
-                    {errors.name && errors.name.message}
-                </FormErrorMessage>
-            </FormControl>
-            <FormControl isInvalid={!!errors.publishedAt}>
-                <FormLabel htmlFor="name">published at</FormLabel>
-                <Input
-                    id="publishedAt"
-                    placeholder="publishedAt"
-                    type="datetime-local"
-                    {...register("publishedAt", {
-                        required: "This is required",
-                    })}
-                />
-                <FormErrorMessage>
-                    {errors.publishedAt && errors.publishedAt.message}
-                </FormErrorMessage>
-            </FormControl>
-            <DragFiles
-                files={files}
-                handleDrop={handleDrop}
-                handleDragOver={handleDragOver}
-                posts={posts}
-                setPosts={setPosts}
-            />
-            <Button
-                mt={4}
-                colorScheme="teal"
-                isLoading={isSubmitting}
-                type="submit"
-            >
-                Submit
-            </Button>
+                <Button
+                    mt={4}
+                    colorScheme="teal"
+                    isLoading={isSubmitting}
+                    type="submit"
+                >
+                    Submit
+                </Button>
+                <Button
+                    onClick={() => {
+                        console.log(getValues());
+                    }}
+                >
+                    log posts
+                </Button>
+            </form>
             <Button
                 onClick={() => {
-                    console.log(posts);
+                    deleteById("clhix5jr7000o7toyd573f6ux");
                 }}
             >
-                log posts
+                Delete
             </Button>
-        </form>
+        </Box>
     );
 };
 
