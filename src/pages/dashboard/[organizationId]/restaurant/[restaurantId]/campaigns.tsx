@@ -45,9 +45,9 @@ const DashboardCampaign: NextPage = () => {
           </Thead>
           <Tbody>
             {getCampaigns.isFetching
-              ? [...Array(6)].map((_, index) => (
+              ? [...Array(6) as number[]].map((_, index) => (
                   <Tr key={index}>
-                    {[...Array(4)].map((_, index) => (
+                    {[...Array(4) as number[]].map((_, index) => (
                       <Td key={index}>
                         <Skeleton h={4} />
                       </Td>

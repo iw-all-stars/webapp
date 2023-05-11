@@ -41,7 +41,7 @@ const TestCampaign: NextPage = () => {
   }, []);
 
   const handleUpdateClient = React.useCallback(() => {
-    const clientId = getClients.data?.[0].id;
+    const clientId = getClients.data?.[0]?.id;
     if (!clientId) return;
 
     updateClient.mutate({
@@ -53,19 +53,19 @@ const TestCampaign: NextPage = () => {
 
   const handleCreateMail = React.useCallback(() => {
     getCampaign.refetch();
-    const campaignId = getCampaign.data?.[0].id;
-    console.log(campaignId);
-    if (!campaignId) return;
-
+    const campaignId = getCampaign.data?.[0]?.id;
+    const clientId = getClients.data?.[0]?.id;
+    if (!campaignId || !clientId) return;
+    
     createMail.mutate({
       campaignId: campaignId,
-      clientId: getClients.data?.[0].id,
+      clientId: clientId,
     });
     getMails.refetch();
   }, []);
 
   const handleSendMail = React.useCallback(() => {
-    const mailId = getMails.data?.[0].id;
+    const mailId = getMails.data?.[0]?.id;
     if (!mailId) return;
 
     sendMail.mutate(mailId);
