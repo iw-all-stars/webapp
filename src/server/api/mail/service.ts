@@ -12,7 +12,7 @@ interface IMail {
   mailId: string;
 }
 
-const sendEmail = async ({ templateId, email, name, subject, body, mailId }: IMail) => {
+const sendEmail = ({ templateId, email, name, subject, body, mailId }: IMail) => {
   const sendSmtpEmail = {
     to: [
       {
@@ -35,7 +35,7 @@ const sendEmail = async ({ templateId, email, name, subject, body, mailId }: IMa
 
   apiInstance.sendTransacEmail(sendSmtpEmail).then(
     function (data: unknown) {
-      console.log("API called successfully. Returned data: " + data);
+      console.log(`API called successfully. Returned data: ${data}`);
       return data;
     },
     function (error: unknown) {

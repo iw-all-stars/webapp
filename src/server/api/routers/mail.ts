@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import {
   createTRPCRouter,
-  publicProcedure,
   protectedProcedure,
 } from "~/server/api/trpc";
 import sendEmail from "../mail/service";
@@ -52,7 +51,7 @@ export const mailRouter = createTRPCRouter({
         throw new Error("Mail not found");
       }
 
-      await sendEmail({
+      sendEmail({
         templateId: mail.campaign.template,
         email: mail.client.email,
         name: mail.client.name,
