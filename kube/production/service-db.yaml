@@ -1,0 +1,22 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres
+  namespace: production
+spec:
+  ports: 
+    - port: 5432
+      targetPort: 6358
+
+---
+
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: postgres
+  namespace: production
+subsets:
+  - addresses:
+      - ip: 34.83.147.68
+    ports:
+      - port: 6358

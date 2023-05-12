@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: webapp
-        image: horekk/webapp:v0.8
+        image: horekk/webapp:v0.9
         ports:
         - containerPort: 3000
         resources:
@@ -47,6 +47,21 @@ spec:
            secretKeyRef:
               name: production-secret
               key: nextauth-url
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+           secretKeyRef:
+              name: production-secret
+              key: google_client_id
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+           secretKeyRef:
+              name: production-secret
+              key: google_client_secret
+        - name: SENDINBLUE_API_KEY
+          valueFrom:
+           secretKeyRef:
+              name: production-secret
+              key: sendinblue_api_key
 
 ---
 
@@ -55,13 +70,76 @@ kind: Service
 metadata:
   name: webapp
   namespace: production
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-resource-group: MC_challenge-iw-te_group_challenge-iw_francecentral
 spec:
-  loadBalancerIP: 20.74.90.61
-  type: LoadBalancer
-  selector:
-    app: webapp
+  type: ClusterIP
   ports:
   - port: 80
     targetPort: 3000
+  selector:
+    app: webapp
+
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: webapp
+#   namespace: production
+#   annotations:
+#     service.beta.kubernetes.io/azure-load-balancer-resource-group: MC_challenge-iw-te_group_challenge-iw_francecentral
+# spec:
+#   loadBalancerIP: 20.74.90.61
+#   type: LoadBalancer
+#   selector:
+#     app: webapp
+#   ports:
+#   - port: 80
+#     targetPort: 3000
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webapp-ingress-static
+  namespace: production
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - challenge.francecentral.cloudapp.azure.com
+    secretName: tls-secret
+  rules:
+  - host: challenge.francecentral.cloudapp.azure.com
+    http:
+      paths:
+      - pathType: Prefix
+        backend:
+          service:
+            name: webapp
+            port: 
+              number: 80
+        path: /
+
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+  namespace: production
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: azenoxe@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+          podTemplate:
+            spec:
+              nodeSelector:
+                "kubernetes.io/os": linux
