@@ -5,7 +5,9 @@ import { api } from "~/utils/api";
 
 const TestCampaign: NextPage = () => {
   const getClients = api.clients.getClients.useQuery();
-  const getCampaign = api.campaign.getCampaigns.useQuery();
+  const getCampaign = api.campaign.getCampaign.useQuery(
+    "d0ebd2e6-3b7e-4d9c-8d3a-e05cad6baba4"
+  );
   const getMails = api.mail.getMails.useQuery();
 
   const addCampaign = api.campaign.createCampaign.useMutation({});
@@ -16,13 +18,13 @@ const TestCampaign: NextPage = () => {
 
   const handleExample = () => {
     addCampaign.mutate({
-      name: "Example",
-      type: "CPC",
+      name: "Example" + Math.random(),
+      typeId: "e58d69ea-0bf6-4686-85f9-09f203739957",
       template: 1,
       subject: "Example",
       body: "Example",
       url: "https://example.com",
-      restaurantId: "7e85237d-1012-445e-9817-dfc852205428", // TODO: replace with restaurantId
+      restaurantId: "ea6254ab-bde4-429f-83c6-4d63695feee0", // TODO: replace with restaurantId
     });
   };
 
@@ -36,8 +38,9 @@ const TestCampaign: NextPage = () => {
 
   const handleClient = React.useCallback(() => {
     addClient.mutate({
-      name: "Test",
-      email: "test@gmail.com",
+      firstname: "Client-" + Math.random().toFixed(2) + "firstname",
+      name: "Client-" + Math.random().toFixed(2),
+      email: "client-" + Math.random().toFixed(2) + "@gmail.com",
     });
   }, []);
 
@@ -54,10 +57,10 @@ const TestCampaign: NextPage = () => {
 
   const handleCreateMail = React.useCallback(() => {
     getCampaign.refetch();
-    const campaignId = getCampaign.data?.[0]?.id;
+    const campaignId = getCampaign.data?.id;
     const clientId = getClients.data?.[0]?.id;
     if (!campaignId || !clientId) return;
-    
+
     createMail.mutate({
       campaignId: campaignId,
       clientId: clientId,
@@ -82,10 +85,7 @@ const TestCampaign: NextPage = () => {
       <Button onClick={handleUpdateClient}>Update a Client</Button>
       <Button onClick={handleCreateMail}>Create a Mail</Button>
       <Button onClick={handleSendMail}>Send Mail</Button>
-      <p>
-        Campagnes:{" "}
-        {getCampaign.data?.map((campaign) => campaign.name).join(", ")}
-      </p>
+      <p>Campagne: {getCampaign.data?.name}</p>
       <p>Clients: {getClients.data?.map((client) => client.name).join(", ")}</p>
       <p>Mails: {getMails.data?.map((mail) => mail.id).join(", ")}</p>
       <p>
