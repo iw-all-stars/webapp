@@ -30,5 +30,4 @@ jobs:
         tags: ${{ secrets.DOCKER_HUB_USERNAME }}/webapp:latest
         build-args: |
           SKIP_ENV_VALIDATION=1
-        cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/webapp:cache
-        cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/webapp:cache,mode=max
+
