@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import {
   Box,
   Button,
@@ -12,18 +13,19 @@ import {
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import CampaignStep from "./steps/campaign";
-import { Campaign } from "@prisma/client";
-import { SubmitHandler } from "react-hook-form";
+import { type Campaign } from "@prisma/client";
+import { type SubmitHandler } from "react-hook-form";
 import Stepper from "../stepper";
 import { useSteps } from "@chakra-ui/stepper";
 import MailStep from "./steps/mail";
 import RecipientStep from "./steps/recipient";
 import { api } from "~/utils/api";
+import { type Column } from "react-table";
 
 interface ICampaignModal {
   isOpen: boolean;
   onClose: () => void;
-  campaign?: any;
+  campaign?: Campaign;
 }
 
 export type FormValues = {
@@ -34,6 +36,13 @@ export type FormValues = {
   url?: string;
 };
 
+export interface Columns {
+  col1: string;
+  col2: string;
+  col3: string;
+  col4: string;
+}
+
 export const CampaignModal = ({
   isOpen,
   onClose,
@@ -41,7 +50,7 @@ export const CampaignModal = ({
 }: ICampaignModal) => {
   const steps = [
     { title: "Campagne" },
-    { title: "Courrier" },
+    { title: "Message" },
     { title: "Cibles" },
   ];
 
@@ -58,11 +67,9 @@ export const CampaignModal = ({
   const disabled = !isDraft && edit;
   const lastStep = activeStep === 2;
 
-  const [_campaign, setCampaign] = useState<Partial<Campaign> | null>(null);
+  const [_campaign, setCampaign] = useState<Partial<Campaign>>();
 
-  const handleCampaign: SubmitHandler<FormValues> = async (
-    values: FormValues
-  ) => {
+  const handleCampaign: SubmitHandler<FormValues> = (values: FormValues) => {
     setCampaign({ ..._campaign, ...values });
   };
 
@@ -82,23 +89,23 @@ export const CampaignModal = ({
     });
   }, [clients?.data]);
 
-  const columns = React.useMemo(
+  const columns: Column<object>[] = React.useMemo(
     () => [
       {
         Header: "Prénom",
-        accessor: "firstname",
+        accessor: "firstname" as keyof Columns,
       },
       {
         Header: "Nom",
-        accessor: "name",
+        accessor: "name" as keyof Columns,
       },
       {
         Header: "E-mail",
-        accessor: "email",
+        accessor: "email" as keyof Columns,
       },
       {
         Header: "Selectionner",
-        accessor: "selected",
+        accessor: "selected" as keyof Columns,
       },
     ],
     []
@@ -109,6 +116,7 @@ export const CampaignModal = ({
       [
         0,
         <CampaignStep
+          key={0}
           campaign={campaign}
           disabled={disabled}
           initialRef={initialRef}
@@ -118,6 +126,7 @@ export const CampaignModal = ({
       [
         1,
         <MailStep
+          key={1}
           campaign={campaign}
           disabled={disabled}
           handleCampaign={handleCampaign}
@@ -126,6 +135,7 @@ export const CampaignModal = ({
       [
         2,
         <RecipientStep
+          key={2}
           columns={columns}
           data={data}
           isFetching={clients?.isFetching}

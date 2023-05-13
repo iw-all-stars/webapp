@@ -6,16 +6,15 @@ import {
   FormErrorMessage,
   InputGroup,
   InputLeftAddon,
-  InputRightAddon,
   Textarea,
 } from "@chakra-ui/react";
 import React from "react";
-import { Campaign } from "@prisma/client";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { FormValues } from "..";
+import { type Campaign } from "@prisma/client";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import { type FormValues } from "..";
 
 interface MailProps {
-  campaign: Campaign;
+  campaign?: Campaign;
   disabled: boolean;
   handleCampaign: SubmitHandler<FormValues>;
 }
@@ -25,7 +24,6 @@ export const MailStep = ({ campaign, disabled, handleCampaign }: MailProps) => {
     register,
     formState: { errors },
     handleSubmit,
-    reset,
   } = useForm<FormValues>();
 
   return (
@@ -60,7 +58,7 @@ export const MailStep = ({ campaign, disabled, handleCampaign }: MailProps) => {
         <FormControl mt={4}>
           <FormLabel>URL de redirection</FormLabel>
           <InputGroup size="sm">
-            <InputLeftAddon children="https://" />
+            <InputLeftAddon>https://</InputLeftAddon>
             <Input
               {...register("url", { required: false })}
               defaultValue={campaign?.url}

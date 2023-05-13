@@ -5,7 +5,6 @@ import {
   Button,
   CircularProgress,
   Heading,
-  Skeleton,
   Table,
   TableContainer,
   Tbody,
@@ -20,14 +19,12 @@ import { api } from "~/utils/api";
 import { MdAddChart } from "react-icons/md";
 import { format } from "date-fns";
 import CampaignModal from "~/components/campaignModal";
-import { Campaign } from "@prisma/client";
+import { type Campaign } from "@prisma/client";
 
 const DashboardCampaign: NextPage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const getCampaigns = api.campaign.getCampaigns.useQuery();
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
-    null
-  );
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign>();
 
   const editCampaign = (campaign: Campaign) => {
     setSelectedCampaign(campaign);
@@ -40,7 +37,7 @@ const DashboardCampaign: NextPage = () => {
 
   const closeModal = useCallback(() => {
     onClose();
-    setSelectedCampaign(null);
+    setSelectedCampaign(undefined);
   }, []);
 
   return (

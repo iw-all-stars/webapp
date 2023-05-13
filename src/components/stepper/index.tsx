@@ -12,6 +12,7 @@ interface stepsProps {
 export const Stepper = ({ steps, activeStep, setActiveStep }: stepsProps) => {
   return (
     <Steps
+      size={"sm"}
       orientation="horizontal"
       activeStep={activeStep}
       onClickStep={setActiveStep}

@@ -18,7 +18,7 @@ const TestCampaign: NextPage = () => {
 
   const handleExample = () => {
     addCampaign.mutate({
-      name: "Example" + Math.random(),
+      name: "Example" + Math.random().toString(),
       typeId: "e58d69ea-0bf6-4686-85f9-09f203739957",
       template: 1,
       subject: "Example",

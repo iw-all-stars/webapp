@@ -6,14 +6,14 @@ import {
   Input,
   Select,
 } from "@chakra-ui/react";
-import { Campaign } from "@prisma/client";
-import React, { Ref, useEffect, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { type Campaign } from "@prisma/client";
+import React, { type Ref, useEffect } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import { api } from "~/utils/api";
-import { FormValues } from "..";
+import { type FormValues } from "..";
 
 interface CampaignProps {
-  campaign: Campaign;
+  campaign?: Campaign;
   disabled: boolean;
   initialRef: Ref<HTMLInputElement>;
   on: {
@@ -34,7 +34,6 @@ export const CampaignStep = ({
     register,
     formState: { errors },
     handleSubmit,
-    reset,
   } = useForm<FormValues>();
 
   useEffect(() => {

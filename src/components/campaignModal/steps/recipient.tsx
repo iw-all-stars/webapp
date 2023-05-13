@@ -1,10 +1,19 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import React from "react";
+import {
+  useTable,
+  usePagination,
+  type Column,
+  type HeaderGroup,
+  type Row,
+  type Cell,
+} from "react-table";
+import { MdSearch } from "react-icons/md";
 import {
   Box,
   Table,
   Thead,
   Tbody,
-  Tfoot,
   Tr,
   Th,
   Td,
@@ -24,7 +33,6 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   Select,
-  Checkbox,
 } from "@chakra-ui/react";
 import {
   ArrowRightIcon,
@@ -32,12 +40,11 @@ import {
   ChevronRightIcon,
   ChevronLeftIcon,
 } from "@chakra-ui/icons";
-import { useTable, usePagination } from "react-table";
-import { MdSearch } from "react-icons/md";
+import { type Campaign } from "@prisma/client";
 
 interface RecipientStepProps {
-  columns: any;
-  data: any;
+  columns: Column<object>[];
+  data: Partial<Campaign>[];
   isFetching: boolean;
 }
 
@@ -47,7 +54,6 @@ export const RecipientStep = ({
   isFetching,
 }: RecipientStepProps) => {
   const {
-    getTableProps,
     getTableBodyProps,
     headerGroups,
     prepareRow,
@@ -75,7 +81,9 @@ export const RecipientStep = ({
       <FormControl>
         <InputGroup>
           <Input type="text" placeholder="Ajouter un destinataire" />
-          <InputRightAddon children={<MdSearch />} />
+          <InputRightAddon>
+            <MdSearch />
+          </InputRightAddon>
         </InputGroup>
       </FormControl>
       <br />
@@ -83,43 +91,42 @@ export const RecipientStep = ({
         <TableContainer>
           <Table size="sm" variant="striped">
             <Thead>
-              {headerGroups.map((headerGroup: any) => (
-                <Tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column: any, index: number) => (
-                    <Th pb={4} {...column.getHeaderProps()}>
-                      {column.render("Header")}
-                    </Th>
-                  ))}
-                </Tr>
-              ))}
+              {headerGroups.map((headerGroup: HeaderGroup) => {
+                const { key, ...headerGroupProps } =
+                  headerGroup.getHeaderGroupProps();
+                return (
+                  <Tr key={key} {...headerGroupProps}>
+                    {headerGroup.headers.map((column: HeaderGroup) => {
+                      const { key, ...columnProps } = column.getHeaderProps();
+                      return (
+                        <Th key={key} pb={4} {...columnProps}>
+                          {column.render("Header")}
+                        </Th>
+                      );
+                    })}
+                  </Tr>
+                );
+              })}
             </Thead>
 
             <Tbody {...getTableBodyProps()}>
-              {page.map((row: any) => {
+              {page.map((row: Row<object>) => {
                 prepareRow(row);
+                const { key, ...rowProps } = row.getRowProps();
                 return (
-                  <Tr {...row.getRowProps()}>
-                    {row.cells.map((cell: any) => (
-                      <Td {...cell.getCellProps()}>{cell.render("Cell")}</Td>
-                    ))}
+                  <Tr key={key} {...rowProps}>
+                    {row.cells.map((cell: Cell) => {
+                      const { key, ...cellProps } = cell.getCellProps();
+                      return (
+                        <Td key={key} {...cellProps}>
+                          {cell.render("Cell")}
+                        </Td>
+                      );
+                    })}
                   </Tr>
                 );
               })}
             </Tbody>
-
-            {page.length >= 20 ? (
-              <Tfoot>
-                {headerGroups.map((headerGroup: any) => (
-                  <Tr {...headerGroup.getHeaderGroupProps()}>
-                    {headerGroup.headers.map((column: any, index: number) => (
-                      <Th pb={4} {...column.getHeaderProps()}>
-                        {column.render("Header")}
-                      </Th>
-                    ))}
-                  </Tr>
-                ))}
-              </Tfoot>
-            ) : null}
           </Table>
           {data && data.length === 0 ? (
             <Box
