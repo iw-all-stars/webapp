@@ -31,3 +31,31 @@ jobs:
         build-args: |
           SKIP_ENV_VALIDATION=1
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Azure login
+        uses: azure/login@v1.4.3
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: '${{ secrets.AZURE_RESSOURCE_GROUP }}' 
+          cluster-name: '${{ secrets.AZURE_CLUSTER_NAME }}'
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Deploy to AKS
+        uses: Azure/k8s-deploy@v4
+        with:
+          namespace: 'production'
+          manifests: |
+             kube/production/webapp.yaml
+          pull-images: true 
+
+
