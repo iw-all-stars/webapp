@@ -16,6 +16,8 @@ const config = {
         "@typescript-eslint/no-misused-promises": "off",
         "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/no-floating-promises": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/unbound-method": "off",
       }
     },
   ],
@@ -36,6 +38,7 @@ const config = {
     "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     "react/no-unescaped-entities": "off",
     "react-hooks/exhaustive-deps": "off",
+    "react/no-children-prop": "off",
     "@typescript-eslint/no-misused-promises": "warn"
   },
 };

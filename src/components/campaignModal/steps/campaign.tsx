@@ -38,6 +38,7 @@ export const CampaignStep = ({
 
   useEffect(() => {
     campaignTypes.refetch();
+    if (!campaign) return;
     setCampaign({ ...campaign });
   }, [campaign]);
 
