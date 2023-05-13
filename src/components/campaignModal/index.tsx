@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Checkbox,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -71,7 +72,15 @@ export const CampaignModal = ({
     clients.refetch();
   }, []);
 
-  const data = React.useMemo(() => clients?.data || [], [clients]);
+  const data = React.useMemo(() => {
+    if (!clients?.data) return [];
+    return clients?.data?.map((client) => {
+      return {
+        ...client,
+        selected: <Checkbox colorScheme="green" defaultChecked />,
+      };
+    });
+  }, [clients?.data]);
 
   const columns = React.useMemo(
     () => [
@@ -86,6 +95,10 @@ export const CampaignModal = ({
       {
         Header: "E-mail",
         accessor: "email",
+      },
+      {
+        Header: "Selectionner",
+        accessor: "selected",
       },
     ],
     []
@@ -110,7 +123,14 @@ export const CampaignModal = ({
           handleCampaign={handleCampaign}
         />,
       ],
-      [2, <RecipientStep columns={columns} data={data} isFetching={clients?.isFetching} />],
+      [
+        2,
+        <RecipientStep
+          columns={columns}
+          data={data}
+          isFetching={clients?.isFetching}
+        />,
+      ],
     ]);
 
     return steps.get(activeStep);
@@ -136,7 +156,7 @@ export const CampaignModal = ({
       finalFocusRef={finalRef}
       isOpen={isOpen}
       onClose={close}
-      size="3xl"
+      size="5xl"
     >
       <ModalOverlay />
       <ModalContent>
