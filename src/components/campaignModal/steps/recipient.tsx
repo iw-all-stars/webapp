@@ -24,6 +24,7 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   Select,
+  Checkbox,
 } from "@chakra-ui/react";
 import {
   ArrowRightIcon,
@@ -65,7 +66,6 @@ export const RecipientStep = ({
     {
       columns,
       data,
-      initialState: { pageIndex: 0 },
     },
     usePagination
   );
@@ -99,23 +99,25 @@ export const RecipientStep = ({
                 prepareRow(row);
                 return (
                   <Tr {...row.getRowProps()}>
-                    {
-                      row.cells.map((cell: any) => (
-                        <Td {...cell.getCellProps()}>{cell.render("Cell")}</Td>
-                      ))
-                    }
+                    {row.cells.map((cell: any) => (
+                      <Td {...cell.getCellProps()}>{cell.render("Cell")}</Td>
+                    ))}
                   </Tr>
                 );
               })}
             </Tbody>
 
-            {data && data.length > 20 ? (
+            {page.length >= 20 ? (
               <Tfoot>
-                <Tr>
-                  <Th>Prénom</Th>
-                  <Th>Nom</Th>
-                  <Th>E-mail</Th>
-                </Tr>
+                {headerGroups.map((headerGroup: any) => (
+                  <Tr {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column: any, index: number) => (
+                      <Th pb={4} {...column.getHeaderProps()}>
+                        {column.render("Header")}
+                      </Th>
+                    ))}
+                  </Tr>
+                ))}
               </Tfoot>
             ) : null}
           </Table>

@@ -62,6 +62,7 @@ export const CampaignStep = ({
         <FormControl mt={4} isInvalid={!!errors.typeId}>
           <FormLabel>Type</FormLabel>
           <Select
+            width="45%"
             {...register("typeId", { required: true })}
             multiple={false}
             disabled={disabled}
