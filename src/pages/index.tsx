@@ -24,9 +24,7 @@ import {
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { type CreatePost } from "~/server/api/routers/story";
 import { api } from "~/utils/api";
 
 type FormValues = {
@@ -35,10 +33,6 @@ type FormValues = {
 };
 
 const Home: NextPage = () => {
-    const [files, setFiles] = useState<File[]>([]);
-    const [posts, setPosts] = useState<CreatePost[]>([]);
-    const [hidePublishAt, setHidePublishAt] = useState<boolean>(false);
-
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { register, formState: { errors }, handleSubmit, reset } = useForm<FormValues>();
 

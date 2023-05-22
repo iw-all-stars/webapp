@@ -7,25 +7,29 @@ import {
     FormLabel,
     Input,
     Select,
+    useToast,
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type CreatePost, type CreateStory } from "~/server/api/routers/story";
 import { api } from "~/utils/api";
-import { StoryStatus } from "@prisma/client";
+import { type Post, StoryStatus, type PostType } from "@prisma/client";
 import { DragFiles } from "~/components/dragFiles.component";
 
 const DashboardStory: NextPage = () => {
     const [files, setFiles] = useState<File[]>([]);
-    const [posts, setPosts] = useState<CreatePost[]>([]);
+    const [posts, setPosts] = useState<Post[]>([]);
     const [hidePublishAt, setHidePublishAt] = useState<boolean>(false);
 
-    const addStory = api.story.create.useMutation({});
+    const { mutate: addStoryMutation, error: addStoryError } = api.story.create.useMutation({});
+    const createManyPost = api.post.createMany.useMutation({});
     const deleteStory = api.story.delete.useMutation({});
 
+    const toast = useToast();
+
     function createStory(data: CreateStory) {
-        addStory.mutate(data);
+        addStoryMutation(data);
     }
 
     function deleteById(id: string) {
@@ -50,27 +54,31 @@ const DashboardStory: NextPage = () => {
     const uploadFiles = async () => {
         const urlsWithFiles = await Promise.all(
             files.map((file) =>
-                fetch("/api/s3/uploadFile", {
-                    method: "POST",
-                    headers: {
-                        "Content-type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        name: crypto.randomUUID(),
-                        type: file.type,
-                    }),
-                })
-                    .then((res) => res.json())
-                    .then(({ url }) => ({
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        url: url as string,
-                        file,
-                    }))
+                {
+                    const name = crypto.randomUUID();
+                    return fetch("/api/s3/uploadFile", {
+                        method: "POST",
+                        headers: {
+                            "Content-type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            name,
+                            type: file.type,
+                        }),
+                    })
+                        .then((res) => res.json())
+                        .then(({ url }) => ({
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                            url: url as string,
+                            file,
+                            name
+                        }))
+                }
             )
         );
 
         const s3UrlsWithFiles = await Promise.all(
-            urlsWithFiles.map(({ url, file }) =>
+            urlsWithFiles.map(({ url, file, name }) =>
                 fetch(url, {
                     method: "PUT",
                     body: file,
@@ -78,15 +86,16 @@ const DashboardStory: NextPage = () => {
                         "Content-type": file.type,
                         "Access-Control-Allow-Origin": "*",
                     },
-                }).then(({ url }) => ({ url, file }))
+                }).then(({ url }) => ({ url, file, name }))
             )
         );
 
         setFiles([]);
 
-        return s3UrlsWithFiles.map(({ url, file }) => ({
+        return s3UrlsWithFiles.map(({ url, file, name }) => ({
             url: url.split("?")[0] ?? "never",
-            type: file.type.split("/")[0] as "image" | "video",
+            type: file.type.split("/")[0]?.toUpperCase() as PostType,
+            name
         }));
     };
 
@@ -94,24 +103,44 @@ const DashboardStory: NextPage = () => {
         if (files.length > 0) {
             void uploadFiles().then((urls) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                setPosts((prevPosts) => {
-                    return [
-                        ...prevPosts,
-                        ...urls.map(({ url, type }, i) => ({
-                            url,
-                            position: posts.length + i,
-                            type,
-                        })),
-                    ];
+                const newPosts = urls.map(({ url, type, name }, i) => ({
+                    originalUrl: url,
+                    position: posts.length + i,
+                    type,
+                    name
+                }))
+                createManyPost.mutate(newPosts, { onSuccess: (newPostsWithId) => {
+                    setPosts((prevPosts) => {
+                        return [
+                            ...prevPosts,
+                            ...newPostsWithId,
+                        ];
+                    });
+                }
+                
                 });
+                
             });
         }
     }, [files]);
 
-    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        const newFiles = Array.from(event.dataTransfer.files);
-        setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+    const handleDrop = async (files: File[]) => {
+        for (const file of files) {
+            if (file.type.split("/")[0] === "video") {
+                const duration = await getVideoDuration(file);
+                if (duration > 10) {
+                    toast({
+                        title: "Video is too long",
+                        description: "Video should be less than 10 seconds",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    return;
+                }
+            }
+        }
+        setFiles((prevFiles) => [...prevFiles, ...files]);
     };
 
     const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -121,6 +150,20 @@ const DashboardStory: NextPage = () => {
     useEffect(() => {
         setValue("posts", posts);
     }, [posts]);
+
+    const getVideoDuration = (file: File): Promise<number> => {
+        return new Promise((resolve, reject) => {
+            const video = document.createElement("video");
+            video.preload = "metadata";
+            
+            video.onloadedmetadata = () => {
+                window.URL.revokeObjectURL(video.src);
+                resolve(video.duration);
+            };
+            video.onerror = reject;
+            video.src = URL.createObjectURL(file);
+        });
+    };
 
     return (
         <Box>
@@ -186,6 +229,7 @@ const DashboardStory: NextPage = () => {
                     handleDragOver={handleDragOver}
                     posts={posts}
                     setPosts={setPosts}
+                    error={addStoryError}
                 />
                 <Button
                     mt={4}
@@ -203,13 +247,6 @@ const DashboardStory: NextPage = () => {
                     log posts
                 </Button>
             </form>
-            <Button
-                onClick={() => {
-                    deleteById("clhix5jr7000o7toyd573f6ux");
-                }}
-            >
-                Delete
-            </Button>
         </Box>
     );
 };
