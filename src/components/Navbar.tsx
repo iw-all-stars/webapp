@@ -11,7 +11,7 @@ export default function Navbar() {
     <Flex px={8} py={7} alignItems="center" justifyContent="space-between" borderBottom="1px solid black">
       <Link href="/">
         <Box>
-          Logo1
+          Logo
         </Box>
       </Link>
       <Flex alignItems="center" gap={6}>
