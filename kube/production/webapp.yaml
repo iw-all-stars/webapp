@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: webapp
-        image: horekk/webapp:v0.9
+        image: horekk/webapp
         ports:
         - containerPort: 3000
         resources:
