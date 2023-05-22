@@ -78,22 +78,6 @@ spec:
   selector:
     app: webapp
 
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: webapp
-#   namespace: production
-#   annotations:
-#     service.beta.kubernetes.io/azure-load-balancer-resource-group: MC_challenge-iw-te_group_challenge-iw_francecentral
-# spec:
-#   loadBalancerIP: 20.74.90.61
-#   type: LoadBalancer
-#   selector:
-#     app: webapp
-#   ports:
-#   - port: 80
-#     targetPort: 3000
-
 ---
 
 apiVersion: networking.k8s.io/v1
