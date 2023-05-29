@@ -109,6 +109,13 @@ export const storyRouter = createTRPCRouter({
                 orderBy: {
                     createdAt: "desc",
                 },
+				include: {
+					posts: {
+						orderBy: {
+							position: "asc"
+						}
+					}
+				}
             });
         })
 });

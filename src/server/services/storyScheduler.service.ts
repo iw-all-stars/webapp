@@ -16,7 +16,7 @@ const client = new SchedulerClient({
 });
 
 export const scheduleStory = async (story: Story & { posts: Post[] }) => {
-    console.info('🟩 SCHEDULE STORY')
+    console.info('🟩 SCHEDULE STORY ', story.id)
     try {
         await deleteStorySchedule(story.id);
     } catch (e) {
