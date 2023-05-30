@@ -46,7 +46,7 @@ export const CampaignStep = ({
     <Box>
       <form onSubmit={handleSubmit(handleCampaign)}>
         <FormControl isInvalid={!!errors.name}>
-          <FormLabel>Nom de la campagne</FormLabel>
+          <FormLabel>Quel est le nom de votre campagne</FormLabel>
           <Input
             {...register("name", { required: true })}
             defaultValue={campaign?.name}

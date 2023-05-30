@@ -33,6 +33,9 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   Select,
+  Stat,
+  StatHelpText,
+  StatNumber,
 } from "@chakra-ui/react";
 import {
   ArrowRightIcon,
@@ -68,24 +71,38 @@ export const RecipientStep = ({
     previousPage,
     setPageSize,
     state: { pageIndex, pageSize },
-  } = useTable(
-    {
-      columns,
-      data,
-    },
-    usePagination
-  );
+  } = useTable({
+    columns,
+    data,
+    // sortingFns: {
+    //   date: (rowA: Row<object>, rowB: Row<object>, columnId: string) => {
+    //     const a = rowA.original[columnId];
+    //     const b = rowB.original[columnId];
+    //     if (a === b) return 0;
+    //     return a > b ? 1 : -1;
+    //   },
+    // },
+    usePagination,
+  });
 
   return (
     <Box>
-      <FormControl>
-        <InputGroup>
-          <Input type="text" placeholder="Ajouter un destinataire" />
-          <InputRightAddon>
-            <MdSearch />
-          </InputRightAddon>
-        </InputGroup>
-      </FormControl>
+      <Flex gap={4}>
+        <FormControl>
+          <InputGroup>
+            <Input type="text" placeholder="Ajouter un destinataire" />
+            <InputRightAddon>
+              <MdSearch />
+            </InputRightAddon>
+          </InputGroup>
+        </FormControl>
+        <Stat>
+          <Flex gap={2} textAlign={"center"}>
+            <StatNumber>{data.length}</StatNumber>
+            <StatHelpText>destinataires sélectionnés</StatHelpText>
+          </Flex>
+        </Stat>
+      </Flex>
       <br />
       <Box border="1px" borderColor="#EDF2F7" py={4} borderRadius="0.375rem">
         <TableContainer>
@@ -110,22 +127,24 @@ export const RecipientStep = ({
             </Thead>
 
             <Tbody {...getTableBodyProps()}>
-              {page.map((row: Row<object>) => {
-                prepareRow(row);
-                const { key, ...rowProps } = row.getRowProps();
-                return (
-                  <Tr key={key} {...rowProps}>
-                    {row.cells.map((cell: Cell) => {
-                      const { key, ...cellProps } = cell.getCellProps();
-                      return (
-                        <Td key={key} {...cellProps}>
-                          {cell.render("Cell")}
-                        </Td>
-                      );
-                    })}
-                  </Tr>
-                );
-              })}
+              {page &&
+                page.length > 0 &&
+                page.map((row: Row<object>) => {
+                  prepareRow(row);
+                  const { key, ...rowProps } = row.getRowProps();
+                  return (
+                    <Tr key={key} {...rowProps}>
+                      {row.cells.map((cell: Cell) => {
+                        const { key, ...cellProps } = cell.getCellProps();
+                        return (
+                          <Td key={key} {...cellProps}>
+                            {cell.render("Cell")}
+                          </Td>
+                        );
+                      })}
+                    </Tr>
+                  );
+                })}
             </Tbody>
           </Table>
           {data && data.length === 0 ? (
@@ -178,11 +197,11 @@ export const RecipientStep = ({
             <Text flexShrink="0" mr={8}>
               Page{" "}
               <Text fontWeight="bold" as="span">
-                {pageIndex + 1}
+                {pageIndex ?? 0}
               </Text>{" "}
               /{" "}
               <Text fontWeight="bold" as="span">
-                {pageOptions.length}
+                {pageOptions?.length ?? 0}
               </Text>
             </Text>
             <Text flexShrink="0">Aller à la page</Text>{" "}
@@ -192,7 +211,7 @@ export const RecipientStep = ({
               mr={8}
               w={28}
               min={1}
-              max={pageOptions.length || 1}
+              max={pageOptions?.length || 0}
               onChange={(value) => {
                 const page = Number(value) ? Number(value) - 1 : 0;
                 gotoPage(page);

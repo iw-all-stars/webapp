@@ -2,7 +2,6 @@
 import {
   Box,
   Button,
-  Checkbox,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -10,6 +9,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Switch,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import CampaignStep from "./steps/campaign";
@@ -73,38 +73,38 @@ export const CampaignModal = ({
     setCampaign({ ..._campaign, ...values });
   };
 
-  const clients = api.clients.getClients.useQuery();
+  const customers = api.customer.getClients.useQuery();
 
   useEffect(() => {
-    clients.refetch();
+    customers.refetch();
   }, []);
 
   const data = React.useMemo(() => {
-    if (!clients?.data) return [];
-    return clients?.data?.map((client) => {
+    if (!customers?.data) return [];
+    return customers?.data?.map((client) => {
       return {
         ...client,
-        selected: <Checkbox colorScheme="green" defaultChecked />,
+        selected: <Switch colorScheme="green" defaultChecked />,
       };
     });
-  }, [clients?.data]);
+  }, [customers?.data]);
 
   const columns: Column<object>[] = React.useMemo(
     () => [
-      {
-        Header: "Prénom",
-        accessor: "firstname" as keyof Columns,
-      },
       {
         Header: "Nom",
         accessor: "name" as keyof Columns,
       },
       {
-        Header: "E-mail",
+        Header: "Prénom",
+        accessor: "firstname" as keyof Columns,
+      },
+      {
+        Header: "Email",
         accessor: "email" as keyof Columns,
       },
       {
-        Header: "Selectionner",
+        Header: "Envoi",
         accessor: "selected" as keyof Columns,
       },
     ],
@@ -138,7 +138,7 @@ export const CampaignModal = ({
           key={2}
           columns={columns}
           data={data}
-          isFetching={clients?.isFetching}
+          isFetching={customers?.isFetching}
         />,
       ],
     ]);
@@ -200,7 +200,7 @@ export const CampaignModal = ({
           >
             {lastStep ? "Enregistrer" : "Suivant"}
           </Button>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>Annuler</Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
