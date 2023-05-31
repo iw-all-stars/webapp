@@ -53,6 +53,14 @@ export const CampaignStep = ({
             ref={initialRef}
             readOnly={disabled}
             placeholder="Enquête de satisfaction"
+            // onChange permet de mettre à jour le state de la campagne
+            // Car dans les steps on a pas de bouton submit
+            onChange={(e) => {
+              if (!campaign) return;
+              const name = e.target.value;
+              campaign.name = name;
+              setCampaign(campaign);
+            }}
           />
           <FormErrorMessage>
             Le nom de la campagne est obligatoire !
@@ -68,6 +76,14 @@ export const CampaignStep = ({
             disabled={disabled}
             placeholder="Séléctionnez un type"
             defaultValue={campaign?.typeId}
+            onChange={(e) => {
+              if (!e.target.value) return;
+              if (!campaign) return;
+              const typeId = e.target.value;
+              const updatedCampaign = campaign;
+              updatedCampaign.typeId = typeId;
+              setCampaign(updatedCampaign);
+            }}
           >
             {campaignTypes?.data?.map((type) => (
               <option key={type.id} value={type.id}>

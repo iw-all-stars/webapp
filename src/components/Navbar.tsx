@@ -19,7 +19,7 @@ import { GoSignOut } from "react-icons/go";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
-  console.log(session);
+
   return (
     <Flex
       px={8}

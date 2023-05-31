@@ -4,15 +4,15 @@ import { Button } from "@chakra-ui/react";
 import { api } from "~/utils/api";
 
 const TestCampaign: NextPage = () => {
-  const getClients = api.clients.getClients.useQuery();
+  const getClients = api.customer.getClients.useQuery();
   const getCampaign = api.campaign.getCampaign.useQuery(
     "d0ebd2e6-3b7e-4d9c-8d3a-e05cad6baba4"
   );
   const getMails = api.mail.getMails.useQuery();
 
   const addCampaign = api.campaign.createCampaign.useMutation({});
-  const addClient = api.clients.createClient.useMutation();
-  const updateClient = api.clients.updateClient.useMutation();
+  const addClient = api.customer.createClient.useMutation();
+  const updateClient = api.customer.updateClient.useMutation();
   const createMail = api.mail.createMail.useMutation();
   const sendMail = api.mail.sendMail.useMutation();
 

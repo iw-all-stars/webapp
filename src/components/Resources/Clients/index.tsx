@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  CircularProgress,
   Image,
   Menu,
   MenuButton,

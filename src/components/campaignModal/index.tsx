@@ -9,18 +9,17 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-  Switch,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import CampaignStep from "./steps/campaign";
-import { type Campaign } from "@prisma/client";
+import { type Client, type Campaign } from "@prisma/client";
 import { type SubmitHandler } from "react-hook-form";
 import Stepper from "../stepper";
 import { useSteps } from "@chakra-ui/stepper";
 import MailStep from "./steps/mail";
 import RecipientStep from "./steps/recipient";
 import { api } from "~/utils/api";
-import { type Column } from "react-table";
+import { type Row, type Column } from "react-table";
 
 interface ICampaignModal {
   isOpen: boolean;
@@ -42,6 +41,8 @@ export interface Columns {
   col3: string;
   col4: string;
 }
+
+export type Recipient = Client & { selected: boolean };
 
 export const CampaignModal = ({
   isOpen,
@@ -68,12 +69,14 @@ export const CampaignModal = ({
   const lastStep = activeStep === 2;
 
   const [_campaign, setCampaign] = useState<Partial<Campaign>>();
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
 
   const handleCampaign: SubmitHandler<FormValues> = (values: FormValues) => {
     setCampaign({ ..._campaign, ...values });
   };
 
   const customers = api.customer.getClients.useQuery();
+  const updateCampaign = api.campaign.updateCampaign.useMutation();
 
   useEffect(() => {
     customers.refetch();
@@ -81,12 +84,8 @@ export const CampaignModal = ({
 
   const data = React.useMemo(() => {
     if (!customers?.data) return [];
-    return customers?.data?.map((client) => {
-      return {
-        ...client,
-        selected: <Switch colorScheme="green" defaultChecked />,
-      };
-    });
+    const Recipients = customers?.data;
+    return Recipients as unknown as Row<object>[];
   }, [customers?.data]);
 
   const columns: Column<object>[] = React.useMemo(
@@ -129,7 +128,7 @@ export const CampaignModal = ({
           key={1}
           campaign={campaign}
           disabled={disabled}
-          handleCampaign={handleCampaign}
+          setCampaign={setCampaign}
         />,
       ],
       [
@@ -138,7 +137,8 @@ export const CampaignModal = ({
           key={2}
           columns={columns}
           data={data}
-          isFetching={customers?.isFetching}
+          recipients={recipients}
+          setRecipients={setRecipients}
         />,
       ],
     ]);
@@ -152,6 +152,12 @@ export const CampaignModal = ({
       setActiveStep(0);
     } else {
       goToNext();
+      // save campaign on each step
+      if (!_campaign) return;
+      const { id, name, typeId } = _campaign;
+      if (!id || !name || !typeId) return;
+      const campaign = { id, name, typeId, status: "draft" };
+      updateCampaign.mutate(campaign);
     }
   };
 

@@ -49,7 +49,7 @@ export const campaignRouter = createTRPCRouter({
     }),
   updateCampaign: protectedProcedure
     .input(
-      campaignSchema.pick({ id: true, name: true, type: true, status: true })
+      campaignSchema.pick({ id: true, name: true, typeId: true, status: true })
     )
     .mutation(({ ctx, input }) => {
       const { id, ...data } = input;
