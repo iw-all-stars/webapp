@@ -2,6 +2,7 @@
 import {
   Box,
   Button,
+  Flex,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -9,6 +10,8 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Spinner,
+  Text,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import CampaignStep from "./steps/campaign";
@@ -20,6 +23,7 @@ import MailStep from "./steps/mail";
 import RecipientStep from "./steps/recipient";
 import { api } from "~/utils/api";
 import { type Row, type Column } from "react-table";
+import { CheckIcon, CloseIcon } from "@chakra-ui/icons";
 
 interface ICampaignModal {
   isOpen: boolean;
@@ -68,6 +72,12 @@ export const CampaignModal = ({
   const disabled = !isDraft && edit;
   const lastStep = activeStep === 2;
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isSent, setIsSent] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
+
   const [_campaign, setCampaign] = useState<Partial<Campaign>>();
   const [recipients, setRecipients] = useState<Recipient[]>([]);
 
@@ -77,10 +87,61 @@ export const CampaignModal = ({
 
   const customers = api.customer.getClients.useQuery();
   const updateCampaign = api.campaign.updateCampaign.useMutation();
+  const sendCampaign = api.mail.sendCampaign.useMutation();
+
+  const sendCampaignToRecipients = React.useCallback(() => {
+    if (!recipients.length || !campaign) return;
+    const selectedRecipients = recipients.filter(
+      (recipient) => recipient.selected
+    );
+    const data = {
+      campaignId: campaign.id,
+      recipientIds: selectedRecipients.map((recipient) => recipient.id),
+    };
+    sendCampaign.mutate(data);
+  }, [recipients, campaign]);
 
   useEffect(() => {
     customers.refetch();
   }, []);
+
+  useEffect(() => {
+    if (updateCampaign.isSuccess) {
+      setTimeout(() => {
+        setIsSaving(false);
+        setIsSaved(true);
+      }, 300);
+    }
+  }, [updateCampaign.isSuccess]);
+
+  useEffect(() => {
+    if (updateCampaign.isLoading) {
+      setIsSaving(true);
+    }
+  }, [updateCampaign.isLoading]);
+
+  useEffect(() => {
+    if (sendCampaign.isSuccess) {
+      setTimeout(() => {
+        setIsSending(false);
+        setIsSent(true);
+      }, 300);
+    }
+  }, [sendCampaign.isSuccess]);
+
+  useEffect(() => {
+    if (sendCampaign.isLoading) {
+      setIsSending(true);
+    }
+  }, [sendCampaign.isLoading]);
+
+  useEffect(() => {
+    if (sendCampaign.isError) {
+      setError(sendCampaign.failureReason?.message as unknown as string);
+      setIsSending(false);
+      setIsSent(false);
+    }
+  }, [sendCampaign.isError]);
 
   const data = React.useMemo(() => {
     if (!customers?.data) return [];
@@ -148,22 +209,34 @@ export const CampaignModal = ({
 
   const save = () => {
     if (lastStep) {
-      onClose();
-      setActiveStep(0);
+      sendCampaignToRecipients();
+      
     } else {
       goToNext();
-      // save campaign on each step
       if (!_campaign) return;
-      const { id, name, typeId } = _campaign;
-      if (!id || !name || !typeId) return;
-      const campaign = { id, name, typeId, status: "draft" };
-      updateCampaign.mutate(campaign);
+      const { id, name, typeId, status, subject, body, url } = _campaign;
+      if (!id || !name || !typeId || !status) return;
+      const campaign = {
+        id,
+        name,
+        typeId,
+        status,
+        subject,
+        body,
+        url,
+      };
+      if (campaign.status === "draft") {
+        updateCampaign.mutate(campaign);
+      }
     }
   };
 
   const close = () => {
     onClose();
     setActiveStep(0);
+    setIsSaved(false);
+    setIsSent(false);
+    setError(undefined);
   };
 
   return (
@@ -193,20 +266,57 @@ export const CampaignModal = ({
           </Box>
         </ModalBody>
 
-        <ModalFooter>
-          {activeStep > 0 && (
-            <Button colorScheme="blue" mr={3} onClick={goToPrevious}>
-              Précedent
+        <ModalFooter justifyContent={"space-between"}>
+          <Box>
+            {isSaving && (
+              <Flex alignItems={"center"} gap={2}>
+                <Spinner color="orange.500" />
+                <Text fontSize={13}>Sauvegarde en cours...</Text>
+              </Flex>
+            )}
+            {!isSaving && isSaved && (
+              <Flex alignItems={"center"} gap={2}>
+                <CheckIcon color="green.500" />
+                <Text fontSize={13}>Sauvegarde réussie</Text>
+              </Flex>
+            )}
+            {isSending && (
+              <Flex alignItems={"center"} gap={2}>
+                <Spinner color="orange.500" />
+                <Text fontSize={13}>Envoi en cours...</Text>
+              </Flex>
+            )}
+            {!isSending && isSent && !error && (
+              <Flex alignItems={"center"} gap={2}>
+                <CheckIcon color="green.500" />
+                <Text fontSize={13}>Campagne envoyée</Text>
+              </Flex>
+            )}
+            {error && (
+              <Flex alignItems={"center"} gap={2}>
+                <CloseIcon color="red.500" />
+                <Text fontSize={13}>{error}</Text>
+              </Flex>
+            )}
+          </Box>
+          <Box>
+            {activeStep > 0 && (
+              <Button colorScheme="blue" mr={3} onClick={() => {
+                goToPrevious();
+                setIsSaved(false);
+              }}>
+                Précedent
+              </Button>
+            )}
+            <Button
+              colorScheme={lastStep ? "green" : "blue"}
+              mr={3}
+              onClick={save}
+            >
+              {lastStep ? "Envoyer" : "Suivant"}
             </Button>
-          )}
-          <Button
-            colorScheme={lastStep ? "green" : "blue"}
-            mr={3}
-            onClick={save}
-          >
-            {lastStep ? "Enregistrer" : "Suivant"}
-          </Button>
-          <Button onClick={close}>Annuler</Button>
+            <Button onClick={close}>Fermer</Button>
+          </Box>
         </ModalFooter>
       </ModalContent>
     </Modal>

@@ -3,13 +3,15 @@ import { type NextPage } from "next";
 import {
   Box,
   Button,
-  CircularProgress,
+  ColorHues,
+  Colors,
   Heading,
   Input,
   InputGroup,
   InputRightElement,
   Table,
   TableContainer,
+  Tag,
   Tbody,
   Td,
   Text,
@@ -180,13 +182,16 @@ const DashboardCampaign: NextPage = () => {
               return (
                 <Tr
                   key={campaign.id}
-                  bg={"red"}
                   cursor={"pointer"}
                   onClick={() => editCampaign(campaign)}
                 >
                   <Td>{campaign.name}</Td>
                   <Td>{date}</Td>
-                  <Td>{campaign.type.name}</Td>
+                  <Td>
+                    <Tag backgroundColor={campaign.type.color as string}>
+                      {campaign.type.name}
+                    </Tag>
+                  </Td>
                   <Td>{sentMails}</Td>
                   <Td>{openRate} %</Td>
                   <Td>{unsubscribeRate} %</Td>
@@ -209,11 +214,6 @@ const DashboardCampaign: NextPage = () => {
             </Tfoot>
           ) : null}
         </Table>
-        {getCampaigns.isFetching ? (
-          <Box mt={"4"} w={"full"} display={"flex"} justifyContent={"center"}>
-            <CircularProgress isIndeterminate color="green.300" />
-          </Box>
-        ) : null}
       </TableContainer>
       <CampaignModal
         isOpen={isOpen}

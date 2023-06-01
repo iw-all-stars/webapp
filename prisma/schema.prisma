@@ -33,6 +33,7 @@ model Campaign {
 model CampaignType {
     id       String     @id @default(uuid()) @db.Uuid
     name     String     @unique
+    color    String?    @default("gray.200")
     Campaign Campaign[]
 }
 
@@ -94,6 +95,7 @@ model Restaurant {
     address   String?
     latitude  Float?
     longitude Float?
+    logo      String?
 
     organizationId String       @db.Uuid
     organization   Organization @relation(fields: [organizationId], references: [id])
@@ -154,15 +156,15 @@ model VerificationToken {
 }
 
 enum StoryStatus {
-  PUBLISHED
-  DRAFT
-  SCHEDULED
-  ERROR
-  NOW
+    PUBLISHED
+    DRAFT
+    SCHEDULED
+    ERROR
+    NOW
 }
 
 model Story {
-    id          String   @id @default(uuid()) @db.Uuid
+    id          String      @id @default(uuid()) @db.Uuid
     name        String
     publishedAt DateTime?
     posts       Post[]
@@ -170,21 +172,21 @@ model Story {
 }
 
 model Post {
-    id  String @id @default(uuid()) @db.Uuid
-    url String
-    story Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
-    storyId String @db.Uuid
+    id       String @id @default(uuid()) @db.Uuid
+    url      String
+    story    Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+    storyId  String @db.Uuid
     position Int
-    type String
+    type     String
 }
 
 enum PlatformKey {
-  TWITTER
-  INSTAGRAM
-  FACEBOOK
+    TWITTER
+    INSTAGRAM
+    FACEBOOK
 }
 
 model Platform {
-    id String @id @default(uuid()) @db.Uuid
+    id  String      @id @default(uuid()) @db.Uuid
     key PlatformKey
 }

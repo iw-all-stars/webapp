@@ -69,7 +69,7 @@ export const MailStep = ({ campaign, disabled, setCampaign }: MailProps) => {
             {...register("url", { required: false })}
             defaultValue={campaign?.url}
             readOnly={disabled}
-            placeholder="monsite"
+            placeholder="monsite.fr"
             onChange={(e) => {
               if (!campaign) return;
               const url = e.target.value;

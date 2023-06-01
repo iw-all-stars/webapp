@@ -15,6 +15,16 @@ const campaignSchema = z.object({
   status: z.string(),
 });
 
+const updateCampaignSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  typeId: z.string(),
+  status: z.string(),
+  subject: z.string().optional(),
+  body: z.string().optional(),
+  url: z.string().optional(),
+});
+
 export const campaignRouter = createTRPCRouter({
   getCampaigns: protectedProcedure.query(({ ctx }) => {
     // get mails for each campaignId
@@ -48,9 +58,7 @@ export const campaignRouter = createTRPCRouter({
       });
     }),
   updateCampaign: protectedProcedure
-    .input(
-      campaignSchema.pick({ id: true, name: true, typeId: true, status: true })
-    )
+    .input(updateCampaignSchema)
     .mutation(({ ctx, input }) => {
       const { id, ...data } = input;
       return ctx.prisma.campaign.update({ where: { id }, data });
