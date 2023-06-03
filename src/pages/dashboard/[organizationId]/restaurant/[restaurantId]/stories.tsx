@@ -1,4 +1,10 @@
 import {
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
     Avatar,
     Box,
     Button,
@@ -15,9 +21,10 @@ import {
     Text,
     useDisclosure,
 } from "@chakra-ui/react";
-import { type Post, StoryStatus } from "@prisma/client";
+import { type Post, StoryStatus, PostType } from "@prisma/client";
 import { on } from "events";
 import { type NextPage } from "next";
+import React from "react";
 import { BiSearch, BiTime } from "react-icons/bi";
 import {
     BsFileText,
@@ -35,7 +42,22 @@ import { api } from "~/utils/api";
 const DashboardStory: NextPage = () => {
     const { data: stories, isLoading } = api.story.getAll.useQuery();
 
+    const utils = api.useContext();
+    // delete
+    const deleteStoryMutation = api.story.delete.useMutation({
+        onSuccess: () => {
+            utils.story.getAll.invalidate();
+        },
+    });
+
     const { isOpen, onOpen, onClose } = useDisclosure();
+
+    const {
+        isOpen: isOpenAlert,
+        onOpen: onOpenAlert,
+        onClose: onCloseAlert,
+    } = useDisclosure();
+    const cancelRef = React.useRef<HTMLInputElement>(null);
 
     const renderStatus = (status: StoryStatus) => {
         switch (status) {
@@ -219,7 +241,10 @@ const DashboardStory: NextPage = () => {
                                             <MenuItem icon={<BsFillEyeFill />}>
                                                 View
                                             </MenuItem>
-                                            <MenuItem icon={<MdDelete />}>
+                                            <MenuItem
+                                                onClick={onOpenAlert}
+                                                icon={<MdDelete />}
+                                            >
                                                 Delete
                                             </MenuItem>
                                         </MenuList>
@@ -238,43 +263,113 @@ const DashboardStory: NextPage = () => {
                                 </Box>
                             </Box>
 
-                            <Box display="flex" height="180px" gap="1" >
-                                {(story.posts.slice(0, 3) || []).map((post: Post, index) => (
-                                    <Box flex="1" key={post.id} position="relative" height="100%">
-                                        <Image
-                                            {
-												...{
-													borderLeftRadius: index === 0 ? "md" : "",
-													borderRightRadius: index === story.posts.slice(0, 3).length - 1 ? "md" : "",
-												}
-											}
-                                            src={post.originalUrl}
-                                            alt="random image"
+                            <Box display="flex" height="180px" gap="1">
+                                {(story.posts.slice(0, 3) || []).map(
+                                    (post: Post, index) => (
+                                        <Box
+                                            flex="1"
+                                            key={post.id}
+                                            position="relative"
                                             height="100%"
-											width="100%"
-                                            objectFit="cover"
-                                        />
-										{ index === 2 && story.posts.length > 3 && (
-											<Box
-												position="absolute"
-												top="0"
-												left="0"
-												height="100%"
-												width="100%"
-												background="rgba(0,0,0,0.35)"
-												borderRadius="md"
-												display="flex"
-												justifyContent="center"
-												alignItems="center"
-											>
-												<Text color="white" fontSize="2xl" fontWeight="bold">	
-													+{story.posts.length - 3}
-												</Text>
-												</Box>
-										)}
-                                    </Box>
-                                ))}
+                                        >
+                                            {post.type === PostType.IMAGE ? (
+                                                <Image
+                                                    {...{
+                                                        borderLeftRadius:
+                                                            index === 0
+                                                                ? "md"
+                                                                : "",
+                                                        borderRightRadius:
+                                                            index ===
+                                                            story.posts.slice(
+                                                                0,
+                                                                3
+                                                            ).length -
+                                                                1
+                                                                ? "md"
+                                                                : "",
+                                                    }}
+                                                    src={post.originalUrl}
+                                                    alt="random image"
+                                                    height="100%"
+                                                    width="100%"
+                                                    objectFit="cover"
+                                                />
+                                            ) : (
+                                                <video width={50} height={50}>
+                                                    <source
+                                                        src={post.originalUrl}
+                                                    />
+                                                </video>
+                                            )}
+
+                                            {index === 2 &&
+                                                story.posts.length > 3 && (
+                                                    <Box
+                                                        position="absolute"
+                                                        top="0"
+                                                        left="0"
+                                                        height="100%"
+                                                        width="100%"
+                                                        background="rgba(0,0,0,0.35)"
+                                                        borderRadius="md"
+                                                        display="flex"
+                                                        justifyContent="center"
+                                                        alignItems="center"
+                                                    >
+                                                        <Text
+                                                            color="white"
+                                                            fontSize="2xl"
+                                                            fontWeight="bold"
+                                                        >
+                                                            +
+                                                            {story.posts
+                                                                .length - 3}
+                                                        </Text>
+                                                    </Box>
+                                                )}
+                                        </Box>
+                                    )
+                                )}
                             </Box>
+                            <AlertDialog
+                                isOpen={isOpenAlert}
+                                leastDestructiveRef={cancelRef}
+                                onClose={onCloseAlert}
+                            >
+                                <AlertDialogOverlay>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader
+                                            fontSize="lg"
+                                            fontWeight="bold"
+                                        >
+                                            Delete Story
+                                        </AlertDialogHeader>
+
+                                        <AlertDialogBody>
+                                            Are you sure? You can't undo this
+                                            action afterwards.
+                                        </AlertDialogBody>
+
+                                        <AlertDialogFooter>
+                                            <Button onClick={onCloseAlert}>
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                colorScheme="red"
+                                                onClick={() => {
+                                                    deleteStoryMutation.mutate({
+                                                        id: story.id,
+                                                    });
+                                                }}
+                                                ml={3}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialogOverlay>
+                            </AlertDialog>
                         </Box>
                     ))
                 }
