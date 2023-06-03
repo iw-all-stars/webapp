@@ -5,27 +5,34 @@ apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, process.
 
 interface IMail {
   templateId: number;
+  restaurant: string;
   email: string;
-  name: string;
+  firstname: string;
   subject: string;
   body: string;
   mailId: string;
+  rateURL?: string;
+  logoURL?: string;
 }
 
-const sendEmail = ({ templateId, email, name, subject, body, mailId }: IMail) => {
+const sendEmail = ({ templateId, restaurant, email, firstname, subject, body, mailId, rateURL, logoURL }: IMail) => {
   const sendSmtpEmail = {
     to: [
       {
         email,
-        name,
+        firstname,
       },
     ],
     subject,
     templateId,
     params: {
-      name,
+      firstname,
       body,
       mailId,
+      subject,
+      restaurant,
+      rateURL,
+      logoURL,
     },
     // headers: {
     //   "X-Mailin-custom":

@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-import {
-  createTRPCRouter,
-  protectedProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import sendEmail from "../mail/service";
 
 const mailSchema = z.object({
@@ -14,6 +11,11 @@ const mailSchema = z.object({
   unsub: z.boolean().optional().default(false),
   status: z.string().optional().default("draft"),
   clientId: z.string(),
+});
+
+const sendCampaignSchema = z.object({
+  campaignId: z.string(),
+  recipientIds: z.array(z.string()),
 });
 
 export const mailRouter = createTRPCRouter({
@@ -44,7 +46,9 @@ export const mailRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const mail = await ctx.prisma.mail.findUnique({
         where: { id: input },
-        include: { campaign: true, client: true },
+        include: { campaign: {
+          include: { restaurant: true },
+        }, client: true },
       });
 
       if (!mail) {
@@ -54,10 +58,13 @@ export const mailRouter = createTRPCRouter({
       sendEmail({
         templateId: mail.campaign.template,
         email: mail.client.email,
-        name: mail.client.name,
+        firstname: mail.client.firstname || mail.client.name,
         subject: mail.campaign.subject,
         body: mail.campaign.body,
         mailId: mail.id,
+        restaurant: mail.campaign.restaurant.name,
+        rateURL: `https://www.google.com/search?q=${mail.campaign.restaurant.name}`, // todo: replace with real url
+        logoURL: mail.campaign.restaurant.logo as string,
       });
 
       return ctx.prisma.mail.update({
@@ -65,6 +72,84 @@ export const mailRouter = createTRPCRouter({
         data: {
           status: "sent",
         },
+      });
+    }),
+
+  sendCampaign: protectedProcedure
+    .input(sendCampaignSchema)
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.$transaction(async (_) => {
+        const { campaignId, recipientIds } = input;
+        const campaign = await ctx.prisma.campaign.findUnique({
+          where: { id: campaignId },
+          include: {
+            restaurant: true,
+            mail: {
+              include: { client: true },
+            },
+          },
+        });
+
+        if (!campaign) {
+          throw new Error("Erreur lors de l'envoi de la campagne");
+        }
+
+        if (!recipientIds.length) {
+          throw new Error("Aucun destinataire sélectionné");
+        }
+
+        if (campaign.status !== "draft") {
+          throw new Error("La campagne a déjà été envoyée");
+        }
+
+        // Create mails for recipients
+        const mails = await ctx.prisma.$transaction(
+          recipientIds.map((id) =>
+            ctx.prisma.mail.create({
+              data: {
+                campaignId,
+                clientId: id,
+                status: "draft",
+              },
+              include: {
+                client: true,
+              },
+            })
+          )
+        );
+
+        // Update campaign status
+        await ctx.prisma.campaign.update({
+          where: { id: campaignId },
+          data: {
+            status: "sent",
+          },
+        });
+
+        // Send emails
+        recipientIds.forEach((id) => {
+          const mail = mails.find((m: { clientId: string; }) => m.clientId === id);
+          if (!mail) {
+            throw new Error("Erreur lors de l'envoi de la campagne");
+          }
+          sendEmail({
+            templateId: 5,
+            email: mail.client.email,
+            firstname: mail.client.firstname || mail.client.name,
+            subject: campaign.subject,
+            body: campaign.body,
+            mailId: mail.id,
+            restaurant: campaign.restaurant.name,
+            rateURL: `https://www.google.com/search?q=${campaign.restaurant.name}`, // todo: replace with real url
+            logoURL: campaign.restaurant.logo ? campaign.restaurant.logo as string : undefined,
+          });
+        });
+        await ctx.prisma.mail.updateMany({
+          where: { id: { in: mails.map((m: { id: string; }) => m.id) } },
+          data: {
+            status: "sent",
+          },
+        });
       });
     }),
 

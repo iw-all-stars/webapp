@@ -4,8 +4,11 @@ import { useRouter } from "next/router";
 import DashboardSidebar from "~/components/DashboardSidebar";
 import Navbar from "~/components/Navbar";
 
-export default function LayoutBase({ children }: { children: React.ReactNode }) {
-
+export default function LayoutBase({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
 
   const isDashboard = router.pathname.startsWith("/dashboard");
@@ -18,12 +21,18 @@ export default function LayoutBase({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Navbar />
-      <main style={{ height: "calc(100% - 97px)", display: "flex" }}>
+      <main
+        style={{
+          height: "calc(100% - 97px)",
+          display: "flex",
+          maxWidth: "100%",
+        }}
+      >
         {isDashboard && <DashboardSidebar />}
-        <Box  h="full" w="full">
+        <Container h="full" bgColor={"#F9FAFF"} minW={"calc(100% - 200px)"}>
           {children}
-        </Box>
+        </Container>
       </main>
     </>
-  )
+  );
 }

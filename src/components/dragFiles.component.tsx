@@ -1,16 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Box } from "@chakra-ui/react";
-import Image from "next/image";
-import { type CreatePost } from "~/server/api/routers/story";
-import {
-    DragDropContext,
-    type DragUpdate,
-    Draggable,
-    Droppable,
-} from "react-beautiful-dnd";
-import { useRef } from "react";
 import { PostType, type Post } from "@prisma/client";
-import { post } from "~/server/api/routers";
+import Image from "next/image";
+import { useRef } from "react";
+import {
+	DragDropContext,
+	Draggable,
+	Droppable,
+	type DragUpdate,
+} from "react-beautiful-dnd";
 
 interface DragFilesProps {
     files: File[];
