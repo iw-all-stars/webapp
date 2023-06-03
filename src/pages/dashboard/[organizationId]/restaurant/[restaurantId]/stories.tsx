@@ -1,215 +1,379 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import {
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
+    Avatar,
     Box,
     Button,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
+    Icon,
+    IconButton,
+    Image,
     Input,
-    Select,
+    InputGroup,
+    InputRightElement,
+    Menu,
+    MenuButton,
+    MenuItem,
+    MenuList,
+    Text,
+    useDisclosure,
 } from "@chakra-ui/react";
+import { type Post, StoryStatus, PostType } from "@prisma/client";
+import { on } from "events";
 import { type NextPage } from "next";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { type CreatePost, type CreateStory } from "~/server/api/routers/story";
+import React from "react";
+import { BiSearch, BiTime } from "react-icons/bi";
+import {
+    BsFileText,
+    BsFillCheckCircleFill,
+    BsFillEyeFill,
+    BsPhone,
+    BsThreeDotsVertical,
+} from "react-icons/bs";
+import { GoSettings } from "react-icons/go";
+import { MdDelete, MdOutlineModeEditOutline } from "react-icons/md";
+import { TiDelete } from "react-icons/ti";
+import CreateUpdateStory from "~/components/stories/CreateUpdateStory";
 import { api } from "~/utils/api";
-import { StoryStatus } from "@prisma/client";
-import { DragFiles } from "~/components/dragFiles.component";
 
 const DashboardStory: NextPage = () => {
-    const [files, setFiles] = useState<File[]>([]);
-    const [posts, setPosts] = useState<CreatePost[]>([]);
-    const [hidePublishAt, setHidePublishAt] = useState<boolean>(false);
+    const { data: stories, isLoading } = api.story.getAll.useQuery();
 
-    const addStory = api.story.create.useMutation({});
-    const deleteStory = api.story.delete.useMutation({});
+    const utils = api.useContext();
+    // delete
+    const deleteStoryMutation = api.story.delete.useMutation({
+        onSuccess: () => {
+            utils.story.getAll.invalidate();
+        },
+    });
 
-    function createStory(data: CreateStory) {
-        addStory.mutate(data);
-    }
-
-    function deleteById(id: string) {
-        deleteStory.mutate({ id });
-    }
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
     const {
-        handleSubmit,
-        register,
-        setValue,
-        formState: { errors, isSubmitting },
-        watch,
-        getValues,
-        resetField,
-    } = useForm<CreateStory>();
+        isOpen: isOpenAlert,
+        onOpen: onOpenAlert,
+        onClose: onCloseAlert,
+    } = useDisclosure();
+    const cancelRef = React.useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        resetField("publishedAt");
-        setHidePublishAt(getValues("status") === StoryStatus.DRAFT);
-    }, [watch("status")]);
-
-    const uploadFiles = async () => {
-        const urlsWithFiles = await Promise.all(
-            files.map((file) =>
-                fetch("/api/s3/uploadFile", {
-                    method: "POST",
-                    headers: {
-                        "Content-type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        name: crypto.randomUUID(),
-                        type: file.type,
-                    }),
-                })
-                    .then((res) => res.json())
-                    .then(({ url }) => ({
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        url: url as string,
-                        file,
-                    }))
-            )
-        );
-
-        const s3UrlsWithFiles = await Promise.all(
-            urlsWithFiles.map(({ url, file }) =>
-                fetch(url, {
-                    method: "PUT",
-                    body: file,
-                    headers: {
-                        "Content-type": file.type,
-                        "Access-Control-Allow-Origin": "*",
-                    },
-                }).then(({ url }) => ({ url, file }))
-            )
-        );
-
-        setFiles([]);
-
-        return s3UrlsWithFiles.map(({ url, file }) => ({
-            url: url.split("?")[0] ?? "never",
-            type: file.type.split("/")[0] as "image" | "video",
-        }));
-    };
-
-    useEffect(() => {
-        if (files.length > 0) {
-            void uploadFiles().then((urls) => {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                setPosts((prevPosts) => {
-                    return [
-                        ...prevPosts,
-                        ...urls.map(({ url, type }, i) => ({
-                            url,
-                            position: posts.length + i,
-                            type,
-                        })),
-                    ];
-                });
-            });
+    const renderStatus = (status: StoryStatus) => {
+        switch (status) {
+            case StoryStatus.DRAFT:
+                return (
+                    <>
+                        <Text
+                            marginRight="6px"
+                            fontSize="sm"
+                            color="gray.500"
+                            ml="2"
+                        >
+                            Draft
+                        </Text>
+                        <Icon as={BsFileText} color="gray.400" />
+                    </>
+                );
+            case StoryStatus.PUBLISHED:
+                return (
+                    <>
+                        <Text
+                            marginRight="6px"
+                            fontSize="sm"
+                            color="gray.500"
+                            ml="2"
+                        >
+                            Published
+                        </Text>
+                        <Icon as={BsFillCheckCircleFill} color="green.400" />
+                    </>
+                );
+            case StoryStatus.SCHEDULED:
+                return (
+                    <>
+                        <Text
+                            marginRight="6px"
+                            fontSize="sm"
+                            color="gray.500"
+                            ml="2"
+                        >
+                            Scheduled
+                        </Text>
+                        <Icon boxSize="5" as={BiTime} color="orange.400" />
+                    </>
+                );
+            case StoryStatus.ERROR:
+                return (
+                    <>
+                        <Text
+                            marginRight="6px"
+                            fontSize="sm"
+                            color="gray.500"
+                            ml="2"
+                        >
+                            Error
+                        </Text>
+                        <Icon boxSize="5" as={TiDelete} color="red.400" />
+                    </>
+                );
+            default:
+                <></>;
         }
-    }, [files]);
-
-    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        const newFiles = Array.from(event.dataTransfer.files);
-        setFiles((prevFiles) => [...prevFiles, ...newFiles]);
     };
 
-    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-    };
-
-    useEffect(() => {
-        setValue("posts", posts);
-    }, [posts]);
+    if (isLoading) {
+        return <div>Chargement en cours...</div>;
+    }
 
     return (
-        <Box>
-            <form onSubmit={handleSubmit(createStory)}>
-                <FormControl isInvalid={!!errors.name}>
-                    <FormLabel htmlFor="name">story name</FormLabel>
-                    <Input
-                        id="name"
-                        placeholder="name"
-                        {...register("name", {
-                            required: "This is required",
-                            minLength: {
-                                value: 4,
-                                message: "Minimum length should be 4",
-                            },
-                        })}
-                    />
-                    <FormErrorMessage>
-                        {errors.name && errors.name.message}
-                    </FormErrorMessage>
-                </FormControl>
-
-                <FormControl>
-                    <Select
-                        {...register("status", {
-                            required: "This is required",
-                        })}
-                    >
-                        {[
-                            StoryStatus.NOW,
-                            StoryStatus.SCHEDULED,
-                            StoryStatus.DRAFT,
-                        ].map((status) => (
-                            <option
-                                selected={status === StoryStatus.NOW}
-                                key={status}
-                                value={status}
-                            >
-                                {status}
-                            </option>
-                        ))}
-                    </Select>
-                </FormControl>
-
-                <FormControl
-                    isInvalid={!!errors.publishedAt}
-                    hidden={hidePublishAt}
-                >
-                    <FormLabel htmlFor="name">published at</FormLabel>
-                    <Input
-                        id="publishedAt"
-                        placeholder="publishedAt"
-                        type="datetime-local"
-                        {...register("publishedAt", {})}
-                    />
-                    <FormErrorMessage>
-                        {errors.publishedAt && errors.publishedAt.message}
-                    </FormErrorMessage>
-                </FormControl>
-                <DragFiles
-                    files={files}
-                    handleDrop={handleDrop}
-                    handleDragOver={handleDragOver}
-                    posts={posts}
-                    setPosts={setPosts}
-                />
-                <Button
-                    mt={4}
-                    colorScheme="teal"
-                    isLoading={isSubmitting}
-                    type="submit"
-                >
-                    Submit
-                </Button>
-                <Button
-                    onClick={() => {
-                        console.log(getValues());
-                    }}
-                >
-                    log posts
-                </Button>
-            </form>
-            <Button
-                onClick={() => {
-                    deleteById("clhix5jr7000o7toyd573f6ux");
-                }}
+        <Box display="flex" flexDirection="column" h="full" w="full">
+            <Box
+                display="flex"
+                gap="4"
+                margin="12px 12px 6px 12px"
+                alignItems="center"
             >
-                Delete
-            </Button>
+                <Text fontSize="lg" fontWeight="bold">
+                    Stories
+                </Text>
+                <InputGroup flexShrink="3">
+                    <Input placeholder="Search by story name ..." />
+                    <InputRightElement>
+                        <Icon as={BiSearch} />
+                    </InputRightElement>
+                </InputGroup>
+                <Menu>
+                    <MenuButton as={IconButton} icon={<GoSettings />}>
+                        Actions
+                    </MenuButton>
+                    <MenuList>
+                        <Box>Dates</Box>
+                    </MenuList>
+                </Menu>
+                <Button
+                    leftIcon={<BsPhone />}
+                    colorScheme="teal"
+                    variant="solid"
+                    onClick={onOpen}
+                >
+                    Create Story
+                </Button>
+            </Box>
+
+            {/* Modal */}
+            <CreateUpdateStory isOpen={isOpen} onClose={onClose} />
+
+            <Box
+                display="flex"
+                overflowY="auto"
+                flexWrap="wrap"
+                gap="5"
+                margin="4"
+            >
+                {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    (stories || []).map((story, index) => (
+                        <Box
+                            width={{ base: "100%", sm: "100%" }}
+                            flex={{ lg: "1 0 21%" }}
+                            maxWidth={{ md: "unset", lg: "294px" }}
+                            borderRadius="md"
+                            borderWidth="1px"
+                            borderColor="#F2F2FF"
+                            display="flex"
+                            flexDirection="column"
+                            justifyContent="space-between"
+                            key={story.id}
+                        >
+                            <Box
+                                display="flex"
+                                flexDirection="column"
+                                padding="4"
+                            >
+                                <Box
+                                    display="flex"
+                                    justifyContent="space-between"
+                                    alignItems="center"
+                                >
+                                    <Box display="flex" gap="2">
+                                        <Avatar
+                                            size="sm"
+                                            name="Dan Abrahmov"
+                                            src="/instagram.png"
+                                        />
+                                        <Box
+                                            display="flex"
+                                            flexDirection="column"
+                                        >
+                                            <Text
+                                                fontSize="sm"
+                                                fontWeight="bold"
+                                            >
+                                                {story.name ?? "Untitled"}
+                                            </Text>
+                                            <Text
+                                                fontSize="xs"
+                                                color="gray.500"
+                                            >
+                                                {story.publishedAt &&
+                                                    new Date(
+                                                        story.publishedAt
+                                                    ).toLocaleDateString()}
+                                            </Text>
+                                        </Box>
+                                    </Box>
+
+                                    <Menu>
+                                        <MenuButton
+                                            as={IconButton}
+                                            icon={<BsThreeDotsVertical />}
+                                            variant="ghost"
+                                        />
+                                        <MenuList>
+                                            <MenuItem
+                                                icon={
+                                                    <MdOutlineModeEditOutline />
+                                                }
+                                            >
+                                                Edit
+                                            </MenuItem>
+                                            <MenuItem icon={<BsFillEyeFill />}>
+                                                View
+                                            </MenuItem>
+                                            <MenuItem
+                                                onClick={onOpenAlert}
+                                                icon={<MdDelete />}
+                                            >
+                                                Delete
+                                            </MenuItem>
+                                        </MenuList>
+                                    </Menu>
+                                </Box>
+
+                                <Box
+                                    margin="4px 0"
+                                    display="flex"
+                                    alignItems="center"
+                                >
+                                    <Text fontSize="sm" fontWeight="bold">
+                                        Status :
+                                    </Text>
+                                    {renderStatus(story.status)}
+                                </Box>
+                            </Box>
+
+                            <Box display="flex" height="180px" gap="1">
+                                {(story.posts.slice(0, 3) || []).map(
+                                    (post: Post, index) => (
+                                        <Box
+                                            flex="1"
+                                            key={post.id}
+                                            position="relative"
+                                            height="100%"
+                                        >
+                                            {post.type === PostType.IMAGE ? (
+                                                <Image
+                                                    {...{
+                                                        borderLeftRadius:
+                                                            index === 0
+                                                                ? "md"
+                                                                : "",
+                                                        borderRightRadius:
+                                                            index ===
+                                                            story.posts.slice(
+                                                                0,
+                                                                3
+                                                            ).length -
+                                                                1
+                                                                ? "md"
+                                                                : "",
+                                                    }}
+                                                    src={post.originalUrl}
+                                                    alt="random image"
+                                                    height="100%"
+                                                    width="100%"
+                                                    objectFit="cover"
+                                                />
+                                            ) : (
+                                                <video width={50} height={50}>
+                                                    <source
+                                                        src={post.originalUrl}
+                                                    />
+                                                </video>
+                                            )}
+
+                                            {index === 2 &&
+                                                story.posts.length > 3 && (
+                                                    <Box
+                                                        position="absolute"
+                                                        top="0"
+                                                        left="0"
+                                                        height="100%"
+                                                        width="100%"
+                                                        background="rgba(0,0,0,0.35)"
+                                                        borderRadius="md"
+                                                        display="flex"
+                                                        justifyContent="center"
+                                                        alignItems="center"
+                                                    >
+                                                        <Text
+                                                            color="white"
+                                                            fontSize="2xl"
+                                                            fontWeight="bold"
+                                                        >
+                                                            +
+                                                            {story.posts
+                                                                .length - 3}
+                                                        </Text>
+                                                    </Box>
+                                                )}
+                                        </Box>
+                                    )
+                                )}
+                            </Box>
+                            <AlertDialog
+                                isOpen={isOpenAlert}
+                                leastDestructiveRef={cancelRef}
+                                onClose={onCloseAlert}
+                            >
+                                <AlertDialogOverlay>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader
+                                            fontSize="lg"
+                                            fontWeight="bold"
+                                        >
+                                            Delete Story
+                                        </AlertDialogHeader>
+
+                                        <AlertDialogBody>
+                                            Are you sure? You can't undo this
+                                            action afterwards.
+                                        </AlertDialogBody>
+
+                                        <AlertDialogFooter>
+                                            <Button onClick={onCloseAlert}>
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                colorScheme="red"
+                                                onClick={() => {
+                                                    deleteStoryMutation.mutate({
+                                                        id: story.id,
+                                                    });
+                                                }}
+                                                ml={3}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialogOverlay>
+                            </AlertDialog>
+                        </Box>
+                    ))
+                }
+            </Box>
         </Box>
     );
 };

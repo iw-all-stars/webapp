@@ -169,15 +169,26 @@ model Story {
     publishedAt DateTime?
     posts       Post[]
     status      StoryStatus
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+}
+
+enum PostType {
+  IMAGE
+  VIDEO
 }
 
 model Post {
-    id       String @id @default(uuid()) @db.Uuid
-    url      String
-    story    Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
-    storyId  String @db.Uuid
-    position Int
-    type     String
+    id  String @id @default(uuid()) @db.Uuid
+    name String @db.Uuid @unique
+    originalUrl String
+    convertedUrl String?
+    story Story?  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+    storyId String? @db.Uuid
+    position Int?
+    type PostType
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
 }
 
 enum PlatformKey {
@@ -189,4 +200,7 @@ enum PlatformKey {
 model Platform {
     id  String      @id @default(uuid()) @db.Uuid
     key PlatformKey
+
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
 }

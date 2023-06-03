@@ -1,11 +1,14 @@
-import { StoryStatus } from "@prisma/client";
+import { PostType, StoryStatus } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 const createPost = z.object({
-    url: z.string(),
-    position: z.number().int().gte(0),
-    type: z.enum(["image", "video"]),
+    id: z.string(),
+    originalUrl: z.string(),
+    name: z.string(),
+    position: z.number().int().gte(0).nullable(),
+    type: z.enum([PostType.IMAGE, PostType.VIDEO]),
 });
 
 const createStory = z
@@ -35,6 +38,45 @@ export const storyRouter = createTRPCRouter({
     create: publicProcedure
         .input(createStory)
         .mutation(async ({ ctx, input }) => {
+
+            const posts = await ctx.prisma.post.findMany({
+                where: {
+                    id: {
+                        in: input.posts.map((post) => post.id),
+                    },
+                },
+            })
+            
+            const notConvertedPosts = [];
+            for (const post of posts) {
+                if (!post.convertedUrl) {
+                    notConvertedPosts.push(post);
+                }
+            }
+
+            if (notConvertedPosts.length > 0) {
+                throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: "Some posts are not converted yet",
+                    cause: {
+                        posts: notConvertedPosts,
+                    },
+                })
+            }
+
+            await Promise.all(
+                input.posts.map((post) => {
+                    return ctx.prisma.post.update({
+                        where: {
+                            id: post.id,
+                        },
+                        data: {
+                            position: post.position,
+                        },
+                    });
+                    }
+                )
+            )
             return ctx.prisma.story.create({
                 data: {
                     name: input.name,
@@ -43,7 +85,9 @@ export const storyRouter = createTRPCRouter({
                         : undefined,
                     status: input.status,
                     posts: {
-                        create: input.posts,
+                        connect: input.posts.map((post) => ({
+                            id: post.id,
+                        })),
                     },
                 },
             });
@@ -58,4 +102,20 @@ export const storyRouter = createTRPCRouter({
                 },
             });
         }),
+
+    getAll: publicProcedure
+        .query(({ ctx }) => {
+            return ctx.prisma.story.findMany({
+                orderBy: {
+                    createdAt: "desc",
+                },
+				include: {
+					posts: {
+						orderBy: {
+							position: "asc"
+						}
+					}
+				}
+            });
+        })
 });
