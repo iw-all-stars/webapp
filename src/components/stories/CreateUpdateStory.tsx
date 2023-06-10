@@ -1,82 +1,104 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import {
-    Box,
-    Button,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Input,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-    Select,
-    useDisclosure,
-    useToast,
+	Box,
+	Button,
+	FormControl,
+	FormErrorMessage,
+	FormLabel,
+	Input,
+	Modal,
+	ModalBody,
+	ModalCloseButton,
+	ModalContent,
+	ModalHeader,
+	ModalOverlay,
+	Select,
+	useToast
 } from "@chakra-ui/react";
-import { StoryStatus, type Post, type PostType } from "@prisma/client";
+import {
+	StoryStatus,
+	type Post,
+	type PostType,
+	type Story,
+} from "@prisma/client";
 import { DateTime } from "luxon";
-import { set } from "mongoose";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DragFiles } from "~/components/dragFiles.component";
 import { type CreateStory } from "~/server/api/routers/story";
 import { api } from "~/utils/api";
+import { dateFromBackend, toBackendDate } from "~/utils/date";
 
 interface CreateStoryProps {
+    story?: Story & { posts: Post[] };
     isOpen: boolean;
     onClose: () => void;
 }
 
-const CreateUpdateStory = ({ isOpen, onClose }: CreateStoryProps) => {
+const CreateUpdateStory = ({ story, isOpen, onClose }: CreateStoryProps) => {
     const [files, setFiles] = useState<File[]>([]);
-    const [posts, setPosts] = useState<Post[]>([]);
+    const [posts, setPosts] = useState<Post[]>(story?.posts ?? []);
     const [hidePublishAt, setHidePublishAt] = useState<boolean>(false);
-    const {
-        isOpen: isOpenAlert,
-        onOpen: onOpenAlert,
-        onClose: onCloseAlert,
-    } = useDisclosure();
-    const cancelRef = React.useRef<HTMLInputElement>(null);
 
     const utils = api.useContext();
 
-    const { mutate: addStoryMutation, error: addStoryError, isLoading } =
-        api.story.create.useMutation({
-            onSuccess: () => {
-				reset();
-				setFiles([]);
-				setPosts([]);
-                onClose();
-                utils.story.getAll.invalidate();
-            },
-        });
+    const {
+        mutate: createUpdateStoryMutation,
+        error: addStoryError,
+        isLoading,
+    } = api.story.upsert.useMutation({
+        onSuccess: () => {
+            if (!story?.id) {
+                reset();
+                setFiles([]);
+                setPosts([]);
+            }
+            onClose();
+            utils.story.getAll.invalidate();
+        },
+    });
     const createManyPost = api.post.createMany.useMutation({});
 
     const toast = useToast();
 
-    function createStory(data: CreateStory) {
-        addStoryMutation(data);
+    function createUpdateStory(data: CreateStory) {
+        createUpdateStoryMutation({
+            id: story?.id,
+            data: {
+                ...data,
+                publishedAt: toBackendDate(
+                    data.publishedAt as string
+                ).toISOString(),
+            },
+        });
     }
 
     const {
         handleSubmit,
         register,
         setValue,
-        formState: { errors, isSubmitting },
+        formState: { errors },
         watch,
         getValues,
         resetField,
-		reset
+        reset,
     } = useForm<CreateStory>({
-		defaultValues: {
-			status: StoryStatus.NOW,
-			publishedAt: DateTime.now()?.toISO()?.slice(0, 16) ?? ""
-		}
-	});
+        defaultValues: !story
+            ? {
+                  status: StoryStatus.SCHEDULED,
+                  publishedAt: dateFromBackend(
+                      DateTime.now().toISO() as string
+                  ),
+              }
+            : {
+                  name: story.name,
+                  status: story.status as CreateStory["status"],
+                  posts: story.posts,
+                  publishedAt: story.publishedAt
+                      ? dateFromBackend(story.publishedAt as unknown as string)
+                      : undefined,
+              },
+    });
 
     useEffect(() => {
         resetField("publishedAt");
@@ -203,10 +225,12 @@ const CreateUpdateStory = ({ isOpen, onClose }: CreateStoryProps) => {
         >
             <ModalOverlay />
             <ModalContent>
-                <ModalHeader>Create Story</ModalHeader>
+                <ModalHeader>
+                    {story?.id ? "Update" : "Create"} Story
+                </ModalHeader>
                 <ModalCloseButton />
                 <ModalBody pb={6}>
-                    <form onSubmit={handleSubmit(createStory)}>
+                    <form onSubmit={handleSubmit(createUpdateStory)}>
                         <Box display="flex" flexDirection="column" gap="3">
                             <FormControl isInvalid={!!errors.name}>
                                 <FormLabel htmlFor="name">

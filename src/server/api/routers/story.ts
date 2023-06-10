@@ -17,7 +17,11 @@ const createStory = z
         name: z.string(),
         posts: z.array(createPost).min(1),
         publishedAt: z.string().optional(),
-        status: z.enum([StoryStatus.DRAFT, StoryStatus.SCHEDULED, StoryStatus.NOW]),
+        status: z.enum([
+            StoryStatus.DRAFT,
+            StoryStatus.SCHEDULED,
+            StoryStatus.NOW,
+        ]),
     })
     .refine(
         (data) => {
@@ -36,18 +40,22 @@ export type CreatePost = z.infer<typeof createPost>;
 export type CreateStory = z.infer<typeof createStory>;
 
 export const storyRouter = createTRPCRouter({
-    create: publicProcedure
-        .input(createStory)
+    upsert: publicProcedure
+        .input(
+            z.object({
+                id: z.string().optional(),
+                data: createStory,
+            })
+        )
         .mutation(async ({ ctx, input }) => {
-
             const posts = await ctx.prisma.post.findMany({
                 where: {
                     id: {
-                        in: input.posts.map((post) => post.id),
+                        in: input.data.posts.map((post) => post.id),
                     },
                 },
-            })
-            
+            });
+
             const notConvertedPosts = [];
             for (const post of posts) {
                 if (!post.convertedUrl) {
@@ -62,11 +70,11 @@ export const storyRouter = createTRPCRouter({
                     cause: {
                         posts: notConvertedPosts,
                     },
-                })
+                });
             }
 
             await Promise.all(
-                input.posts.map((post) => {
+                input.data.posts.map((post) => {
                     return ctx.prisma.post.update({
                         where: {
                             id: post.id,
@@ -75,30 +83,47 @@ export const storyRouter = createTRPCRouter({
                             position: post.position,
                         },
                     });
-                    }
-                )
-            )
+                })
+            );
 
-			let publishedAt = undefined;
+            let publishedAt = undefined;
 
-			if (input.status === StoryStatus.NOW) {
-				publishedAt = DateTime.fromJSDate(new Date()).plus({ minute: 1 }).toJSDate()
-			} else {
-				publishedAt = input.publishedAt
-			}
+            if (input.data.status === StoryStatus.NOW) {
+                publishedAt = DateTime.fromJSDate(new Date())
+                    .plus({ minute: 1 })
+                    .toJSDate();
+            } else {
+                publishedAt = new Date(input.data.publishedAt as string);
+            }
 
-            return ctx.prisma.story.create({
-                data: {
-                    name: input.name,
-                    publishedAt: publishedAt,
-                    status: input.status,
-                    posts: {
-                        connect: input.posts.map((post) => ({
-                            id: post.id,
-                        })),
-                    },
-                },
-            });
+            return !input.id
+                ? ctx.prisma.story.create({
+                      data: {
+                          name: input.data.name,
+                          publishedAt: publishedAt,
+                          status: input.data.status,
+                          posts: {
+                              connect: input.data.posts.map((post) => ({
+                                  id: post.id,
+                              })),
+                          },
+                      },
+                  })
+                : ctx.prisma.story.update({
+                      where: {
+                          id: input.id,
+                      },
+                      data: {
+                          name: input.data.name,
+                          publishedAt: publishedAt,
+                          status: input.data.status,
+                          posts: {
+                              connect: input.data.posts.map((post) => ({
+                                  id: post.id,
+                              })),
+                          },
+                      },
+                  });
         }),
 
     delete: publicProcedure
@@ -111,19 +136,21 @@ export const storyRouter = createTRPCRouter({
             });
         }),
 
-    getAll: publicProcedure
-        .query(({ ctx }) => {
-            return ctx.prisma.story.findMany({
-                orderBy: {
-                    createdAt: "desc",
+    getAll: publicProcedure.query(({ ctx }) => {
+        return ctx.prisma.story.findMany({
+            orderBy: {
+                createdAt: "desc",
+            },
+            include: {
+                posts: {
+                    orderBy: {
+                        position: "asc",
+                    },
                 },
-				include: {
-					posts: {
-						orderBy: {
-							position: "asc"
-						}
-					}
-				}
-            });
-        })
+            },
+        });
+    }),
+
+    //update: publicProcedure
+    //	.input()
 });
