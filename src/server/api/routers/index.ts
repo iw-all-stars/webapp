@@ -5,3 +5,4 @@ export { mailRouter as mail } from './mail';
 export { restaurantRouter as restaurant } from './restaurant';
 export { storyRouter as story } from './story';
 export { postRouter as post } from './post';
+export { platformRouter as platform } from './platform';

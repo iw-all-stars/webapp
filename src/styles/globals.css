@@ -19,3 +19,7 @@ a {
 html, body, #__next {
   height: 100%;
 }
+
+* {
+	word-wrap: unset !important;
+}

@@ -141,7 +141,7 @@ export const mailRouter = createTRPCRouter({
             mailId: mail.id,
             restaurant: campaign.restaurant.name,
             rateURL: `https://www.google.com/search?q=${campaign.restaurant.name}`, // todo: replace with real url
-            logoURL: campaign.restaurant.logo ? campaign.restaurant.logo as string : undefined,
+            logoURL: campaign.restaurant.logo ? campaign.restaurant.logo : undefined,
           });
         });
         await ctx.prisma.mail.updateMany({

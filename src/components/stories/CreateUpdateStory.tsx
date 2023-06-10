@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import {
+    Box,
     Button,
     FormControl,
     FormErrorMessage,
@@ -17,6 +18,8 @@ import {
     useToast,
 } from "@chakra-ui/react";
 import { StoryStatus, type Post, type PostType } from "@prisma/client";
+import { DateTime } from "luxon";
+import { set } from "mongoose";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DragFiles } from "~/components/dragFiles.component";
@@ -41,9 +44,12 @@ const CreateUpdateStory = ({ isOpen, onClose }: CreateStoryProps) => {
 
     const utils = api.useContext();
 
-    const { mutate: addStoryMutation, error: addStoryError } =
+    const { mutate: addStoryMutation, error: addStoryError, isLoading } =
         api.story.create.useMutation({
             onSuccess: () => {
+				reset();
+				setFiles([]);
+				setPosts([]);
                 onClose();
                 utils.story.getAll.invalidate();
             },
@@ -64,11 +70,20 @@ const CreateUpdateStory = ({ isOpen, onClose }: CreateStoryProps) => {
         watch,
         getValues,
         resetField,
-    } = useForm<CreateStory>();
+		reset
+    } = useForm<CreateStory>({
+		defaultValues: {
+			status: StoryStatus.NOW,
+			publishedAt: DateTime.now()?.toISO()?.slice(0, 16) ?? ""
+		}
+	});
 
     useEffect(() => {
         resetField("publishedAt");
-        setHidePublishAt(getValues("status") === StoryStatus.DRAFT);
+        setHidePublishAt(
+            getValues("status") === StoryStatus.DRAFT ||
+                getValues("status") === StoryStatus.NOW
+        );
     }, [watch("status")]);
 
     const uploadFiles = async () => {
@@ -180,98 +195,112 @@ const CreateUpdateStory = ({ isOpen, onClose }: CreateStoryProps) => {
     };
 
     return (
-        <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={onClose}>
+        <Modal
+            size="2xl"
+            closeOnOverlayClick={false}
+            isOpen={isOpen}
+            onClose={onClose}
+        >
             <ModalOverlay />
             <ModalContent>
                 <ModalHeader>Create Story</ModalHeader>
                 <ModalCloseButton />
-                <ModalBody pb={6}></ModalBody>
-                <form onSubmit={handleSubmit(createStory)}>
-                    <FormControl isInvalid={!!errors.name}>
-                        <FormLabel htmlFor="name">story name</FormLabel>
-                        <Input
-                            id="name"
-                            placeholder="name"
-                            {...register("name", {
-                                required: "This is required",
-                                minLength: {
-                                    value: 4,
-                                    message: "Minimum length should be 4",
-                                },
-                            })}
-                        />
-                        <FormErrorMessage>
-                            {errors.name && errors.name.message}
-                        </FormErrorMessage>
-                    </FormControl>
+                <ModalBody pb={6}>
+                    <form onSubmit={handleSubmit(createStory)}>
+                        <Box display="flex" flexDirection="column" gap="3">
+                            <FormControl isInvalid={!!errors.name}>
+                                <FormLabel htmlFor="name">
+                                    Story name (optional)
+                                </FormLabel>
+                                <Input
+                                    id="name"
+                                    placeholder="name"
+                                    {...register("name", {
+                                        required: "This is required",
+                                        minLength: {
+                                            value: 4,
+                                            message:
+                                                "Minimum length should be 4",
+                                        },
+                                    })}
+                                />
+                                <FormErrorMessage>
+                                    {errors.name && errors.name.message}
+                                </FormErrorMessage>
+                            </FormControl>
 
-                    <FormControl>
-                        <Select
-                            {...register("status", {
-                                required: "This is required",
-                            })}
-                        >
-                            {[
-                                StoryStatus.NOW,
-                                StoryStatus.SCHEDULED,
-                                StoryStatus.DRAFT,
-                            ].map((status) => (
-                                <option
-                                    selected={status === StoryStatus.NOW}
-                                    key={status}
-                                    value={status}
+                            <FormControl>
+                                <FormLabel htmlFor="name">
+                                    Schedule type
+                                </FormLabel>
+                                <Select
+                                    {...register("status", {
+                                        required: "This is required",
+                                    })}
                                 >
-                                    {status}
-                                </option>
-                            ))}
-                        </Select>
-                    </FormControl>
+                                    {[
+                                        StoryStatus.NOW,
+                                        StoryStatus.SCHEDULED,
+                                        StoryStatus.DRAFT,
+                                    ].map((status) => (
+                                        <option
+                                            selected={
+                                                status === StoryStatus.NOW
+                                            }
+                                            key={status}
+                                            value={status}
+                                        >
+                                            {status}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </FormControl>
 
-                    <FormControl
-                        isInvalid={!!errors.publishedAt}
-                        hidden={hidePublishAt}
-                    >
-                        <FormLabel htmlFor="name">published at</FormLabel>
-                        <Input
-                            id="publishedAt"
-                            placeholder="publishedAt"
-                            type="datetime-local"
-                            {...register("publishedAt", {})}
-                        />
-                        <FormErrorMessage>
-                            {errors.publishedAt && errors.publishedAt.message}
-                        </FormErrorMessage>
-                    </FormControl>
-                    <DragFiles
-                        files={files}
-                        handleDrop={handleDrop}
-                        handleDragOver={handleDragOver}
-                        posts={posts}
-                        setPosts={setPosts}
-                        error={addStoryError}
-                    />
-                    <Button
-                        mt={4}
-                        colorScheme="teal"
-                        isLoading={isSubmitting}
-                        type="submit"
-                    >
-                        Submit
-                    </Button>
-                    <Button
-                        onClick={() => {
-                            console.log(getValues());
-                        }}
-                    >
-                        log posts
-                    </Button>
-                </form>
-                <ModalFooter>
-                    <Button colorScheme="blue" mr={3}>
-                        Save
-                    </Button>
-                    <Button onClick={onClose}>Cancel</Button>
-                </ModalFooter>
+                            <FormControl
+                                isInvalid={!!errors.publishedAt}
+                                hidden={hidePublishAt}
+                            >
+                                <FormLabel htmlFor="name">
+                                    Publication date
+                                </FormLabel>
+                                <Input
+                                    id="publishedAt"
+                                    placeholder="publishedAt"
+                                    type="datetime-local"
+                                    {...register("publishedAt", {})}
+                                />
+                                <FormErrorMessage>
+                                    {errors.publishedAt &&
+                                        errors.publishedAt.message}
+                                </FormErrorMessage>
+                            </FormControl>
+                            <DragFiles
+                                files={files}
+                                handleDrop={handleDrop}
+                                handleDragOver={handleDragOver}
+                                posts={posts}
+                                setPosts={setPosts}
+                                error={addStoryError}
+                            />
+                            <Box mt="4" display="flex" justifyContent="end">
+                                <Button
+                                    colorScheme="teal"
+                                    isLoading={isLoading}
+                                    type="submit"
+                                >
+                                    Submit
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        onClose();
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                            </Box>
+                        </Box>
+                    </form>
+                </ModalBody>
             </ModalContent>
         </Modal>
     );

@@ -1,5 +1,6 @@
 import { PostType, StoryStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
+import { DateTime } from "luxon";
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
@@ -77,12 +78,19 @@ export const storyRouter = createTRPCRouter({
                     }
                 )
             )
+
+			let publishedAt = undefined;
+
+			if (input.status === StoryStatus.NOW) {
+				publishedAt = DateTime.fromJSDate(new Date()).plus({ minute: 1 }).toJSDate()
+			} else {
+				publishedAt = input.publishedAt
+			}
+
             return ctx.prisma.story.create({
                 data: {
                     name: input.name,
-                    publishedAt: input.publishedAt
-                        ? new Date(input.publishedAt)
-                        : undefined,
+                    publishedAt: publishedAt,
                     status: input.status,
                     posts: {
                         connect: input.posts.map((post) => ({

@@ -1,46 +1,56 @@
+import { ArrowForwardIcon } from "@chakra-ui/icons";
 import {
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogOverlay,
-    Avatar,
-    Box,
-    Button,
-    Icon,
-    IconButton,
-    Image,
-    Input,
-    InputGroup,
-    InputRightElement,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuList,
-    Text,
-    useDisclosure,
+	AlertDialog,
+	AlertDialogBody,
+	AlertDialogContent,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogOverlay,
+	Avatar,
+	AvatarGroup,
+	Box,
+	Button,
+	Icon,
+	IconButton,
+	Image,
+	Input,
+	InputGroup,
+	InputRightElement,
+	Menu,
+	MenuButton,
+	MenuItem,
+	MenuList,
+	Skeleton,
+	Text,
+	useDisclosure,
 } from "@chakra-ui/react";
-import { type Post, StoryStatus, PostType } from "@prisma/client";
-import { on } from "events";
+import { PostType, StoryStatus, type Post } from "@prisma/client";
 import { type NextPage } from "next";
+import { useRouter } from "next/router";
 import React from "react";
 import { BiSearch, BiTime } from "react-icons/bi";
 import {
-    BsFileText,
-    BsFillCheckCircleFill,
-    BsFillEyeFill,
-    BsPhone,
-    BsThreeDotsVertical,
+	BsFileText,
+	BsFillCheckCircleFill,
+	BsFillEyeFill,
+	BsPhone,
+	BsThreeDotsVertical,
 } from "react-icons/bs";
 import { GoSettings } from "react-icons/go";
 import { MdDelete, MdOutlineModeEditOutline } from "react-icons/md";
 import { TiDelete } from "react-icons/ti";
 import CreateUpdateStory from "~/components/stories/CreateUpdateStory";
 import { api } from "~/utils/api";
+import { PLATFORMS } from "./platforms";
 
 const DashboardStory: NextPage = () => {
+    const router = useRouter();
+
     const { data: stories, isLoading } = api.story.getAll.useQuery();
+
+    const { data: platforms } = api.platform.getAllByRestaurantId.useQuery(
+        router.query.restaurantId as string
+    );
 
     const utils = api.useContext();
     // delete
@@ -122,44 +132,89 @@ const DashboardStory: NextPage = () => {
         }
     };
 
-    if (isLoading) {
-        return <div>Chargement en cours...</div>;
+    if (!platforms?.length) {
+        return (
+            <Box
+                h="full"
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                flexDirection="column"
+            >
+                <Box
+                    display="flex"
+                    alignItems="center"
+                    flexDirection="column"
+                    gap="4"
+                >
+                    <AvatarGroup size="md">
+                        {PLATFORMS.map((platform, i) => (
+                            <Avatar
+                                key={i}
+                                name={platform}
+                                src={`/${platform}.png`}
+                            />
+                        ))}
+                    </AvatarGroup>
+                    <Text fontSize="lg" fontWeight="bold">
+                        You are not connected to any platform
+                    </Text>
+                    <Text fontSize="sm" color="gray.500">
+                        Connect to a platform to create a story
+                    </Text>
+                    <Button
+                        rightIcon={<ArrowForwardIcon />}
+                        colorScheme="teal"
+                        variant="outline"
+                        onClick={() => {
+                            router.push(
+                                `/dashboard/${router.query.organizationId}/restaurant/${router.query.restaurantId}/platforms`
+                            );
+                        }}
+                    >
+                        Connect
+                    </Button>
+                </Box>
+            </Box>
+        );
     }
 
     return (
         <Box display="flex" flexDirection="column" h="full" w="full">
-            <Box
-                display="flex"
-                gap="4"
-                margin="12px 12px 6px 12px"
-                alignItems="center"
-            >
-                <Text fontSize="lg" fontWeight="bold">
-                    Stories
-                </Text>
-                <InputGroup flexShrink="3">
-                    <Input placeholder="Search by story name ..." />
-                    <InputRightElement>
-                        <Icon as={BiSearch} />
-                    </InputRightElement>
-                </InputGroup>
-                <Menu>
-                    <MenuButton as={IconButton} icon={<GoSettings />}>
-                        Actions
-                    </MenuButton>
-                    <MenuList>
-                        <Box>Dates</Box>
-                    </MenuList>
-                </Menu>
-                <Button
-                    leftIcon={<BsPhone />}
-                    colorScheme="teal"
-                    variant="solid"
-                    onClick={onOpen}
+            <Skeleton isLoaded={!isLoading}>
+                <Box
+                    display="flex"
+                    gap="4"
+                    margin="12px 12px 6px 12px"
+                    alignItems="center"
                 >
-                    Create Story
-                </Button>
-            </Box>
+                    <Text fontSize="lg" fontWeight="bold">
+                        Stories
+                    </Text>
+                    <InputGroup flexShrink="3">
+                        <Input placeholder="Search by story name ..." />
+                        <InputRightElement>
+                            <Icon as={BiSearch} />
+                        </InputRightElement>
+                    </InputGroup>
+                    <Menu>
+                        <MenuButton as={IconButton} icon={<GoSettings />}>
+                            Actions
+                        </MenuButton>
+                        <MenuList>
+                            <Box>Dates</Box>
+                        </MenuList>
+                    </Menu>
+                    <Button
+                        leftIcon={<BsPhone />}
+                        colorScheme="teal"
+                        variant="solid"
+                        onClick={onOpen}
+                    >
+                        Create Story
+                    </Button>
+                </Box>
+            </Skeleton>
 
             {/* Modal */}
             <CreateUpdateStory isOpen={isOpen} onClose={onClose} />
@@ -296,7 +351,14 @@ const DashboardStory: NextPage = () => {
                                                     objectFit="cover"
                                                 />
                                             ) : (
-                                                <video width={50} height={50}>
+                                                <video style={
+													{
+														'objectFit': 'cover',
+														"height": '100%',
+														"width": '100%',
+														"borderRadius": "1px",
+													}
+												}>
                                                     <source
                                                         src={post.originalUrl}
                                                     />
@@ -361,6 +423,7 @@ const DashboardStory: NextPage = () => {
                                                     deleteStoryMutation.mutate({
                                                         id: story.id,
                                                     });
+													onCloseAlert();
                                                 }}
                                                 ml={3}
                                             >

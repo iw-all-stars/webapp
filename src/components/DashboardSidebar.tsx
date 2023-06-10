@@ -14,6 +14,7 @@ import {
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { BiChevronDown } from "react-icons/bi";
+import { RxComponent1 } from "react-icons/rx";
 import {
   MdAdd,
   MdCheck,
@@ -70,6 +71,11 @@ export default function DashboardSidebar() {
       slug: "resources",
       icon: MdOutlineDataset,
     },
+	{
+		name: "Plateformes",
+		slug: "platforms",
+		icon: RxComponent1
+	  },
     {
       name: "Paramètres",
       slug: "settings",

@@ -100,6 +100,7 @@ model Restaurant {
     organizationId String       @db.Uuid
     organization   Organization @relation(fields: [organizationId], references: [id])
     campaigns      Campaign[]
+	platforms      Platform[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -195,11 +196,17 @@ enum PlatformKey {
     TWITTER
     INSTAGRAM
     FACEBOOK
+	TIKTOK
 }
 
 model Platform {
     id  String      @id @default(uuid()) @db.Uuid
     key PlatformKey
+	login String
+	password String
+	
+	restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+	restaurantId String @db.Uuid
 
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt

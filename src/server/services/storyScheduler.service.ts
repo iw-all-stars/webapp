@@ -25,7 +25,7 @@ export const scheduleStory = async (story: Story & { posts: Post[] }) => {
 
     if (!story.publishedAt) return;
 
-    const { minute, hour, day, month, year } = DateTime.fromJSDate(
+    const { minute, hour, day, month, year, second } = DateTime.fromJSDate(
         story.publishedAt
     )
         .toUTC()
