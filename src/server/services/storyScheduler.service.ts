@@ -3,7 +3,7 @@ import {
     DeleteScheduleCommand,
     SchedulerClient
 } from "@aws-sdk/client-scheduler";
-import { type Post, type Story } from "@prisma/client";
+import { type Platform, type Post, type Story } from "@prisma/client";
 import { DateTime } from "luxon";
 import { encrypt } from "~/utils/decrypte-password";
 
@@ -15,7 +15,7 @@ const client = new SchedulerClient({
     },
 });
 
-export const scheduleStory = async (story: Story & { posts: Post[] }) => {
+export const scheduleStory = async (story: Story & { posts: Post[], platform: Platform }) => {
     console.info('🟩 SCHEDULE STORY ', story.id)
     try {
         await deleteStorySchedule(story.id);
@@ -38,9 +38,8 @@ export const scheduleStory = async (story: Story & { posts: Post[] }) => {
         ...story,
         callbackUrl: 'https://fdfd-94-228-190-38.ngrok-free.app/api/webhooks/publish',
         credentials: {
-            username: "devftn5",
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            password: encrypt("monnouvomdPé94290"),
+            username: story.platform.login,
+            password: story.platform.password,
         },
         storyId: story.id,
         restaurantId: 'story.restaurantId',

@@ -22,6 +22,7 @@ const createStory = z
             StoryStatus.SCHEDULED,
             StoryStatus.NOW,
         ]),
+		platformId: z.string(),
     })
     .refine(
         (data) => {
@@ -102,6 +103,7 @@ export const storyRouter = createTRPCRouter({
                           name: input.data.name,
                           publishedAt: publishedAt,
                           status: input.data.status,
+						  platformId: input.data.platformId,
                           posts: {
                               connect: input.data.posts.map((post) => ({
                                   id: post.id,
@@ -147,10 +149,17 @@ export const storyRouter = createTRPCRouter({
                         position: "asc",
                     },
                 },
+				platform: {
+					select: {
+						key: true,
+						createdAt: true,
+						updatedAt: true,
+						id: true,
+						login: true,
+						restaurantId: true,
+					}
+				},
             },
         });
     }),
-
-    //update: publicProcedure
-    //	.input()
 });

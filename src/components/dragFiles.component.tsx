@@ -135,7 +135,7 @@ export const DragFiles = ({
                         >
                             {(provided, snapshot) => (
                                 <div
-								style={{ display: "flex"}}
+                                    style={{ display: "flex" }}
                                     ref={provided.innerRef}
                                     {...provided.droppableProps}
                                 >
@@ -150,7 +150,8 @@ export const DragFiles = ({
                                         >
                                             {(provided, snapshot) => (
                                                 <Box
-                                                    width="100px"
+                                                    width="120px"
+                                                    height={200}
                                                     mr={1}
                                                     border={
                                                         isStillConverting(item)
@@ -170,21 +171,23 @@ export const DragFiles = ({
                                                             src={
                                                                 item.originalUrl
                                                             }
-                                                            alt="Dan Abramov"
+                                                            alt=""
                                                         />
                                                     ) : (
-                                                        <Box>
-                                                            <video
-                                                                height={200}
-                                                                width="120px"
-                                                            >
-                                                                <source
-                                                                    src={
-                                                                        item.originalUrl
-                                                                    }
-                                                                />
-                                                            </video>
-                                                        </Box>
+                                                        <video
+                                                            style={{
+																objectFit: "cover",
+																height: "100%",
+																width: "100%",
+																borderRadius: "1px",
+															}}
+                                                        >
+                                                            <source
+                                                                src={
+                                                                    item.originalUrl
+                                                                }
+                                                            />
+                                                        </video>
                                                     )}
                                                 </Box>
                                             )}
@@ -198,7 +201,7 @@ export const DragFiles = ({
                 </DragDropContext>
                 <Box
                     hidden={!posts.length}
-                    minWidth={100}
+                    minWidth={120}
                     cursor="pointer"
                     backgroundColor="purple.100"
                     display="flex"

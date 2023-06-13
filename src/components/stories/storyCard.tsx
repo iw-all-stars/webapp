@@ -1,32 +1,39 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogOverlay,
-    Avatar,
-    Box,
-    Button,
-    Icon,
-    IconButton,
-    Image,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuList,
-    Text,
-    useDisclosure,
+	AlertDialog,
+	AlertDialogBody,
+	AlertDialogContent,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogOverlay,
+	Avatar,
+	Box,
+	Button,
+	Icon,
+	IconButton,
+	Image,
+	Menu,
+	MenuButton,
+	MenuItem,
+	MenuList,
+	Text,
+	useDisclosure,
 } from "@chakra-ui/react";
-import { PostType, StoryStatus, type Post, type Story } from "@prisma/client";
+import {
+	PostType,
+	StoryStatus,
+	type Platform,
+	type Post,
+	type Story,
+} from "@prisma/client";
 import { useRef } from "react";
 import { BiTime } from "react-icons/bi";
 import {
-    BsFileText,
-    BsFillCheckCircleFill,
-    BsFillEyeFill,
-    BsHourglassSplit,
-    BsThreeDotsVertical,
+	BsFileText,
+	BsFillCheckCircleFill,
+	BsFillEyeFill,
+	BsHourglassSplit,
+	BsThreeDotsVertical,
 } from "react-icons/bs";
 import { MdDelete, MdOutlineModeEditOutline } from "react-icons/md";
 import { TiDelete } from "react-icons/ti";
@@ -34,10 +41,11 @@ import { api } from "~/utils/api";
 import CreateUpdateStory from "./CreateUpdateStory";
 
 interface StoryCardProps {
-    story: Story & { posts: Post[] };
+    story: Story & { posts: Post[]; platform: Omit<Platform, "password"> };
+    connectedPlatforms: Omit<Platform, "password">[];
 }
 
-export const StoryCard = ({ story }: StoryCardProps) => {
+export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
 
     const utils = api.useContext();
@@ -45,6 +53,7 @@ export const StoryCard = ({ story }: StoryCardProps) => {
     const deleteStoryMutation = api.story.delete.useMutation({
         onSuccess: () => {
             utils.story.getAll.invalidate();
+			onCloseAlert();
         },
     });
 
@@ -117,7 +126,11 @@ export const StoryCard = ({ story }: StoryCardProps) => {
                         >
                             Now
                         </Text>
-                        <Icon boxSize="5" as={BsHourglassSplit} color="blue.400" />
+                        <Icon
+                            boxSize="5"
+                            as={BsHourglassSplit}
+                            color="blue.400"
+                        />
                     </>
                 );
             default:
@@ -178,20 +191,29 @@ export const StoryCard = ({ story }: StoryCardProps) => {
                                 variant="ghost"
                             />
                             <MenuList>
+							{[StoryStatus.DRAFT, StoryStatus.SCHEDULED].includes(story.status as any) && (
                                 <MenuItem
                                     onClick={onOpen}
                                     icon={<MdOutlineModeEditOutline />}
                                 >
-                                    Edit
+                                    Editer
                                 </MenuItem>
-                                <MenuItem icon={<BsFillEyeFill />}>
-                                    View
-                                </MenuItem>
+							)}
+                                {story.status === StoryStatus.PUBLISHED && (
+                                    <a
+                                        href={`https:///www.instagram.com/stories/${story.platform.login}/${story.posts[0]?.socialPostId ?? ''}`}
+                                        target="_blank"
+                                    >
+                                        <MenuItem icon={<BsFillEyeFill />}>
+                                            Voir
+                                        </MenuItem>
+                                    </a>
+                                )}
                                 <MenuItem
                                     onClick={onOpenAlert}
                                     icon={<MdDelete />}
                                 >
-                                    Delete
+                                    Supprimer
                                 </MenuItem>
                             </MenuList>
                         </Menu>
@@ -291,11 +313,11 @@ export const StoryCard = ({ story }: StoryCardProps) => {
                                 <Button onClick={onCloseAlert}>Cancel</Button>
                                 <Button
                                     colorScheme="red"
+									isLoading={deleteStoryMutation.isLoading}
                                     onClick={() => {
                                         deleteStoryMutation.mutate({
                                             id: story.id,
                                         });
-                                        onCloseAlert();
                                     }}
                                     ml={3}
                                 >
@@ -311,6 +333,7 @@ export const StoryCard = ({ story }: StoryCardProps) => {
                 isOpen={isOpen}
                 onClose={onClose}
                 story={story}
+                connectedPlatforms={connectedPlatforms}
             ></CreateUpdateStory>
         </>
     );

@@ -32,7 +32,6 @@ const DashboardStory: NextPage = () => {
     const router = useRouter();
 
     const { data: stories, isLoading } = api.story.getAll.useQuery();
-
     const { data: platforms } = api.platform.getAllByRestaurantId.useQuery(
         router.query.restaurantId as string
     );
@@ -124,7 +123,7 @@ const DashboardStory: NextPage = () => {
             </Skeleton>
 
             {/* Modal */}
-            <CreateUpdateStory isOpen={isOpen} onClose={onClose} />
+            <CreateUpdateStory connectedPlatforms={platforms} isOpen={isOpen} onClose={onClose} />
 
             <Box
                 display="flex"
@@ -136,7 +135,7 @@ const DashboardStory: NextPage = () => {
                 {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     (stories || []).map((story) => (
-                        <StoryCard story={story} key={story.id} />
+                        <StoryCard connectedPlatforms={platforms} story={story} key={story.id} />
                     ))
                 }
             </Box>

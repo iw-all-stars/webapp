@@ -41,7 +41,8 @@
     "react-icons": "^4.8.0",
     "react-table": "^7.8.0",
     "superjson": "1.12.2",
-    "zod": "^3.21.4"
+    "zod": "^3.21.4",
+	"instagram-private-api": "^1.45.3"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.1.1",

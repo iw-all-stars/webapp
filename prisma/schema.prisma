@@ -169,6 +169,8 @@ model Story {
     name        String
     publishedAt DateTime?
     posts       Post[]
+	platformId  String 	@db.Uuid
+	platform    Platform	@relation(fields: [platformId], references: [id], onDelete: Cascade)
     status      StoryStatus
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
@@ -188,6 +190,7 @@ model Post {
     storyId String? @db.Uuid
     position Int?
     type PostType
+	socialPostId String?
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
 }
@@ -207,6 +210,7 @@ model Platform {
 	
 	restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 	restaurantId String @db.Uuid
+	stories Story[]
 
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt

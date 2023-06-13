@@ -1,5 +1,6 @@
 import { Box, Heading, Text } from "@chakra-ui/react";
 import { PlatformKey, type Platform } from "@prisma/client";
+import { type MutateOptions } from "@tanstack/react-query";
 import { type NextPage } from "next";
 import { useRouter } from "next/router";
 import { PlatformCard } from "~/components/platforms/platformCard";
@@ -12,47 +13,71 @@ export const PLATFORMS = [
     PlatformKey.TWITTER,
 ];
 
+export type createUpdatePlatformParams = {
+    dataForm: Pick<Platform, "login" | "password">;
+    key: PlatformKey;
+    platform?: Platform;
+    options?: MutateOptions;
+};
+
 const DashboardPlatforms: NextPage = () => {
     const router = useRouter();
 
-	const utils = api.useContext();
+    const utils = api.useContext();
 
-    const { data: platforms, isLoading } = api.platform.getAllByRestaurantId.useQuery(
-        router.query.restaurantId as string
-    );
+    const { data: platforms, isLoading } =
+        api.platform.getAllByRestaurantId.useQuery(
+            router.query.restaurantId as string
+        );
 
-	const createPlatformMutation = api.platform.create.useMutation({
+    const createPlatformMutation = api.platform.create.useMutation({
         onSuccess: () => {
             utils.platform.getAllByRestaurantId.invalidate();
         },
     });
 
-	const updatePlatformMutation = api.platform.updateById.useMutation({
+    const updatePlatformMutation = api.platform.updateById.useMutation({
         onSuccess: () => {
             utils.platform.getAllByRestaurantId.invalidate();
         },
     });
 
-	const deletePlatformMutation = api.platform.deleteById.useMutation({
-		onSuccess: () => {
-			utils.platform.getAllByRestaurantId.invalidate();
-		},
-	});
+    const deletePlatformMutation = api.platform.deleteById.useMutation({
+        onSuccess: () => {
+            utils.platform.getAllByRestaurantId.invalidate();
+        },
+    });
 
-	const createUpdatePlatform = (dataForm: Pick<Platform, 'login' | 'password'>, key: PlatformKey, platform?: Platform) => {
-		if (platform?.id) {
-			updatePlatformMutation.mutate({ id: platform.id, ...dataForm });
-		} else {
-			createPlatformMutation.mutate({ ...dataForm, restaurantId: router.query.restaurantId as string, key });
-		}
-	}
+    const createUpdatePlatform = ({
+        dataForm,
+        key,
+        platform,
+        options,
+    }: createUpdatePlatformParams) => {
+        if (platform?.id) {
+            updatePlatformMutation.mutate(
+                { id: platform.id, ...dataForm },
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                options as any
+            );
+        } else {
+            createPlatformMutation.mutate(
+                {
+                    ...dataForm,
+                    restaurantId: router.query.restaurantId as string,
+                    key,
+                },
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                options as any
+            );
+        }
+    };
 
-	const deletePlatformById = (id: string) => {
-		deletePlatformMutation.mutate({
-			id
-		});
-	}
-
+    const deletePlatformById = (id: string) => {
+        deletePlatformMutation.mutate({
+            id,
+        });
+    };
 
     return (
         <Box h="full" w="full" pt={8}>
@@ -79,14 +104,17 @@ const DashboardPlatforms: NextPage = () => {
             >
                 {PLATFORMS.map((platformKey, i) => (
                     <PlatformCard
-						isLoading={isLoading}
+                        isLoading={isLoading}
                         platformKey={platformKey}
                         platform={platforms?.find(
                             (platform) => platform.key === platformKey
                         )}
                         available={platformKey === PlatformKey.INSTAGRAM}
-						createUpdatePlatform={createUpdatePlatform}
-						deletePlatformById={deletePlatformById}
+                        createUpdatePlatform={createUpdatePlatform}
+                        isLoadingCreateUpdatePlatform={
+                            createPlatformMutation.isLoading
+                        }
+                        deletePlatformById={deletePlatformById}
                         key={i}
                     />
                 ))}

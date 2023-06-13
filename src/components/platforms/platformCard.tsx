@@ -24,17 +24,16 @@ import { BsFillCheckCircleFill, BsThreeDotsVertical } from "react-icons/bs";
 import { MdDelete, MdOutlineModeEditOutline } from "react-icons/md";
 import CreateUpdatePlatform from "./createUpdatePlatform";
 import { useRef } from "react";
+import { type createUpdatePlatformParams } from "~/pages/dashboard/[organizationId]/restaurant/[restaurantId]/platforms";
 
 interface PlatformCardProps {
     platform?: Platform;
     platformKey: PlatformKey;
     available: boolean;
-    createUpdatePlatform: (
-        dataForm: Pick<Platform, "login" | "password">,
-        key: PlatformKey,
-        platform?: Platform
-    ) => void;
+    createUpdatePlatform: (data: createUpdatePlatformParams) => void;
+    isLoadingCreateUpdatePlatform: boolean;
     deletePlatformById: (id: string) => void;
+    isLoadingDeletePlatform: boolean;
     isLoading: boolean;
 }
 
@@ -43,6 +42,7 @@ export const PlatformCard = ({
     platform,
     available,
     createUpdatePlatform,
+    isLoadingCreateUpdatePlatform,
     deletePlatformById,
     isLoading,
 }: PlatformCardProps) => {
@@ -115,7 +115,12 @@ export const PlatformCard = ({
             justifyContent="space-between"
             background="white"
         >
-            <Box display="flex" height="100%" flexDirection="column" padding="6">
+            <Box
+                display="flex"
+                height="100%"
+                flexDirection="column"
+                padding="6"
+            >
                 <Box
                     display="flex"
                     flex="1"
@@ -193,6 +198,9 @@ export const PlatformCard = ({
                                         </Button>
                                         {platform?.id && (
                                             <Button
+                                                isLoading={
+                                                    isLoadingDeletePlatform
+                                                }
                                                 colorScheme="red"
                                                 ml={3}
                                                 onClick={() => {
@@ -224,6 +232,7 @@ export const PlatformCard = ({
                 isOpen={isOpen}
                 onClose={onClose}
                 createUpdatePlatform={createUpdatePlatform}
+                isLoadingCreateUpdatePlatform={isLoadingCreateUpdatePlatform}
             />
         </Box>
     );

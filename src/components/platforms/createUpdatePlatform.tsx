@@ -14,22 +14,18 @@ import {
 	ModalCloseButton,
 	ModalContent,
 	ModalHeader,
-	ModalOverlay,
-	useDisclosure
+	ModalOverlay
 } from "@chakra-ui/react";
 import { type Platform, type PlatformKey } from "@prisma/client";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { api } from "~/utils/api";
+import { type createUpdatePlatformParams } from "~/pages/dashboard/[organizationId]/restaurant/[restaurantId]/platforms";
 
 interface CreateUpdatePlatformProps {
     platformKey: PlatformKey;
     platform?: Platform;
-    createUpdatePlatform: (
-        dataForm: Pick<Platform, "login" | "password">,
-        key: PlatformKey,
-        platform?: Platform
-    ) => void;
+    createUpdatePlatform: (data: createUpdatePlatformParams) => void;
+	isLoadingCreateUpdatePlatform: boolean;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -37,38 +33,46 @@ interface CreateUpdatePlatformProps {
 const CreateUpdatePlatform = ({
     platformKey,
     createUpdatePlatform,
+	isLoadingCreateUpdatePlatform,
     platform,
     isOpen,
     onClose,
 }: CreateUpdatePlatformProps) => {
-    const {
-        isOpen: isOpenAlert,
-        onOpen: onOpenAlert,
-        onClose: onCloseAlert,
-    } = useDisclosure();
-    const cancelRef = React.useRef<HTMLInputElement>(null);
-
-    const utils = api.useContext();
 
     const {
         handleSubmit,
         register,
-        setValue,
         formState: { errors, isSubmitting },
-        watch,
-        getValues,
-        resetField,
         reset,
+		setError,
     } = useForm<Pick<Platform, "login" | "password">>({
         defaultValues: {
             login: platform?.login || "",
         },
     });
 
+	
     const submit = (dataForm: Pick<Platform, "login" | "password">) => {
-        createUpdatePlatform(dataForm, platformKey, platform);
-        reset();
-		onClose();
+        createUpdatePlatform({dataForm, key: platformKey, platform, options: {
+			onSuccess: () => {
+				onClose();
+				reset();
+			},
+			onError: (e: any) => {
+				// set errors
+				setError("login", {
+					type: "manual",
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+					message: e?.data?.httpStatus === 401 ? "Mauvais identifiants" : "Une erreur inconnue est survenue",
+				});
+
+				setError("password", {
+					type: "manual",
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+					message: e?.data?.httpStatus === 401 ? "Mauvais identifiants" : "Une erreur inconnue est survenue",
+				});
+			}
+		}});
     };
 
     const [show, setShow] = useState(false);
@@ -148,7 +152,7 @@ const CreateUpdatePlatform = ({
                             <Button
                                 colorScheme="blue"
                                 mr={3}
-                                isLoading={isSubmitting}
+                                isLoading={isLoadingCreateUpdatePlatform}
                                 type="submit"
                             >
                                 {platform ? "Enregistrer" : "Connecter"}

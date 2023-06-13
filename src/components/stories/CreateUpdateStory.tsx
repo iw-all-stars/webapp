@@ -20,6 +20,7 @@ import {
 	type Post,
 	type PostType,
 	type Story,
+	type Platform,
 } from "@prisma/client";
 import { DateTime } from "luxon";
 import React, { useEffect, useState } from "react";
@@ -30,12 +31,13 @@ import { api } from "~/utils/api";
 import { dateFromBackend, toBackendDate } from "~/utils/date";
 
 interface CreateStoryProps {
+	connectedPlatforms: Omit<Platform, 'password'>[];
     story?: Story & { posts: Post[] };
     isOpen: boolean;
     onClose: () => void;
 }
 
-const CreateUpdateStory = ({ story, isOpen, onClose }: CreateStoryProps) => {
+const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: CreateStoryProps) => {
     const [files, setFiles] = useState<File[]>([]);
     const [posts, setPosts] = useState<Post[]>(story?.posts ?? []);
     const [hidePublishAt, setHidePublishAt] = useState<boolean>(false);
@@ -94,6 +96,7 @@ const CreateUpdateStory = ({ story, isOpen, onClose }: CreateStoryProps) => {
                   name: story.name,
                   status: story.status as CreateStory["status"],
                   posts: story.posts,
+				  platformId: story.platformId as string,
                   publishedAt: story.publishedAt
                       ? dateFromBackend(story.publishedAt as unknown as string)
                       : undefined,
@@ -254,7 +257,7 @@ const CreateUpdateStory = ({ story, isOpen, onClose }: CreateStoryProps) => {
                             </FormControl>
 
                             <FormControl>
-                                <FormLabel htmlFor="name">
+                                <FormLabel htmlFor="status">
                                     Schedule type
                                 </FormLabel>
                                 <Select
@@ -268,9 +271,6 @@ const CreateUpdateStory = ({ story, isOpen, onClose }: CreateStoryProps) => {
                                         StoryStatus.DRAFT,
                                     ].map((status) => (
                                         <option
-                                            selected={
-                                                status === StoryStatus.NOW
-                                            }
                                             key={status}
                                             value={status}
                                         >
@@ -280,11 +280,34 @@ const CreateUpdateStory = ({ story, isOpen, onClose }: CreateStoryProps) => {
                                 </Select>
                             </FormControl>
 
+                            <FormControl>
+                                <FormLabel htmlFor="platformId">
+                                    Platform
+                                </FormLabel>
+                                <Select
+                                    {...register("platformId", {
+                                        required: "This is required",
+                                    })}
+                                >
+                                    {connectedPlatforms.map((platform, i) => (
+                                        <option
+                                            selected={
+                                                i === 0
+                                            }
+                                            key={platform.key}
+                                            value={platform.id}
+                                        >
+                                            {platform.key}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
                             <FormControl
                                 isInvalid={!!errors.publishedAt}
                                 hidden={hidePublishAt}
                             >
-                                <FormLabel htmlFor="name">
+                                <FormLabel htmlFor="publishedAt">
                                     Publication date
                                 </FormLabel>
                                 <Input
