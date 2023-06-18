@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
-    StoryStatus,
-    type Prisma,
-    type PrismaClient,
-    type Story,
+	StoryStatus,
+	type Prisma,
+	type PrismaClient,
+	type Story,
 } from "@prisma/client";
-import {
-    deleteStorySchedule,
-    scheduleStory,
-} from "~/server/services/storyScheduler.service";
-import { type Hook } from "../setup.hook";
 import { IgApiClient } from "instagram-private-api";
-import { DateTime } from "luxon";
+import { Duration } from "luxon";
+import {
+	deleteStorySchedule,
+	scheduleStory,
+} from "~/server/services/storyScheduler.service";
+import { isElapsedTimesBetweenDatesGreaterThanDuration } from "~/utils/date";
 import { decrypt } from "~/utils/decrypte-password";
+import { type Hook } from "../setup.hook";
 
 export class StoryHook implements Hook {
     useHook(
@@ -41,10 +41,17 @@ export class StoryHook implements Hook {
                     },
                 });
 
+				try {
+					await deleteStorySchedule((result as Story).id);
+				} catch (_) {
+					console.log('no schedule to delete');
+				}
+
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 if (
                     storyWithPosts &&
-                    (params.args.data as Partial<Story>)?.publishedAt
+                    (result as Partial<Story>)?.publishedAt &&
+                    (result as Partial<Story>)?.status !== StoryStatus.DRAFT
                 ) {
                     await scheduleStory(storyWithPosts);
                 }
@@ -56,7 +63,6 @@ export class StoryHook implements Hook {
 
         prismaClient.$use(async (params, next) => {
             if (params.model == "Story" && ["delete"].includes(params.action)) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 const storyId = params.args.where.id as string;
                 const story = await prismaClient.story.findUnique({
                     where: {
@@ -72,11 +78,16 @@ export class StoryHook implements Hook {
                     await deleteStorySchedule(story.id);
                 }
 
-				const nbHoursBetweenNowAndPublishedAt = DateTime.fromJSDate(
-					new Date(story?.publishedAt as unknown as string)
-				).diffNow("hours").hours;
-
-                if (story?.status === StoryStatus.PUBLISHED && nbHoursBetweenNowAndPublishedAt < 24) {
+                if (
+                    story?.status === StoryStatus.PUBLISHED &&
+                    !isElapsedTimesBetweenDatesGreaterThanDuration(
+                        new Date(story.publishedAt as unknown as string),
+                        new Date(),
+                        Duration.fromObject({
+                            hours: 24,
+                        })
+                    )
+                ) {
                     const ig = new IgApiClient();
                     ig.state.generateDevice(story.platform.login);
 

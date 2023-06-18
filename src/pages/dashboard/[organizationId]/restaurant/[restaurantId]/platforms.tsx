@@ -27,7 +27,9 @@ const DashboardPlatforms: NextPage = () => {
 
     const { data: platforms, isLoading } =
         api.platform.getAllByRestaurantId.useQuery(
-            router.query.restaurantId as string
+            router.query.restaurantId as string, {
+				refetchOnWindowFocus: false,
+			}
         );
 
     const createPlatformMutation = api.platform.create.useMutation({
@@ -112,9 +114,8 @@ const DashboardPlatforms: NextPage = () => {
                         available={platformKey === PlatformKey.INSTAGRAM}
                         createUpdatePlatform={createUpdatePlatform}
                         isLoadingCreateUpdatePlatform={
-                            createPlatformMutation.isLoading
+                            createPlatformMutation.isLoading || updatePlatformMutation.isLoading
                         }
-                        deletePlatformById={deletePlatformById}
                         key={i}
                     />
                 ))}

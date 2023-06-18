@@ -25,6 +25,7 @@ import { MdDelete, MdOutlineModeEditOutline } from "react-icons/md";
 import CreateUpdatePlatform from "./createUpdatePlatform";
 import { useRef } from "react";
 import { type createUpdatePlatformParams } from "~/pages/dashboard/[organizationId]/restaurant/[restaurantId]/platforms";
+import { api } from "~/utils/api";
 
 interface PlatformCardProps {
     platform?: Platform;
@@ -32,8 +33,6 @@ interface PlatformCardProps {
     available: boolean;
     createUpdatePlatform: (data: createUpdatePlatformParams) => void;
     isLoadingCreateUpdatePlatform: boolean;
-    deletePlatformById: (id: string) => void;
-    isLoadingDeletePlatform: boolean;
     isLoading: boolean;
 }
 
@@ -43,7 +42,6 @@ export const PlatformCard = ({
     available,
     createUpdatePlatform,
     isLoadingCreateUpdatePlatform,
-    deletePlatformById,
     isLoading,
 }: PlatformCardProps) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -54,6 +52,15 @@ export const PlatformCard = ({
         onClose: onCloseAlert,
     } = useDisclosure();
     const cancelRef = useRef<HTMLInputElement>(null);
+
+	const utils = api.useContext();
+
+	const {mutate: mutateDeletePlatform, isLoading: isLoadingDeletePlatform} = api.platform.deleteById.useMutation({
+        onSuccess: () => {
+			onCloseAlert();
+            utils.platform.getAllByRestaurantId.invalidate();
+        },
+    });
 
     const renderBottom = (available: boolean, platform?: Platform) => {
         if (platform) {
@@ -152,16 +159,10 @@ export const PlatformCard = ({
                             />
                             <MenuList>
                                 <MenuItem
-                                    onClick={onOpen}
-                                    icon={<MdOutlineModeEditOutline />}
-                                >
-                                    Edit
-                                </MenuItem>
-                                <MenuItem
                                     onClick={onOpenAlert}
                                     icon={<MdDelete />}
                                 >
-                                    Delete
+                                    Supprimer
                                 </MenuItem>
                             </MenuList>
                         </Menu>
@@ -183,18 +184,17 @@ export const PlatformCard = ({
                                                 marginRight="2"
                                                 src={`/${platformKey.toLowerCase()}.png`}
                                             />
-                                            Delete platform "{platformKey}"
+                                            Supprimer la plateforme "{platformKey}"
                                         </Box>
                                     </AlertDialogHeader>
 
                                     <AlertDialogBody>
-                                        Are you sure ? If you have scheduled
-                                        stories, they will be drafted.
+                                        Êtes-vous sûr ? Vos stories seront supprimées.
                                     </AlertDialogBody>
 
                                     <AlertDialogFooter>
                                         <Button onClick={onCloseAlert}>
-                                            Cancel
+                                            Annuler
                                         </Button>
                                         {platform?.id && (
                                             <Button
@@ -204,13 +204,12 @@ export const PlatformCard = ({
                                                 colorScheme="red"
                                                 ml={3}
                                                 onClick={() => {
-                                                    deletePlatformById(
-                                                        platform.id
-                                                    );
-                                                    onCloseAlert();
+                                                    mutateDeletePlatform({
+														id: platform.id,
+													});
                                                 }}
                                             >
-                                                Delete anyway
+                                                Supprimer quand même
                                             </Button>
                                         )}
                                     </AlertDialogFooter>

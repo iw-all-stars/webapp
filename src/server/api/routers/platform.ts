@@ -29,8 +29,8 @@ export const platformRouter = createTRPCRouter({
     create: publicProcedure
         .input(createPlatform)
         .mutation(async ({ ctx, input }) => {
+            await igLogin(input.key, input.login, input.password);
 
-			await igLogin(input.key, input.login, input.password);
 
             return ctx.prisma.platform.create({
                 data: {
@@ -49,22 +49,20 @@ export const platformRouter = createTRPCRouter({
     updateById: publicProcedure
         .input(updatePlatform)
         .mutation(async ({ ctx, input }) => {
+            const platform = await ctx.prisma.platform.findUnique({
+                where: {
+                    id: input.id,
+                },
+                select: {
+                    key: true,
+                },
+            });
 
+            if (!platform) {
+                throw new Error("Platform not found");
+            }
 
-			const platform = await ctx.prisma.platform.findUnique({
-				where: {
-					id: input.id,
-				},
-				select: {
-					key: true,
-				},
-			});
-
-			if (!platform) {
-				throw new Error("Platform not found");
-			}
-			
-			await igLogin(platform.key, input.login, input.password);
+            await igLogin(platform.key, input.login, input.password);
 
             return ctx.prisma.platform.update({
                 where: {
@@ -80,6 +78,7 @@ export const platformRouter = createTRPCRouter({
     deleteById: publicProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
+
             return ctx.prisma.platform.delete({
                 where: {
                     id: input.id,
@@ -94,14 +93,14 @@ export const platformRouter = createTRPCRouter({
                 where: {
                     restaurantId: input,
                 },
-				select: {
-					id: true,
-					key: true,
-					login: true,
-					restaurantId: true,
-					createdAt: true,
-					updatedAt: true,
-				}
+                select: {
+                    id: true,
+                    key: true,
+                    login: true,
+                    restaurantId: true,
+                    createdAt: true,
+                    updatedAt: true,
+                },
             });
         }),
 });
@@ -111,20 +110,24 @@ async function igLogin(
     username: string,
     password: string
 ) {
-	try {
-		switch (platformKey) {
-			case PlatformKey.INSTAGRAM:
-				const ig = new IgApiClient();
-				ig.state.generateDevice(username);
-				await ig.account.login(username, password);
-				break;
-			default:
-				throw new Error("Invalid platform key connection");
-		}
-	} catch (error) {
-		throw new TRPCError({
-			code: "UNAUTHORIZED",
-			message: "wrong login or password",
-		});
-	}
+    try {
+		console.log('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩')
+		console.log(username)
+		console.log(password)
+		console.log('🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦')
+        switch (platformKey) {
+            case PlatformKey.INSTAGRAM:
+                const ig = new IgApiClient();
+                ig.state.generateDevice(username);
+                await ig.account.login(username, password);
+                break;
+            default:
+                throw new Error("Invalid platform key connection");
+        }
+    } catch (error) {
+        throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "wrong login or password",
+        });
+    }
 }

@@ -212,6 +212,7 @@ model Platform {
 	restaurantId String @db.Uuid
 	stories Story[]
 
+
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
 }

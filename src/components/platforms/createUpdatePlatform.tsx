@@ -1,23 +1,23 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import {
-	Avatar,
-	Box,
-	Button,
-	FormControl,
-	FormErrorMessage,
-	FormLabel,
-	Input,
-	InputGroup,
-	InputRightElement,
-	Modal,
-	ModalBody,
-	ModalCloseButton,
-	ModalContent,
-	ModalHeader,
-	ModalOverlay
+    Avatar,
+    Box,
+    Button,
+    FormControl,
+    FormErrorMessage,
+    FormLabel,
+    Input,
+    InputGroup,
+    InputRightElement,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalHeader,
+    ModalOverlay,
 } from "@chakra-ui/react";
 import { type Platform, type PlatformKey } from "@prisma/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type createUpdatePlatformParams } from "~/pages/dashboard/[organizationId]/restaurant/[restaurantId]/platforms";
 
@@ -25,7 +25,7 @@ interface CreateUpdatePlatformProps {
     platformKey: PlatformKey;
     platform?: Platform;
     createUpdatePlatform: (data: createUpdatePlatformParams) => void;
-	isLoadingCreateUpdatePlatform: boolean;
+    isLoadingCreateUpdatePlatform: boolean;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -33,46 +33,62 @@ interface CreateUpdatePlatformProps {
 const CreateUpdatePlatform = ({
     platformKey,
     createUpdatePlatform,
-	isLoadingCreateUpdatePlatform,
+    isLoadingCreateUpdatePlatform,
     platform,
     isOpen,
     onClose,
 }: CreateUpdatePlatformProps) => {
-
     const {
         handleSubmit,
         register,
         formState: { errors, isSubmitting },
         reset,
-		setError,
+        setError,
+        setValue,
     } = useForm<Pick<Platform, "login" | "password">>({
         defaultValues: {
-            login: platform?.login || "",
+            login: platform?.login ?? "",
         },
     });
 
-	
-    const submit = (dataForm: Pick<Platform, "login" | "password">) => {
-        createUpdatePlatform({dataForm, key: platformKey, platform, options: {
-			onSuccess: () => {
-				onClose();
-				reset();
-			},
-			onError: (e: any) => {
-				// set errors
-				setError("login", {
-					type: "manual",
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-					message: e?.data?.httpStatus === 401 ? "Mauvais identifiants" : "Une erreur inconnue est survenue",
-				});
+    useEffect(() => {
+        setValue("login", platform ? platform.login : "");
+    }, [platform]);
 
-				setError("password", {
-					type: "manual",
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-					message: e?.data?.httpStatus === 401 ? "Mauvais identifiants" : "Une erreur inconnue est survenue",
-				});
-			}
-		}});
+    const submit = (dataForm: Pick<Platform, "login" | "password">) => {
+        createUpdatePlatform({
+            dataForm,
+            key: platformKey,
+            platform,
+            options: {
+                onSuccess: () => {
+                    onClose();
+                    reset();
+                },
+                onError: (e: any) => {
+                    // set errors
+                    setError("login", {
+                        type: "manual",
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        message:
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            e?.data?.httpStatus === 401
+                                ? "Mauvais identifiants"
+                                : "Une erreur inconnue est survenue",
+                    });
+
+                    setError("password", {
+                        type: "manual",
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        message:
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            e?.data?.httpStatus === 401
+                                ? "Mauvais identifiants"
+                                : "Une erreur inconnue est survenue",
+                    });
+                },
+            },
+        });
     };
 
     const [show, setShow] = useState(false);
@@ -84,9 +100,9 @@ const CreateUpdatePlatform = ({
             closeOnOverlayClick={false}
             isOpen={isOpen}
             onClose={() => {
-				onClose();
-				reset();
-			}}
+                onClose();
+                reset();
+            }}
         >
             <ModalOverlay />
             <ModalContent>
@@ -108,6 +124,8 @@ const CreateUpdatePlatform = ({
                             <FormControl isInvalid={!!errors.login}>
                                 <FormLabel htmlFor="login">Login</FormLabel>
                                 <Input
+                                    autoComplete="none"
+                                    isDisabled={!!platform}
                                     id="login"
                                     placeholder="login"
                                     {...register("login", {
@@ -126,6 +144,7 @@ const CreateUpdatePlatform = ({
                                 <InputGroup size="md">
                                     <Input
                                         id="password"
+                                        autoComplete="off"
                                         placeholder="password"
                                         pr="4.5rem"
                                         type={show ? "text" : "password"}
@@ -155,12 +174,18 @@ const CreateUpdatePlatform = ({
                                 isLoading={isLoadingCreateUpdatePlatform}
                                 type="submit"
                             >
-                                {platform ? "Enregistrer" : "Connecter"}
+                                {platform
+                                    ? "Enregistrer"
+                                    : "Connecter"}
                             </Button>
-                            <Button onClick={() => {
-								onClose();
-								reset();
-							}}>Cancel</Button>
+                            <Button
+                                onClick={() => {
+                                    onClose();
+                                    reset();
+                                }}
+                            >
+                                Cancel
+                            </Button>
                         </Box>
                     </form>
                 </ModalBody>

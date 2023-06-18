@@ -16,13 +16,30 @@ const createStory = z
     .object({
         name: z.string(),
         posts: z.array(createPost).min(1),
-        publishedAt: z.string().optional(),
+        publishedAt: z
+            .string()
+            .optional()
+            .refine(
+                (data) => {
+                    if (
+                        data &&
+                        DateTime.fromJSDate(new Date(data)) <
+                            DateTime.fromJSDate(new Date())
+                    ) {
+                        return false;
+                    }
+                    return true;
+                },
+                {
+                    message: "invalid publishedAt date, must be in the future",
+                }
+            ),
         status: z.enum([
             StoryStatus.DRAFT,
             StoryStatus.SCHEDULED,
             StoryStatus.NOW,
         ]),
-		platformId: z.string(),
+        platformId: z.string(),
     })
     .refine(
         (data) => {
@@ -36,9 +53,23 @@ const createStory = z
         }
     );
 
+const searchStories = z
+    .object({
+        name: z.string().optional(),
+        dates: z
+            .object({
+                startDate: z.string().optional(),
+                endDate: z.string().optional(),
+            })
+            .optional(),
+    })
+    .optional();
+
 export type CreatePost = z.infer<typeof createPost>;
 
 export type CreateStory = z.infer<typeof createStory>;
+
+export type SearchStories = z.infer<typeof searchStories>;
 
 export const storyRouter = createTRPCRouter({
     upsert: publicProcedure
@@ -103,7 +134,7 @@ export const storyRouter = createTRPCRouter({
                           name: input.data.name,
                           publishedAt: publishedAt,
                           status: input.data.status,
-						  platformId: input.data.platformId,
+                          platformId: input.data.platformId,
                           posts: {
                               connect: input.data.posts.map((post) => ({
                                   id: post.id,
@@ -120,7 +151,7 @@ export const storyRouter = createTRPCRouter({
                           publishedAt: publishedAt,
                           status: input.data.status,
                           posts: {
-                              connect: input.data.posts.map((post) => ({
+                              set: input.data.posts.map((post) => ({
                                   id: post.id,
                               })),
                           },
@@ -138,10 +169,31 @@ export const storyRouter = createTRPCRouter({
             });
         }),
 
-    getAll: publicProcedure.query(({ ctx }) => {
+    getAll: publicProcedure.input(searchStories).query(({ ctx, input }) => {
+        let where = {};
+        if (input?.name) {
+            where = {
+                name: {
+                    contains: input.name.trim().toLocaleLowerCase(),
+                    mode: "insensitive",
+                },
+            };
+        }
+
+        if (input?.dates?.startDate && input?.dates?.endDate) {
+            where = {
+                ...where,
+                publishedAt: {
+                    gte: new Date(input.dates.startDate),
+                    lte: new Date(input.dates.endDate),
+                },
+            };
+        }
+
         return ctx.prisma.story.findMany({
+            where,
             orderBy: {
-                createdAt: "desc",
+                publishedAt: "desc",
             },
             include: {
                 posts: {
@@ -149,16 +201,16 @@ export const storyRouter = createTRPCRouter({
                         position: "asc",
                     },
                 },
-				platform: {
-					select: {
-						key: true,
-						createdAt: true,
-						updatedAt: true,
-						id: true,
-						login: true,
-						restaurantId: true,
-					}
-				},
+                platform: {
+                    select: {
+                        key: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        id: true,
+                        login: true,
+                        restaurantId: true,
+                    },
+                },
             },
         });
     }),

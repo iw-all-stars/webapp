@@ -1,44 +1,80 @@
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import {
-	Avatar,
-	AvatarGroup,
-	Box,
-	Button,
-	Icon,
-	IconButton,
-	Input,
-	InputGroup,
-	InputRightElement,
-	Menu,
-	MenuButton,
-	MenuList,
-	Skeleton,
-	Text,
-	useDisclosure
+    Avatar,
+    AvatarGroup,
+    Box,
+    Button,
+    Icon,
+    IconButton,
+    Input,
+    InputGroup,
+    InputRightElement,
+    Menu,
+    MenuButton,
+    MenuList,
+    Skeleton,
+    SkeletonCircle,
+    Text,
+    useDisclosure,
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { useRouter } from "next/router";
 import { BiSearch } from "react-icons/bi";
-import {
-	BsPhone
-} from "react-icons/bs";
+import { BsPhone } from "react-icons/bs";
 import { GoSettings } from "react-icons/go";
 import CreateUpdateStory from "~/components/stories/CreateUpdateStory";
 import { StoryCard } from "~/components/stories/storyCard";
 import { api } from "~/utils/api";
 import { PLATFORMS } from "./platforms";
+import { useEffect, useState } from "react";
+import { useDebounce } from "usehooks-ts";
+import { useForm } from "react-hook-form";
+import { dateFromBackend } from "~/utils/date";
+import { DateTime } from "luxon";
+import { NoResultsStories } from "~/components/stories/NoResultsStories";
 
 const DashboardStory: NextPage = () => {
     const router = useRouter();
 
-    const { data: stories, isLoading } = api.story.getAll.useQuery();
+    const [search, setSearch] = useState<string>("");
+
+    const debouncedSearchTerm = useDebounce(search, 500);
+    const { register, watch, getValues, reset, setValue } = useForm<{
+        startDate: string | undefined;
+        endDate: string | undefined;
+    }>({});
+
+    const [dateRanges, setDateRanges] = useState<{
+        startDate: string | undefined;
+        endDate: string | undefined;
+    }>({
+        startDate: undefined,
+        endDate: undefined,
+    });
+
+    const { data: stories, isLoading } = api.story.getAll.useQuery({
+        name: debouncedSearchTerm,
+        dates: dateRanges,
+    });
     const { data: platforms } = api.platform.getAllByRestaurantId.useQuery(
         router.query.restaurantId as string
     );
 
     const { isOpen, onOpen, onClose } = useDisclosure();
 
-    if (!platforms?.length) {
+    useEffect(() => {
+        const subscription = watch(({ startDate, endDate }) => {
+            if (startDate && endDate) {
+                setDateRanges(getValues());
+            }
+            if (!startDate && !endDate) {
+                setDateRanges(getValues());
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, [watch]);
+
+    if (!platforms?.length && !isLoading) {
         return (
             <Box
                 h="full"
@@ -87,58 +123,156 @@ const DashboardStory: NextPage = () => {
 
     return (
         <Box display="flex" flexDirection="column" h="full" w="full">
-            <Skeleton isLoaded={!isLoading}>
-                <Box
-                    display="flex"
-                    gap="4"
-                    margin="12px 12px 6px 12px"
-                    alignItems="center"
-                >
-                    <Text fontSize="lg" fontWeight="bold">
-                        Stories
-                    </Text>
-                    <InputGroup flexShrink="3">
-                        <Input placeholder="Search by story name ..." />
-                        <InputRightElement>
-                            <Icon as={BiSearch} />
-                        </InputRightElement>
-                    </InputGroup>
-                    <Menu>
-                        <MenuButton as={IconButton} icon={<GoSettings />}>
-                            Actions
-                        </MenuButton>
-                        <MenuList>
-                            <Box>Dates</Box>
-                        </MenuList>
-                    </Menu>
-                    <Button
-                        leftIcon={<BsPhone />}
-                        colorScheme="teal"
-                        variant="solid"
-                        onClick={onOpen}
-                    >
-                        Create Story
-                    </Button>
-                </Box>
-            </Skeleton>
-
-            {/* Modal */}
-            <CreateUpdateStory connectedPlatforms={platforms} isOpen={isOpen} onClose={onClose} />
-
             <Box
                 display="flex"
-                overflowY="auto"
-                flexWrap="wrap"
-                gap="5"
-                margin="4"
+                gap="4"
+                margin="12px 12px 6px 12px"
+                alignItems="center"
             >
-                {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    (stories || []).map((story) => (
-                        <StoryCard connectedPlatforms={platforms} story={story} key={story.id} />
-                    ))
-                }
+                <Text fontSize="lg" fontWeight="bold">
+                    Stories
+                </Text>
+                <InputGroup flexShrink="3">
+                    <Input
+                        value={search}
+                        onChange={(value) => setSearch(value.target.value)}
+                        placeholder="Rechercher par nom de story ..."
+                    />
+                    <InputRightElement>
+                        <Icon as={BiSearch} />
+                    </InputRightElement>
+                </InputGroup>
+                <Menu>
+                    <MenuButton as={IconButton} icon={<GoSettings />}>
+                        Actions
+                    </MenuButton>
+                    <MenuList>
+                        <Box
+                            padding="4"
+                            display="flex"
+                            flexDirection="column"
+                            gap="3"
+                        >
+                            <Box
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="space-between"
+                            >
+                                <Text fontWeight="medium">Filtres</Text>
+                                <Button
+                                    size="sm"
+                                    colorScheme="blue"
+                                    variant="solid"
+                                    onClick={() => {
+                                        setValue("startDate", undefined);
+                                        setValue("endDate", undefined);
+                                    }}
+                                >
+                                    Effacer
+                                </Button>
+                            </Box>
+                            <Box>
+                                <Text mb="1" fontSize="xs">
+                                    Date de publication début
+                                </Text>
+                                <Input
+                                    {...register("startDate")}
+                                    placeholder="Select Date and Time"
+                                    size="md"
+                                    type="date"
+                                />
+                            </Box>
+                            <Box>
+                                <Text mb="1" fontSize="xs">
+                                    Date de publication fin
+                                </Text>
+                                <Input
+                                    {...register("endDate")}
+                                    placeholder="Select Date and Time"
+                                    size="md"
+                                    type="date"
+                                />
+                            </Box>
+                        </Box>
+                    </MenuList>
+                </Menu>
+                <Button
+                    leftIcon={<BsPhone />}
+                    colorScheme="teal"
+                    variant="solid"
+                    onClick={onOpen}
+                >
+                    Créer une story
+                </Button>
             </Box>
+
+            {platforms?.length && !isLoading ? (
+                <>
+                    <CreateUpdateStory
+                        connectedPlatforms={platforms}
+                        isOpen={isOpen}
+                        onClose={onClose}
+                    />
+                    {(stories || [])?.length > 0 ? (
+                        <Box
+                            display="flex"
+                            overflowY="auto"
+                            flexWrap="wrap"
+                            gap="5"
+                            margin="4"
+                        >
+                            {(stories || []).map((story) => (
+                                <StoryCard
+                                    connectedPlatforms={platforms}
+                                    story={story}
+                                    key={story.id}
+                                />
+                            ))}
+                        </Box>
+                    ) : (
+                        <NoResultsStories />
+                    )}
+                </>
+            ) : (
+                <Box display="flex" gap={4}>
+                    {Array.from({ length: 2 }).map((_, i) => (
+                        <Box
+                            key={i}
+                            bg="gray.100"
+                            height="283px"
+                            width="294px"
+                            marginTop="4"
+                            borderRadius="md"
+                            display="flex"
+                            flexDirection="column"
+                        >
+                            <Box display="flex" alignItems="center" margin="5">
+                                <SkeletonCircle
+                                    startColor="gree.100"
+                                    size="10"
+                                />
+                                <Box
+                                    display="flex"
+                                    flexDirection="column"
+                                    gap="2"
+                                    marginLeft="4"
+                                >
+                                    <Skeleton height="10px" width="150px" />
+                                    <Skeleton height="10px" width="100px" />
+                                </Box>
+                            </Box>
+                            <Box flex="1">
+                                <Skeleton
+                                    startColor="teal.50"
+                                    endColor="teal.100"
+                                    height="100%"
+                                    width="100%"
+                                />
+                            </Box>
+                        </Box>
+                    ))}
+                </Box>
+            )}
         </Box>
     );
 };

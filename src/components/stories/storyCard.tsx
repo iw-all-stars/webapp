@@ -1,44 +1,46 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
-	AlertDialog,
-	AlertDialogBody,
-	AlertDialogContent,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogOverlay,
-	Avatar,
-	Box,
-	Button,
-	Icon,
-	IconButton,
-	Image,
-	Menu,
-	MenuButton,
-	MenuItem,
-	MenuList,
-	Text,
-	useDisclosure,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
+    Avatar,
+    Box,
+    Button,
+    Icon,
+    IconButton,
+    Image,
+    Menu,
+    MenuButton,
+    MenuItem,
+    MenuList,
+    Text,
+    useDisclosure,
 } from "@chakra-ui/react";
 import {
-	PostType,
-	StoryStatus,
-	type Platform,
-	type Post,
-	type Story,
+    PostType,
+    StoryStatus,
+    type Platform,
+    type Post,
+    type Story,
 } from "@prisma/client";
 import { useRef } from "react";
 import { BiTime } from "react-icons/bi";
 import {
-	BsFileText,
-	BsFillCheckCircleFill,
-	BsFillEyeFill,
-	BsHourglassSplit,
-	BsThreeDotsVertical,
+    BsCameraVideo,
+    BsFileText,
+    BsFillCheckCircleFill,
+    BsFillEyeFill,
+    BsHourglassSplit,
+    BsThreeDotsVertical,
 } from "react-icons/bs";
 import { MdDelete, MdOutlineModeEditOutline } from "react-icons/md";
 import { TiDelete } from "react-icons/ti";
 import { api } from "~/utils/api";
 import CreateUpdateStory from "./CreateUpdateStory";
+import { DateTime } from "luxon";
 
 interface StoryCardProps {
     story: Story & { posts: Post[]; platform: Omit<Platform, "password"> };
@@ -53,7 +55,7 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
     const deleteStoryMutation = api.story.delete.useMutation({
         onSuccess: () => {
             utils.story.getAll.invalidate();
-			onCloseAlert();
+            onCloseAlert();
         },
     });
 
@@ -177,9 +179,9 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                                 </Text>
                                 <Text fontSize="xs" color="gray.500">
                                     {story.publishedAt &&
-                                        new Date(
-                                            story.publishedAt
-                                        ).toLocaleDateString()}
+                                        DateTime.fromJSDate(
+                                            new Date(story.publishedAt)
+                                        ).toFormat("dd/MM/yyyy HH:mm")}
                                 </Text>
                             </Box>
                         </Box>
@@ -191,17 +193,24 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                                 variant="ghost"
                             />
                             <MenuList>
-							{[StoryStatus.DRAFT, StoryStatus.SCHEDULED].includes(story.status as any) && (
-                                <MenuItem
-                                    onClick={onOpen}
-                                    icon={<MdOutlineModeEditOutline />}
-                                >
-                                    Editer
-                                </MenuItem>
-							)}
+                                {[
+                                    StoryStatus.DRAFT,
+                                    StoryStatus.SCHEDULED,
+                                ].includes(story.status as any) && (
+                                    <MenuItem
+                                        onClick={onOpen}
+                                        icon={<MdOutlineModeEditOutline />}
+                                    >
+                                        Editer
+                                    </MenuItem>
+                                )}
                                 {story.status === StoryStatus.PUBLISHED && (
                                     <a
-                                        href={`https:///www.instagram.com/stories/${story.platform.login}/${story.posts[0]?.socialPostId ?? ''}`}
+                                        href={`https:///www.instagram.com/stories/${
+                                            story.platform.login
+                                        }/${
+                                            story.posts[0]?.socialPostId ?? ""
+                                        }`}
                                         target="_blank"
                                     >
                                         <MenuItem icon={<BsFillEyeFill />}>
@@ -260,11 +269,43 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                                             objectFit: "cover",
                                             height: "100%",
                                             width: "100%",
-                                            borderRadius: "1px",
+                                            borderTopLeftRadius:
+                                                index === 0 ? "4px" : "",
+                                            borderBottomLeftRadius:
+                                                index === 0 ? "4px" : "",
+                                            borderTopRightRadius:
+                                                index ===
+                                                story.posts.slice(0, 3).length -
+                                                    1
+                                                    ? "4px"
+                                                    : "",
+                                            borderBottomRightRadius:
+                                                index ===
+                                                story.posts.slice(0, 3).length -
+                                                    1
+                                                    ? "4px"
+                                                    : "",
                                         }}
                                     >
                                         <source src={post.originalUrl} />
                                     </video>
+                                )}
+
+                                {post.type === PostType.VIDEO && (
+                                    <Box
+                                        cursor="pointer"
+                                        position="absolute"
+                                        bottom="1"
+                                        right="1"
+                                        display="flex"
+                                        justifyContent="center"
+                                        alignItems="center"
+                                        w={8}
+                                        h={8}
+                                        color="white"
+                                    >
+                                        <BsCameraVideo />
+                                    </Box>
                                 )}
 
                                 {index === 2 && story.posts.length > 3 && (
@@ -275,7 +316,7 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                                         height="100%"
                                         width="100%"
                                         background="rgba(0,0,0,0.35)"
-                                        borderRadius="md"
+                                        borderRightRadius="md"
                                         display="flex"
                                         justifyContent="center"
                                         alignItems="center"
@@ -301,19 +342,18 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                     <AlertDialogOverlay bg="blackAlpha.300">
                         <AlertDialogContent>
                             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                                Delete Story
+                                Supprimer la story
                             </AlertDialogHeader>
 
                             <AlertDialogBody>
-                                Are you sure? You can't undo this action
-                                afterwards.
+                                Êtes-vous sûr de vouloir supprimer cette story ?
                             </AlertDialogBody>
 
                             <AlertDialogFooter>
                                 <Button onClick={onCloseAlert}>Cancel</Button>
                                 <Button
                                     colorScheme="red"
-									isLoading={deleteStoryMutation.isLoading}
+                                    isLoading={deleteStoryMutation.isLoading}
                                     onClick={() => {
                                         deleteStoryMutation.mutate({
                                             id: story.id,

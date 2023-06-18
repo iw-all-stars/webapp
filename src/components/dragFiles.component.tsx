@@ -9,6 +9,8 @@ import {
     type DragUpdate,
 } from "react-beautiful-dnd";
 import { BiImageAdd } from "react-icons/bi";
+import { BsCameraVideo } from "react-icons/bs";
+import { MdDelete } from "react-icons/md";
 
 interface DragFilesProps {
     files: File[];
@@ -27,8 +29,6 @@ export const DragFiles = ({
     setPosts,
     error,
 }: DragFilesProps) => {
-    const postes = posts;
-
     const inputRef = useRef<HTMLInputElement>(null);
 
     const reorder = (list: Post[], startIndex: number, endIndex: number) => {
@@ -107,21 +107,21 @@ export const DragFiles = ({
                             color="purple.800"
                             fontWeight="bold"
                         >
-                            Drag and drop your files here
+                            Déposez vos fichiers ici
                         </Box>
                         <Box
                             textAlign="center"
                             color="purple.400"
                             fontSize="sm"
                         >
-                            or
+                            ou
                         </Box>
                         <Box
                             textAlign="center"
                             color="purple.400"
                             fontSize="sm"
                         >
-                            Click to select files
+                            Cliquez pour sélectionner vos fichiers
                         </Box>
                     </Box>
                 </Box>
@@ -139,7 +139,7 @@ export const DragFiles = ({
                                     ref={provided.innerRef}
                                     {...provided.droppableProps}
                                 >
-                                    {postes.map((item, index) => (
+                                    {posts.map((item, index) => (
                                         <Draggable
                                             key={item.originalUrl}
                                             draggableId={item.originalUrl}
@@ -152,6 +152,7 @@ export const DragFiles = ({
                                                 <Box
                                                     width="120px"
                                                     height={200}
+                                                    position="relative"
                                                     mr={1}
                                                     border={
                                                         isStillConverting(item)
@@ -176,11 +177,13 @@ export const DragFiles = ({
                                                     ) : (
                                                         <video
                                                             style={{
-																objectFit: "cover",
-																height: "100%",
-																width: "100%",
-																borderRadius: "1px",
-															}}
+                                                                objectFit:
+                                                                    "cover",
+                                                                height: "100%",
+                                                                width: "100%",
+                                                                borderRadius:
+                                                                    "1px",
+                                                            }}
                                                         >
                                                             <source
                                                                 src={
@@ -188,6 +191,48 @@ export const DragFiles = ({
                                                                 }
                                                             />
                                                         </video>
+                                                    )}
+                                                    <Box
+                                                        cursor="pointer"
+                                                        position="absolute"
+                                                        top="1"
+                                                        right="1"
+                                                        display="flex"
+                                                        justifyContent="center"
+                                                        alignItems="center"
+                                                        bg="white"
+                                                        borderRadius={50}
+                                                        w={8}
+                                                        h={8}
+                                                        color="purple.400"
+                                                        onClick={() => {
+                                                            setPosts(
+                                                                posts.filter(
+                                                                    (p) =>
+                                                                        p.id !==
+                                                                        item.id
+                                                                )
+                                                            );
+                                                        }}
+                                                    >
+                                                        <MdDelete />
+                                                    </Box>
+                                                    {item.type ===
+                                                        PostType.VIDEO && (
+                                                        <Box
+                                                            cursor="pointer"
+                                                            position="absolute"
+                                                            bottom="1"
+                                                            right="1"
+                                                            display="flex"
+                                                            justifyContent="center"
+                                                            alignItems="center"
+                                                            w={8}
+                                                            h={8}
+                                                            color="white"
+                                                        >
+                                                            <BsCameraVideo />
+                                                        </Box>
                                                     )}
                                                 </Box>
                                             )}
@@ -217,12 +262,15 @@ export const DragFiles = ({
                         as={BiImageAdd}
                     ></Icon>
                     <Text fontSize="xs" color="purple.400">
-                        Add files
+                        Ajouter des fichiers
                     </Text>
                 </Box>
             </Box>
             {!!error?.data?.zodError?.posts && (
-                <p>Wait few seconds until all files are converted</p>
+                <Text fontSize="sm" color="orange.400">
+                    Attendez quelques secondes que vos fichiers se convertissent
+                    dans le bon format
+                </Text>
             )}
         </Box>
     );

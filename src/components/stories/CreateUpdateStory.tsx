@@ -1,26 +1,26 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import {
-	Box,
-	Button,
-	FormControl,
-	FormErrorMessage,
-	FormLabel,
-	Input,
-	Modal,
-	ModalBody,
-	ModalCloseButton,
-	ModalContent,
-	ModalHeader,
-	ModalOverlay,
-	Select,
-	useToast
+    Box,
+    Button,
+    FormControl,
+    FormErrorMessage,
+    FormLabel,
+    Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalHeader,
+    ModalOverlay,
+    Select,
+    useToast,
 } from "@chakra-ui/react";
 import {
-	StoryStatus,
-	type Post,
-	type PostType,
-	type Story,
-	type Platform,
+    StoryStatus,
+    type Post,
+    type PostType,
+    type Story,
+    type Platform,
 } from "@prisma/client";
 import { DateTime } from "luxon";
 import React, { useEffect, useState } from "react";
@@ -31,13 +31,18 @@ import { api } from "~/utils/api";
 import { dateFromBackend, toBackendDate } from "~/utils/date";
 
 interface CreateStoryProps {
-	connectedPlatforms: Omit<Platform, 'password'>[];
+    connectedPlatforms: Omit<Platform, "password">[];
     story?: Story & { posts: Post[] };
     isOpen: boolean;
     onClose: () => void;
 }
 
-const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: CreateStoryProps) => {
+const CreateUpdateStory = ({
+    connectedPlatforms,
+    story,
+    isOpen,
+    onClose,
+}: CreateStoryProps) => {
     const [files, setFiles] = useState<File[]>([]);
     const [posts, setPosts] = useState<Post[]>(story?.posts ?? []);
     const [hidePublishAt, setHidePublishAt] = useState<boolean>(false);
@@ -58,19 +63,31 @@ const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: Creat
             onClose();
             utils.story.getAll.invalidate();
         },
+		onError: (error: { message: string; }) => {
+			if (error?.message.match(/invalid publishedAt date/)) {
+				toast({
+					title: "Méthode de programmation invalide",
+					description: "Vous ne pouvez pas programmer une story dans le passé",
+					status: "error",
+					duration: 5000,
+					isClosable: true,
+				});
+			}
+		}
     });
     const createManyPost = api.post.createMany.useMutation({});
 
     const toast = useToast();
 
     function createUpdateStory(data: CreateStory) {
+        const publishedAt = data.publishedAt
+            ? toBackendDate(data.publishedAt).toISOString()
+            : undefined;
         createUpdateStoryMutation({
             id: story?.id,
             data: {
                 ...data,
-                publishedAt: toBackendDate(
-                    data.publishedAt as string
-                ).toISOString(),
+                publishedAt,
             },
         });
     }
@@ -84,31 +101,46 @@ const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: Creat
         getValues,
         resetField,
         reset,
+		formState: { isValid }
     } = useForm<CreateStory>({
         defaultValues: !story
             ? {
                   status: StoryStatus.SCHEDULED,
                   publishedAt: dateFromBackend(
-                      DateTime.now().toISO() as string
+                      DateTime.now().plus({ minutes: 10 }).toISO() as string
                   ),
               }
             : {
                   name: story.name,
                   status: story.status as CreateStory["status"],
                   posts: story.posts,
-				  platformId: story.platformId as string,
+                  platformId: story.platformId,
                   publishedAt: story.publishedAt
                       ? dateFromBackend(story.publishedAt as unknown as string)
                       : undefined,
               },
+			  
     });
 
     useEffect(() => {
         resetField("publishedAt");
-        setHidePublishAt(
+        if (
             getValues("status") === StoryStatus.DRAFT ||
-                getValues("status") === StoryStatus.NOW
-        );
+            getValues("status") === StoryStatus.NOW
+        ) {
+            setHidePublishAt(true);
+        } else {
+            setHidePublishAt(false);
+        }
+
+        if (getValues("status") === StoryStatus.DRAFT) {
+            setValue("publishedAt", undefined);
+        } else {
+            setValue(
+                "publishedAt",
+                dateFromBackend(DateTime.now().plus({ minutes: 10 }).toISO() as string)
+            );
+        }
     }, [watch("status")]);
 
     const uploadFiles = async () => {
@@ -224,12 +256,15 @@ const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: Creat
             size="2xl"
             closeOnOverlayClick={false}
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={() => {
+				setPosts(story?.posts ?? []);
+				onClose();
+			}}
         >
             <ModalOverlay />
             <ModalContent>
                 <ModalHeader>
-                    {story?.id ? "Update" : "Create"} Story
+                    {story?.id ? "Éditer" : "Créer"} une story
                 </ModalHeader>
                 <ModalCloseButton />
                 <ModalBody pb={6}>
@@ -237,11 +272,11 @@ const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: Creat
                         <Box display="flex" flexDirection="column" gap="3">
                             <FormControl isInvalid={!!errors.name}>
                                 <FormLabel htmlFor="name">
-                                    Story name (optional)
+                                    Nom de votre story
                                 </FormLabel>
                                 <Input
                                     id="name"
-                                    placeholder="name"
+                                    placeholder="nom de votre story"
                                     {...register("name", {
                                         required: "This is required",
                                         minLength: {
@@ -258,7 +293,7 @@ const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: Creat
 
                             <FormControl>
                                 <FormLabel htmlFor="status">
-                                    Schedule type
+                                    Méthode de programmation
                                 </FormLabel>
                                 <Select
                                     {...register("status", {
@@ -270,10 +305,7 @@ const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: Creat
                                         StoryStatus.SCHEDULED,
                                         StoryStatus.DRAFT,
                                     ].map((status) => (
-                                        <option
-                                            key={status}
-                                            value={status}
-                                        >
+                                        <option key={status} value={status}>
                                             {status}
                                         </option>
                                     ))}
@@ -282,7 +314,7 @@ const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: Creat
 
                             <FormControl>
                                 <FormLabel htmlFor="platformId">
-                                    Platform
+                                    Plateforme
                                 </FormLabel>
                                 <Select
                                     {...register("platformId", {
@@ -291,9 +323,7 @@ const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: Creat
                                 >
                                     {connectedPlatforms.map((platform, i) => (
                                         <option
-                                            selected={
-                                                i === 0
-                                            }
+                                            selected={i === 0}
                                             key={platform.key}
                                             value={platform.id}
                                         >
@@ -308,11 +338,11 @@ const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: Creat
                                 hidden={hidePublishAt}
                             >
                                 <FormLabel htmlFor="publishedAt">
-                                    Publication date
+                                    Date de publication
                                 </FormLabel>
                                 <Input
                                     id="publishedAt"
-                                    placeholder="publishedAt"
+                                    placeholder="Publication"
                                     type="datetime-local"
                                     {...register("publishedAt", {})}
                                 />
@@ -329,20 +359,22 @@ const CreateUpdateStory = ({ connectedPlatforms, story, isOpen, onClose }: Creat
                                 setPosts={setPosts}
                                 error={addStoryError}
                             />
-                            <Box mt="4" display="flex" justifyContent="end">
+                            <Box mt="4" display="flex" gap="2" justifyContent="end">
                                 <Button
+									isDisabled={!isValid || posts.length === 0}
                                     colorScheme="teal"
-                                    isLoading={isLoading}
                                     type="submit"
+									isLoading={isLoading}
                                 >
-                                    Submit
+                                    Sauvegarder
                                 </Button>
                                 <Button
                                     onClick={() => {
+										setPosts(story?.posts ?? []);
                                         onClose();
                                     }}
                                 >
-                                    Cancel
+                                    Annuler
                                 </Button>
                             </Box>
                         </Box>

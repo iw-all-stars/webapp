@@ -16,16 +16,9 @@ const client = new SchedulerClient({
 });
 
 export const scheduleStory = async (story: Story & { posts: Post[], platform: Platform }) => {
-    console.info('🟩 SCHEDULE STORY ', story.id)
-    try {
-        await deleteStorySchedule(story.id);
-    } catch (e) {
-        console.log(e);
-    }
-
     if (!story.publishedAt) return;
 
-    const { minute, hour, day, month, year, second } = DateTime.fromJSDate(
+    const { minute, hour, day, month, year } = DateTime.fromJSDate(
         story.publishedAt
     )
         .toUTC()
