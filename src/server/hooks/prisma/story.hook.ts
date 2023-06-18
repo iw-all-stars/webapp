@@ -53,7 +53,27 @@ export class StoryHook implements Hook {
                     (result as Partial<Story>)?.publishedAt &&
                     (result as Partial<Story>)?.status !== StoryStatus.DRAFT
                 ) {
-                    await scheduleStory(storyWithPosts);
+					const platform = await prismaClient.platform.findFirst({
+						where: {
+							id: storyWithPosts.platformId,
+						},
+						include: {
+							restaurant: true,
+						},
+					});
+					const restaurantWithOrga = await prismaClient.restaurant.findFirst({
+						where: {
+							id: platform?.restaurantId,
+						},
+						include: {
+							organization: true,
+						},
+					})
+
+					if (restaurantWithOrga) {
+						await scheduleStory(storyWithPosts, restaurantWithOrga);
+					}
+
                 }
             }
 
