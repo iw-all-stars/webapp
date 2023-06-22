@@ -46,9 +46,12 @@ export const mailRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const mail = await ctx.prisma.mail.findUnique({
         where: { id: input },
-        include: { campaign: {
-          include: { restaurant: true },
-        }, client: true },
+        include: {
+          campaign: {
+            include: { restaurant: true },
+          },
+          client: true,
+        },
       });
 
       if (!mail) {
@@ -118,6 +121,41 @@ export const mailRouter = createTRPCRouter({
           )
         );
 
+        // Send emails
+        recipientIds.forEach((id) => {
+          const mail = mails.find(
+            (m: { clientId: string }) => m.clientId === id
+          );
+          if (!mail) {
+            throw new Error("Erreur lors de l'envoi de la campagne");
+          }
+          sendEmail({
+            templateId: campaign.template,
+            email: mail.client.email,
+            firstname: mail.client.firstname || mail.client.name,
+            subject: campaign.subject,
+            body: campaign.body.replaceAll(
+              "@Prénom_client",
+              mail.client.firstname || mail.client.name
+            ),
+            mailId: mail.id,
+            restaurant: campaign.restaurant.name,
+            rateURL:
+              campaign.url ??
+              `https://www.google.com/search?q=${campaign.restaurant.name}`,
+            logoURL: campaign.restaurant.logo
+              ? campaign.restaurant.logo
+              : undefined,
+          });
+        });
+
+        await ctx.prisma.mail.updateMany({
+          where: { id: { in: mails.map((m: { id: string }) => m.id) } },
+          data: {
+            status: "sent",
+          },
+        });
+
         // Update campaign status
         await ctx.prisma.campaign.update({
           where: { id: campaignId },
@@ -126,30 +164,17 @@ export const mailRouter = createTRPCRouter({
           },
         });
 
-        // Send emails
-        recipientIds.forEach((id) => {
-          const mail = mails.find((m: { clientId: string; }) => m.clientId === id);
-          if (!mail) {
-            throw new Error("Erreur lors de l'envoi de la campagne");
-          }
-          sendEmail({
-            templateId: 5,
-            email: mail.client.email,
-            firstname: mail.client.firstname || mail.client.name,
-            subject: campaign.subject,
-            body: campaign.body,
-            mailId: mail.id,
-            restaurant: campaign.restaurant.name,
-            rateURL: `https://www.google.com/search?q=${campaign.restaurant.name}`, // todo: replace with real url
-            logoURL: campaign.restaurant.logo ? campaign.restaurant.logo : undefined,
-          });
-        });
-        await ctx.prisma.mail.updateMany({
-          where: { id: { in: mails.map((m: { id: string; }) => m.id) } },
-          data: {
-            status: "sent",
+        const updatedCampaign = await ctx.prisma.campaign.findUnique({
+          where: { id: campaignId },
+          include: {
+            restaurant: true,
+            mail: {
+              include: { client: true },
+            },
           },
         });
+
+        return updatedCampaign;
       });
     }),
 

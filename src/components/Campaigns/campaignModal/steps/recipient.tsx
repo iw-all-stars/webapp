@@ -38,7 +38,7 @@ import {
   ChevronRightIcon,
   ChevronLeftIcon,
 } from "@chakra-ui/icons";
-import { Recipient } from "..";
+import { type Recipient } from "..";
 
 interface RecipientStepProps {
   columns: Column<object>[];

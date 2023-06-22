@@ -15,7 +15,7 @@ interface IMail {
   logoURL?: string;
 }
 
-const sendEmail = ({ templateId, restaurant, email, firstname, subject, body, mailId, rateURL, logoURL }: IMail) => {
+const sendEmail = ({ templateId, restaurant, email, firstname, subject, body, mailId, rateURL, logoURL }: IMail): Promise<unknown> => {
   const sendSmtpEmail = {
     to: [
       {
@@ -34,13 +34,9 @@ const sendEmail = ({ templateId, restaurant, email, firstname, subject, body, ma
       rateURL,
       logoURL,
     },
-    // headers: {
-    //   "X-Mailin-custom":
-    //     "custom_header_1:custom_value_1|custom_header_2:custom_value_2",
-    // },
   };
 
-  apiInstance.sendTransacEmail(sendSmtpEmail).then(
+  return apiInstance.sendTransacEmail(sendSmtpEmail).then(
     function (data: unknown) {
       console.log(`API called successfully. Returned data: ${data}`);
       return data;

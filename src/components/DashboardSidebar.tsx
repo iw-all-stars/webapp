@@ -22,7 +22,6 @@ import {
   MdCampaign,
   MdPhotoFilter,
   MdHome,
-  MdOutlineDataset,
 } from "react-icons/md";
 import Link from "next/link";
 
@@ -67,15 +66,10 @@ export default function DashboardSidebar() {
 
   const settings = [
     {
-      name: "Ressources",
-      slug: "resources",
-      icon: MdOutlineDataset,
+      name: "Plateformes",
+      slug: "platforms",
+      icon: RxComponent1,
     },
-	{
-		name: "Plateformes",
-		slug: "platforms",
-		icon: RxComponent1
-	  },
     {
       name: "Paramètres",
       slug: "settings",

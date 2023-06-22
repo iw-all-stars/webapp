@@ -17,7 +17,7 @@ const server = z.object({
     (str) => process.env.VERCEL_URL ?? str,
     // VERCEL_URL doesn't include `https` so it cant be validated as a URL
     process.env.VERCEL ? z.string().min(1) : z.string().url(),
-  ),
+    ),
   // Add `.min(1) on ID and SECRET if you want to make sure they're not empty
 });
 
@@ -27,6 +27,7 @@ const server = z.object({
  */
 const client = z.object({
   NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
+  NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID: z.string().min(1),
 });
 
 /**
@@ -41,6 +42,7 @@ const processEnv = {
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
   NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+  NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID: process.env.NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID,
 };
 
 // Don't touch the part below

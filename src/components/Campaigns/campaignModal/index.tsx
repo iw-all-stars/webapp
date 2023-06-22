@@ -13,30 +13,32 @@ import {
   Spinner,
   Text,
 } from "@chakra-ui/react";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import CampaignStep from "./steps/campaign";
-import { type Client, type Campaign } from "@prisma/client";
-import { type SubmitHandler } from "react-hook-form";
-import Stepper from "../stepper";
+import { type Client } from "@prisma/client";
+import Stepper from "../../stepper";
 import { useSteps } from "@chakra-ui/stepper";
 import MailStep from "./steps/mail";
 import RecipientStep from "./steps/recipient";
 import { api } from "~/utils/api";
 import { type Row, type Column } from "react-table";
 import { CheckIcon, CloseIcon } from "@chakra-ui/icons";
+import { useRouter } from "next/router";
+import { CampaignContext } from "../CampaignContext";
+import { env } from "~/env.mjs";
 
 interface ICampaignModal {
   isOpen: boolean;
   onClose: () => void;
-  campaign?: Campaign;
 }
 
 export type FormValues = {
   name?: string;
-  typeId?: string;
   subject?: string;
   body?: string;
   url?: string;
+  fromName?: string;
+  fromEmail?: string;
 };
 
 export interface Columns {
@@ -48,15 +50,11 @@ export interface Columns {
 
 export type Recipient = Client & { selected: boolean };
 
-export const CampaignModal = ({
-  isOpen,
-  onClose,
-  campaign,
-}: ICampaignModal) => {
+export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
   const steps = [
     { title: "Campagne" },
     { title: "Message" },
-    { title: "Cibles" },
+    { title: "Clients" },
   ];
 
   const initialRef = React.useRef(null);
@@ -67,10 +65,9 @@ export const CampaignModal = ({
     count: steps.length,
   });
 
-  const edit = !!campaign;
-  const isDraft = campaign?.status.toLowerCase() === "draft";
-  const disabled = !isDraft && edit;
-  const lastStep = activeStep === 2;
+  const [edit, setEdit] = useState(false);
+  const [disabled, setDisabled] = useState(false);
+  const [lastStep, setLastStep] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -78,28 +75,27 @@ export const CampaignModal = ({
   const [isSent, setIsSent] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
 
-  const [_campaign, setCampaign] = useState<Partial<Campaign>>();
   const [recipients, setRecipients] = useState<Recipient[]>([]);
 
-  const handleCampaign: SubmitHandler<FormValues> = (values: FormValues) => {
-    setCampaign({ ..._campaign, ...values });
-  };
+  const context = useContext(CampaignContext);
 
   const customers = api.customer.getClients.useQuery();
+  const createCampaign = api.campaign.createCampaign.useMutation();
   const updateCampaign = api.campaign.updateCampaign.useMutation();
   const sendCampaign = api.mail.sendCampaign.useMutation();
+  const router = useRouter();
 
-  const sendCampaignToRecipients = React.useCallback(() => {
-    if (!recipients.length || !campaign) return;
-    const selectedRecipients = recipients.filter(
-      (recipient) => recipient.selected
+  useEffect(() => {
+    setEdit(!!context?.campaign?.id);
+    setDisabled(
+      context?.campaign?.status?.toLowerCase() !== "draft" &&
+        context?.campaign?.id !== undefined
     );
-    const data = {
-      campaignId: campaign.id,
-      recipientIds: selectedRecipients.map((recipient) => recipient.id),
-    };
-    sendCampaign.mutate(data);
-  }, [recipients, campaign]);
+  }, [context?.campaign]);
+
+  useEffect(() => {
+    setLastStep(activeStep === 2);
+  }, [activeStep]);
 
   useEffect(() => {
     customers.refetch();
@@ -112,13 +108,11 @@ export const CampaignModal = ({
         setIsSaved(true);
       }, 300);
     }
-  }, [updateCampaign.isSuccess]);
 
-  useEffect(() => {
     if (updateCampaign.isLoading) {
       setIsSaving(true);
     }
-  }, [updateCampaign.isLoading]);
+  }, [updateCampaign]);
 
   useEffect(() => {
     if (sendCampaign.isSuccess) {
@@ -127,21 +121,38 @@ export const CampaignModal = ({
         setIsSent(true);
       }, 300);
     }
-  }, [sendCampaign.isSuccess]);
 
-  useEffect(() => {
     if (sendCampaign.isLoading) {
       setIsSending(true);
     }
-  }, [sendCampaign.isLoading]);
 
-  useEffect(() => {
     if (sendCampaign.isError) {
       setError(sendCampaign.failureReason?.message as unknown as string);
       setIsSending(false);
       setIsSent(false);
     }
-  }, [sendCampaign.isError]);
+  }, [sendCampaign]);
+
+  const sendCampaignToClients = React.useCallback(
+    (recipients: Recipient[]) => {
+      const selectedRecipients = recipients.filter(
+        (recipient) => recipient.selected
+      );
+
+      const campaignId = context?.campaign?.id;
+      if (!campaignId) {
+        return;
+      }
+
+      const data = {
+        campaignId,
+        recipientIds: selectedRecipients.map((recipient) => recipient.id),
+      };
+
+      sendCampaign.mutate(data);
+    },
+    [context?.campaign?.id, sendCampaign]
+  );
 
   const data = React.useMemo(() => {
     if (!customers?.data) return [];
@@ -173,25 +184,8 @@ export const CampaignModal = ({
 
   const renderSteps = () => {
     const steps = new Map<number, React.ReactNode>([
-      [
-        0,
-        <CampaignStep
-          key={0}
-          campaign={campaign}
-          disabled={disabled}
-          initialRef={initialRef}
-          on={{ handleCampaign, setCampaign }}
-        />,
-      ],
-      [
-        1,
-        <MailStep
-          key={1}
-          campaign={campaign}
-          disabled={disabled}
-          setCampaign={setCampaign}
-        />,
-      ],
+      [0, <CampaignStep key={0} disabled={disabled} initialRef={initialRef} />],
+      [1, <MailStep key={1} disabled={disabled} />],
       [
         2,
         <RecipientStep
@@ -207,27 +201,54 @@ export const CampaignModal = ({
     return steps.get(activeStep);
   };
 
-  const save = () => {
+  const save = async () => {
     if (lastStep) {
-      sendCampaignToRecipients();
-      
-    } else {
-      goToNext();
-      if (!_campaign) return;
-      const { id, name, typeId, status, subject, body, url } = _campaign;
-      if (!id || !name || !typeId || !status) return;
+      sendCampaignToClients(recipients);
+      return; // If it's the last step, we're done here
+    }
+
+    // If no campaign id and basic details are present, create a new campaign
+    if (!context?.campaign?.id && context?.campaign?.name) {
+      const campaign = {
+        name: context?.campaign.name,
+        restaurantId: router.query.restaurantId as string,
+        template: Number(env.NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID),
+        subject: context?.campaign.subject || "",
+        body: context?.campaign.body || "",
+        url: context?.campaign.url || "",
+      };
+
+      const newCampaign = await createCampaign.mutateAsync(campaign);
+
+      if (newCampaign?.id) {
+        context?.setCampaign(newCampaign);
+        goToNext();
+      }
+      return;
+    }
+
+    // If campaign id exists, validate necessary details and update the campaign if it's a draft
+    if (
+      context?.campaign?.id &&
+      context?.campaign?.name &&
+      context?.campaign?.status
+    ) {
+      const { id, name, status, subject, body, url } = context?.campaign;
+
       const campaign = {
         id,
         name,
-        typeId,
         status,
         subject,
         body,
         url,
       };
+
       if (campaign.status === "draft") {
         updateCampaign.mutate(campaign);
       }
+
+      goToNext();
     }
   };
 
@@ -250,7 +271,7 @@ export const CampaignModal = ({
       <ModalOverlay />
       <ModalContent>
         <ModalHeader noOfLines={2}>
-          {edit ? campaign.name : "Nouvelle campagne"}
+          {edit ? context?.campaign?.name : "Nouvelle campagne"}
         </ModalHeader>
         <ModalCloseButton />
 
@@ -301,10 +322,14 @@ export const CampaignModal = ({
           </Box>
           <Box>
             {activeStep > 0 && (
-              <Button colorScheme="blue" mr={3} onClick={() => {
-                goToPrevious();
-                setIsSaved(false);
-              }}>
+              <Button
+                colorScheme="blue"
+                mr={3}
+                onClick={() => {
+                  goToPrevious();
+                  setIsSaved(false);
+                }}
+              >
                 Précedent
               </Button>
             )}

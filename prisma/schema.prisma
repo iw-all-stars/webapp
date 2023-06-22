@@ -12,29 +12,22 @@ datasource db {
 }
 
 model Campaign {
-    id           String       @id @default(uuid()) @db.Uuid
+    id           String     @id @default(uuid()) @db.Uuid
     name         String
-    creatorId    String       @db.Uuid
-    restaurantId String       @db.Uuid
-    typeId       String       @db.Uuid
+    creatorId    String     @db.Uuid
+    restaurantId String     @db.Uuid
     status       String
     template     Int
     subject      String
     body         String
     url          String
-    createdAt    DateTime     @default(now())
-    updatedAt    DateTime     @updatedAt
-    user         User         @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-    restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-    type         CampaignType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+    fromName     String     @default("Jone's burgers")
+    fromEmail    String     @default("jonesburgers@gmail.com")
+    createdAt    DateTime   @default(now())
+    updatedAt    DateTime   @updatedAt
+    user         User       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+    restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
     mail         Mail[]
-}
-
-model CampaignType {
-    id       String     @id @default(uuid()) @db.Uuid
-    name     String     @unique
-    color    String?    @default("gray.200")
-    Campaign Campaign[]
 }
 
 model Mail {
@@ -52,20 +45,20 @@ model Mail {
 }
 
 model Client {
-    id        String    @id @default(uuid()) @db.Uuid
-    email     String    @unique
-    name      String
-    firstname String?
-    phone     String?
-    image     String?
-    address   String?
-    city      String?
-    state     String?
-    zip       String?
-    lastLogin DateTime?
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    Mail      Mail[]
+    id           String    @id @default(uuid()) @db.Uuid
+    email        String    @unique
+    name         String
+    firstname    String?
+    phone        String?
+    image        String?
+    address      String?
+    city         String?
+    unsubscribed Boolean?  @default(false)
+    zip          String?
+    lastLogin    DateTime?
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+    Mail         Mail[]
 }
 
 model Category {
