@@ -5,7 +5,6 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 const campaignSchema = z.object({
   id: z.string(),
   name: z.string(),
-  typeId: z.string(),
   template: z.number(),
   subject: z.string(),
   body: z.string(),
@@ -15,19 +14,43 @@ const campaignSchema = z.object({
   status: z.string(),
 });
 
+const updateCampaignSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  status: z.string(),
+  subject: z.string().optional(),
+  body: z.string().optional(),
+  url: z.string().optional(),
+  fromName: z.string().optional(),
+  fromEmail: z.string().optional(),
+});
+
 export const campaignRouter = createTRPCRouter({
   getCampaigns: protectedProcedure.query(({ ctx }) => {
     // get mails for each campaignId
     return ctx.prisma.campaign.findMany({
-      include: { mail: true, type: true },
+      include: { mail: true },
     });
   }),
+  findCampaignByName: protectedProcedure
+    .input(z.object({
+      name: z.string().optional(),
+    }))
+    .query(({ ctx, input }) => {
+      if (!input.name) return null;
+      return ctx.prisma.campaign.findFirst({
+        where: {
+          name: input.name,
+        },
+        include: { mail: true },
+      });
+    }),
   getCampaign: protectedProcedure
     .input(z.string().nonempty())
     .query(({ ctx, input }) => {
       return ctx.prisma.campaign.findUnique({
         where: { id: input },
-        include: { mail: true, type: true },
+        include: { mail: true },
       });
     }),
   createCampaign: protectedProcedure
@@ -39,7 +62,6 @@ export const campaignRouter = createTRPCRouter({
           creatorId: ctx.session.user.id,
           restaurantId: input.restaurantId,
           template: input.template,
-          typeId: input.typeId,
           subject: input.subject,
           body: input.body,
           url: input.url,
@@ -47,10 +69,24 @@ export const campaignRouter = createTRPCRouter({
         },
       });
     }),
+  initializeCampaign: protectedProcedure
+    .input(campaignSchema.omit({ id: true, creatorId: true, status: true, subject: true, body: true, url: true }))
+    .mutation(({ ctx, input }) => {
+      return ctx.prisma.campaign.create({
+        data: {
+          ...input,
+          creatorId: ctx.session.user.id,
+          restaurantId: input.restaurantId,
+          template: input.template,
+          subject: "",
+          body: "",
+          url: "",
+          status: "draft",
+        },
+      });
+    }),
   updateCampaign: protectedProcedure
-    .input(
-      campaignSchema.pick({ id: true, name: true, type: true, status: true })
-    )
+    .input(updateCampaignSchema)
     .mutation(({ ctx, input }) => {
       const { id, ...data } = input;
       return ctx.prisma.campaign.update({ where: { id }, data });
@@ -60,9 +96,6 @@ export const campaignRouter = createTRPCRouter({
     .mutation(({ ctx, input }) => {
       return ctx.prisma.campaign.delete({ where: { id: input } });
     }),
-  getCampaignTypes: protectedProcedure.query(({ ctx }) => {
-    return ctx.prisma.campaignType.findMany();
-  }),
 });
 
 export default campaignRouter;

@@ -62,6 +62,11 @@ spec:
            secretKeyRef:
               name: production-secret
               key: sendinblue_api_key
+        - name: MAIL_TEMPLATE_CAMPAIGN_ID
+          valueFrom:
+           secretKeyRef:
+              name: production-secret
+              key: mail_template_campaign_id
 
 ---
 

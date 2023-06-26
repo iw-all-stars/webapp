@@ -1,215 +1,278 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
+import { ArrowForwardIcon } from "@chakra-ui/icons";
 import {
+    Avatar,
+    AvatarGroup,
     Box,
     Button,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
+    Icon,
+    IconButton,
     Input,
-    Select,
+    InputGroup,
+    InputRightElement,
+    Menu,
+    MenuButton,
+    MenuList,
+    Skeleton,
+    SkeletonCircle,
+    Text,
+    useDisclosure,
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { type CreatePost, type CreateStory } from "~/server/api/routers/story";
+import { useRouter } from "next/router";
+import { BiSearch } from "react-icons/bi";
+import { BsPhone } from "react-icons/bs";
+import { GoSettings } from "react-icons/go";
+import CreateUpdateStory from "~/components/stories/CreateUpdateStory";
+import { StoryCard } from "~/components/stories/storyCard";
 import { api } from "~/utils/api";
-import { StoryStatus } from "@prisma/client";
-import { DragFiles } from "~/components/dragFiles.component";
+import { PLATFORMS } from "./platforms";
+import { useEffect, useState } from "react";
+import { useDebounce } from "usehooks-ts";
+import { useForm } from "react-hook-form";
+import { dateFromBackend } from "~/utils/date";
+import { DateTime } from "luxon";
+import { NoResultsStories } from "~/components/stories/NoResultsStories";
 
 const DashboardStory: NextPage = () => {
-    const [files, setFiles] = useState<File[]>([]);
-    const [posts, setPosts] = useState<CreatePost[]>([]);
-    const [hidePublishAt, setHidePublishAt] = useState<boolean>(false);
+    const router = useRouter();
 
-    const addStory = api.story.create.useMutation({});
-    const deleteStory = api.story.delete.useMutation({});
+    const [search, setSearch] = useState<string>("");
 
-    function createStory(data: CreateStory) {
-        addStory.mutate(data);
-    }
+    const debouncedSearchTerm = useDebounce(search, 500);
+    const { register, watch, getValues, reset, setValue } = useForm<{
+        startDate: string | undefined;
+        endDate: string | undefined;
+    }>({});
 
-    function deleteById(id: string) {
-        deleteStory.mutate({ id });
-    }
+    const [dateRanges, setDateRanges] = useState<{
+        startDate: string | undefined;
+        endDate: string | undefined;
+    }>({
+        startDate: undefined,
+        endDate: undefined,
+    });
 
-    const {
-        handleSubmit,
-        register,
-        setValue,
-        formState: { errors, isSubmitting },
-        watch,
-        getValues,
-        resetField,
-    } = useForm<CreateStory>();
+    const { data: stories, isLoading } = api.story.getAll.useQuery({
+        name: debouncedSearchTerm,
+        dates: dateRanges,
+    });
+    const { data: platforms } = api.platform.getAllByRestaurantId.useQuery(
+        router.query.restaurantId as string
+    );
+
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
     useEffect(() => {
-        resetField("publishedAt");
-        setHidePublishAt(getValues("status") === StoryStatus.DRAFT);
-    }, [watch("status")]);
+        const subscription = watch(({ startDate, endDate }) => {
+            if (startDate && endDate) {
+                setDateRanges(getValues());
+            }
+            if (!startDate && !endDate) {
+                setDateRanges(getValues());
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, [watch]);
 
-    const uploadFiles = async () => {
-        const urlsWithFiles = await Promise.all(
-            files.map((file) =>
-                fetch("/api/s3/uploadFile", {
-                    method: "POST",
-                    headers: {
-                        "Content-type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        name: crypto.randomUUID(),
-                        type: file.type,
-                    }),
-                })
-                    .then((res) => res.json())
-                    .then(({ url }) => ({
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        url: url as string,
-                        file,
-                    }))
-            )
+    if (!platforms?.length && !isLoading) {
+        return (
+            <Box
+                h="full"
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                flexDirection="column"
+            >
+                <Box
+                    display="flex"
+                    alignItems="center"
+                    flexDirection="column"
+                    gap="4"
+                >
+                    <AvatarGroup size="md">
+                        {PLATFORMS.map((platform, i) => (
+                            <Avatar
+                                key={i}
+                                name={platform}
+                                src={`/${platform}.png`}
+                            />
+                        ))}
+                    </AvatarGroup>
+                    <Text fontSize="lg" fontWeight="bold">
+                        You are not connected to any platform
+                    </Text>
+                    <Text fontSize="sm" color="gray.500">
+                        Connect to a platform to create a story
+                    </Text>
+                    <Button
+                        rightIcon={<ArrowForwardIcon />}
+                        colorScheme="teal"
+                        variant="outline"
+                        onClick={() => {
+                            router.push(
+                                `/dashboard/${router.query.organizationId}/restaurant/${router.query.restaurantId}/platforms`
+                            );
+                        }}
+                    >
+                        Connect
+                    </Button>
+                </Box>
+            </Box>
         );
-
-        const s3UrlsWithFiles = await Promise.all(
-            urlsWithFiles.map(({ url, file }) =>
-                fetch(url, {
-                    method: "PUT",
-                    body: file,
-                    headers: {
-                        "Content-type": file.type,
-                        "Access-Control-Allow-Origin": "*",
-                    },
-                }).then(({ url }) => ({ url, file }))
-            )
-        );
-
-        setFiles([]);
-
-        return s3UrlsWithFiles.map(({ url, file }) => ({
-            url: url.split("?")[0] ?? "never",
-            type: file.type.split("/")[0] as "image" | "video",
-        }));
-    };
-
-    useEffect(() => {
-        if (files.length > 0) {
-            void uploadFiles().then((urls) => {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                setPosts((prevPosts) => {
-                    return [
-                        ...prevPosts,
-                        ...urls.map(({ url, type }, i) => ({
-                            url,
-                            position: posts.length + i,
-                            type,
-                        })),
-                    ];
-                });
-            });
-        }
-    }, [files]);
-
-    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        const newFiles = Array.from(event.dataTransfer.files);
-        setFiles((prevFiles) => [...prevFiles, ...newFiles]);
-    };
-
-    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-    };
-
-    useEffect(() => {
-        setValue("posts", posts);
-    }, [posts]);
+    }
 
     return (
-        <Box>
-            <form onSubmit={handleSubmit(createStory)}>
-                <FormControl isInvalid={!!errors.name}>
-                    <FormLabel htmlFor="name">story name</FormLabel>
-                    <Input
-                        id="name"
-                        placeholder="name"
-                        {...register("name", {
-                            required: "This is required",
-                            minLength: {
-                                value: 4,
-                                message: "Minimum length should be 4",
-                            },
-                        })}
-                    />
-                    <FormErrorMessage>
-                        {errors.name && errors.name.message}
-                    </FormErrorMessage>
-                </FormControl>
-
-                <FormControl>
-                    <Select
-                        {...register("status", {
-                            required: "This is required",
-                        })}
-                    >
-                        {[
-                            StoryStatus.NOW,
-                            StoryStatus.SCHEDULED,
-                            StoryStatus.DRAFT,
-                        ].map((status) => (
-                            <option
-                                selected={status === StoryStatus.NOW}
-                                key={status}
-                                value={status}
-                            >
-                                {status}
-                            </option>
-                        ))}
-                    </Select>
-                </FormControl>
-
-                <FormControl
-                    isInvalid={!!errors.publishedAt}
-                    hidden={hidePublishAt}
-                >
-                    <FormLabel htmlFor="name">published at</FormLabel>
-                    <Input
-                        id="publishedAt"
-                        placeholder="publishedAt"
-                        type="datetime-local"
-                        {...register("publishedAt", {})}
-                    />
-                    <FormErrorMessage>
-                        {errors.publishedAt && errors.publishedAt.message}
-                    </FormErrorMessage>
-                </FormControl>
-                <DragFiles
-                    files={files}
-                    handleDrop={handleDrop}
-                    handleDragOver={handleDragOver}
-                    posts={posts}
-                    setPosts={setPosts}
-                />
-                <Button
-                    mt={4}
-                    colorScheme="teal"
-                    isLoading={isSubmitting}
-                    type="submit"
-                >
-                    Submit
-                </Button>
-                <Button
-                    onClick={() => {
-                        console.log(getValues());
-                    }}
-                >
-                    log posts
-                </Button>
-            </form>
-            <Button
-                onClick={() => {
-                    deleteById("clhix5jr7000o7toyd573f6ux");
-                }}
+        <Box display="flex" flexDirection="column" h="full" w="full">
+            <Box
+                display="flex"
+                gap="4"
+                margin="12px 12px 6px 12px"
+                alignItems="center"
             >
-                Delete
-            </Button>
+                <Text fontSize="lg" fontWeight="bold">
+                    Stories
+                </Text>
+                <InputGroup flexShrink="3">
+                    <Input
+                        value={search}
+                        onChange={(value) => setSearch(value.target.value)}
+                        placeholder="Rechercher par nom de story ..."
+                    />
+                    <InputRightElement>
+                        <Icon as={BiSearch} />
+                    </InputRightElement>
+                </InputGroup>
+                <Menu>
+                    <MenuButton as={IconButton} icon={<GoSettings />}>
+                        Actions
+                    </MenuButton>
+                    <MenuList>
+                        <Box
+                            padding="4"
+                            display="flex"
+                            flexDirection="column"
+                            gap="3"
+                        >
+                            <Box
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="space-between"
+                            >
+                                <Text fontWeight="medium">Filtres</Text>
+                                <Button
+                                    size="sm"
+                                    colorScheme="blue"
+                                    variant="solid"
+                                    onClick={() => {
+                                        setValue("startDate", undefined);
+                                        setValue("endDate", undefined);
+                                    }}
+                                >
+                                    Effacer
+                                </Button>
+                            </Box>
+                            <Box>
+                                <Text mb="1" fontSize="xs">
+                                    Date de publication début
+                                </Text>
+                                <Input
+                                    {...register("startDate")}
+                                    placeholder="Select Date and Time"
+                                    size="md"
+                                    type="date"
+                                />
+                            </Box>
+                            <Box>
+                                <Text mb="1" fontSize="xs">
+                                    Date de publication fin
+                                </Text>
+                                <Input
+                                    {...register("endDate")}
+                                    placeholder="Select Date and Time"
+                                    size="md"
+                                    type="date"
+                                />
+                            </Box>
+                        </Box>
+                    </MenuList>
+                </Menu>
+                <Button
+                    leftIcon={<BsPhone />}
+                    colorScheme="teal"
+                    variant="solid"
+                    onClick={onOpen}
+                >
+                    Créer une story
+                </Button>
+            </Box>
+
+            {platforms?.length && !isLoading ? (
+                <>
+                    <CreateUpdateStory
+                        connectedPlatforms={platforms}
+                        isOpen={isOpen}
+                        onClose={onClose}
+                    />
+                    {(stories || [])?.length > 0 ? (
+                        <Box
+                            display="flex"
+                            overflowY="auto"
+                            flexWrap="wrap"
+                            gap="5"
+                            margin="4"
+                        >
+                            {(stories || []).map((story) => (
+                                <StoryCard
+                                    connectedPlatforms={platforms}
+                                    story={story}
+                                    key={story.id}
+                                />
+                            ))}
+                        </Box>
+                    ) : (
+                        <NoResultsStories />
+                    )}
+                </>
+            ) : (
+                <Box display="flex" gap={4}>
+                    {Array.from({ length: 2 }).map((_, i) => (
+                        <Box
+                            key={i}
+                            bg="gray.100"
+                            height="283px"
+                            width="294px"
+                            marginTop="4"
+                            borderRadius="md"
+                            display="flex"
+                            flexDirection="column"
+                        >
+                            <Box display="flex" alignItems="center" margin="5">
+                                <SkeletonCircle
+                                    startColor="gree.100"
+                                    size="10"
+                                />
+                                <Box
+                                    display="flex"
+                                    flexDirection="column"
+                                    gap="2"
+                                    marginLeft="4"
+                                >
+                                    <Skeleton height="10px" width="150px" />
+                                    <Skeleton height="10px" width="100px" />
+                                </Box>
+                            </Box>
+                            <Box flex="1">
+                                <Skeleton
+                                    startColor="teal.50"
+                                    endColor="teal.100"
+                                    height="100%"
+                                    width="100%"
+                                />
+                            </Box>
+                        </Box>
+                    ))}
+                </Box>
+            )}
         </Box>
     );
 };

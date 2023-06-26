@@ -1,13 +1,19 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
-    StoryStatus,
-    type Prisma,
-    type PrismaClient,
-    type Story,
+	StoryStatus,
+	type Prisma,
+	type PrismaClient,
+	type Story,
 } from "@prisma/client";
+import { IgApiClient } from "instagram-private-api";
+import { Duration } from "luxon";
 import {
-    deleteStorySchedule,
-    scheduleStory,
+	deleteStorySchedule,
+	scheduleStory,
 } from "~/server/services/storyScheduler.service";
+import { isElapsedTimesBetweenDatesGreaterThanDuration } from "~/utils/date";
+import { decrypt } from "~/utils/decrypte-password";
 import { type Hook } from "../setup.hook";
 
 export class StoryHook implements Hook {
@@ -31,12 +37,43 @@ export class StoryHook implements Hook {
                     },
                     include: {
                         posts: true,
+                        platform: true,
                     },
                 });
 
+				try {
+					await deleteStorySchedule((result as Story).id);
+				} catch (_) {
+					console.log('no schedule to delete');
+				}
+
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                if (storyWithPosts && (params.args.data as Partial<Story>)?.publishedAt) {
-                    await scheduleStory(storyWithPosts);
+                if (
+                    storyWithPosts &&
+                    (result as Partial<Story>)?.publishedAt &&
+                    (result as Partial<Story>)?.status !== StoryStatus.DRAFT
+                ) {
+					const platform = await prismaClient.platform.findFirst({
+						where: {
+							id: storyWithPosts.platformId,
+						},
+						include: {
+							restaurant: true,
+						},
+					});
+					const restaurantWithOrga = await prismaClient.restaurant.findFirst({
+						where: {
+							id: platform?.restaurantId,
+						},
+						include: {
+							organization: true,
+						},
+					})
+
+					if (restaurantWithOrga) {
+						await scheduleStory(storyWithPosts, restaurantWithOrga);
+					}
+
                 }
             }
 
@@ -46,19 +83,49 @@ export class StoryHook implements Hook {
 
         prismaClient.$use(async (params, next) => {
             if (params.model == "Story" && ["delete"].includes(params.action)) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                const storyId = (params.args.where.id as string)
+                const storyId = params.args.where.id as string;
                 const story = await prismaClient.story.findUnique({
                     where: {
-                        id: storyId
+                        id: storyId,
+                    },
+                    include: {
+                        platform: true,
+                        posts: true,
                     },
                 });
 
                 if (story?.status === StoryStatus.SCHEDULED) {
                     await deleteStorySchedule(story.id);
                 }
+
+                if (
+                    story?.status === StoryStatus.PUBLISHED &&
+                    !isElapsedTimesBetweenDatesGreaterThanDuration(
+                        new Date(story.publishedAt as unknown as string),
+                        new Date(),
+                        Duration.fromObject({
+                            hours: 24,
+                        })
+                    )
+                ) {
+                    const ig = new IgApiClient();
+                    ig.state.generateDevice(story.platform.login);
+
+                    await ig.account.login(
+                        story.platform.login,
+                        decrypt(story.platform.password)
+                    );
+
+                    await Promise.all(
+                        story.posts.map(async (post) =>
+                            ig.media.delete({
+                                mediaId: post.socialPostId as string,
+                            })
+                        )
+                    );
+                }
             }
             return next(params);
-        })
+        });
     }
 }

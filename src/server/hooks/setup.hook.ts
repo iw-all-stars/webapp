@@ -18,5 +18,5 @@ export const setupHooks = (
         Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
     >
 ) => {
-    new StoryHook().useHook(prisma);
+      new StoryHook().useHook(prisma);
 };

@@ -1,31 +1,72 @@
-import { Box, Flex, Image, Skeleton, SkeletonCircle, Text, Icon } from "@chakra-ui/react";
+import { ChevronDownIcon } from "@chakra-ui/icons";
+import {
+  Box,
+  Flex,
+  Image,
+  Skeleton,
+  SkeletonCircle,
+  Text,
+  Icon,
+  Menu,
+  MenuButton,
+  Button,
+  MenuList,
+  MenuItem,
+} from "@chakra-ui/react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { GoSignOut } from "react-icons/go";
 
 export default function Navbar() {
-
   const { data: session, status } = useSession();
 
   return (
-    <Flex px={8} py={7} alignItems="center" justifyContent="space-between" borderBottom="1px solid black">
+    <Flex
+      px={8}
+      py={7}
+      alignItems="center"
+      justifyContent="space-between"
+      borderBottom="1px solid black"
+    >
       <Link href="/">
-        <Box>
-          Logo
-        </Box>
+        <Box>Logo</Box>
       </Link>
-      <Flex alignItems="center" gap={6}>
-        Links
-        <Flex alignItems="center" gap={4}>
-          <SkeletonCircle h={10} w={10} rounded="full" isLoaded={status !== "loading"}>
-            <Image h={10} w={10} rounded="full" src={session?.user?.image ?? ""} alt="User profile image" />
-          </SkeletonCircle>
-          <Skeleton isLoaded={status !== "loading"} h={6}>
-            <Text minW={28}>{session?.user.name}</Text>
-          </Skeleton>
-          <Icon as={GoSignOut} w={6} h={6} mt={1} color="red.600" cursor="pointer" onClick={() => signOut()} />
-        </Flex>
-      </Flex>
+      <Menu>
+        <MenuButton
+          as={Button}
+          variant="ghost"
+          colorScheme="gray"
+          rightIcon={<ChevronDownIcon />}
+        >
+          <Flex alignItems="center" justifyContent="space-between" p={4}>
+            <SkeletonCircle
+              h={30}
+              w={30}
+              rounded="full"
+              isLoaded={status !== "loading"}
+            >
+              <Image
+                h={30}
+                w={30}
+                rounded="full"
+                src={session?.user?.image ?? ""}
+                alt="User profile image"
+              />
+            </SkeletonCircle>
+            <Skeleton isLoaded={status !== "loading"} h={6}>
+              <Text minW={28}>{session?.user.name}</Text>
+            </Skeleton>
+          </Flex>
+        </MenuButton>
+        <MenuList>
+          <MenuItem onClick={() => signOut()}>
+            <Flex w={"100%"} alignItems="center" justifyContent="space-between">
+              <p>Déconnexion</p>
+              <Icon as={GoSignOut} w={5} h={5} color="red.500" />
+            </Flex>
+          </MenuItem>
+        </MenuList>
+      </Menu>
     </Flex>
-  )
+  );
 }

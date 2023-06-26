@@ -1,9 +1,16 @@
 import {
     CreateScheduleCommand,
     DeleteScheduleCommand,
-    SchedulerClient
+    SchedulerClient,
 } from "@aws-sdk/client-scheduler";
-import { type Post, type Story } from "@prisma/client";
+import {
+    PlatformKey,
+    type Platform,
+    type Post,
+    type Story,
+    type Organization,
+    type Restaurant,
+} from "@prisma/client";
 import { DateTime } from "luxon";
 import { encrypt } from "~/utils/decrypte-password";
 
@@ -15,16 +22,12 @@ const client = new SchedulerClient({
     },
 });
 
-export const scheduleStory = async (story: Story & { posts: Post[] }) => {
-    console.log('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩')
-    console.log('SCHEULLEEEEE')
-    console.log('🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦')
-    try {
-        await deleteStorySchedule(story.id);
-    } catch (e) {
-        console.log(e);
+export const scheduleStory = async (
+    story: Story & { posts: Post[]; platform: Platform },
+    restaurantWithOrga: Restaurant & {
+        organization: Organization;
     }
-
+) => {
     if (!story.publishedAt) return;
 
     const { minute, hour, day, month, year } = DateTime.fromJSDate(
@@ -36,19 +39,23 @@ export const scheduleStory = async (story: Story & { posts: Post[] }) => {
     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     const cron = `cron(${minute} ${hour} ${day} ${month} ? ${year})`;
 
-    await _sendSchedule(client, {
-        ...story,
-        callbackUrl: 'https://fdfd-94-228-190-38.ngrok-free.app/api/webhooks/publish',
-        credentials: {
-            username: "devftn5",
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            password: encrypt("monnouvomdPé94290"),
+    await _sendSchedule(
+        client,
+        {
+            ...story,
+            callbackUrl:
+                "https://fdfd-94-228-190-38.ngrok-free.app/api/webhooks/publish",
+            credentials: {
+                username: story.platform.login,
+                password: story.platform.password,
+            },
+            storyId: story.id,
+            restaurantId: restaurantWithOrga.id,
+            organizationId: restaurantWithOrga.organization.id,
+            platformKey: PlatformKey.INSTAGRAM,
         },
-        storyId: story.id,
-        restaurantId: 'story.restaurantId',
-        organizationId: 'story.organizationId',
-        platformKey: PlatformKeys.INSTAGRAM,
-    }, cron);
+        cron
+    );
 };
 
 export const deleteStorySchedule = async (storyId: string) => {
@@ -69,23 +76,21 @@ type Credentials = {
     password: string;
 };
 
-enum PlatformKeys {
-    INSTAGRAM = "instagram",
-    FACEBOOK = "facebook", // not implemented
-    TIKTOK = "tiktok", // not implemented
-}
-
 export type EventPublishPost = {
     storyId: string;
     restaurantId: string;
     organizationId: string;
     credentials: Credentials;
-    platformKey: PlatformKeys;
+    platformKey: PlatformKey;
     posts: Post[];
     callbackUrl: string;
 };
 
-const _sendSchedule = (client: SchedulerClient, event: EventPublishPost, cron : string) => {
+const _sendSchedule = (
+    client: SchedulerClient,
+    event: EventPublishPost,
+    cron: string
+) => {
     return client.send(
         new CreateScheduleCommand({
             Name: event.storyId,
@@ -101,4 +106,4 @@ const _sendSchedule = (client: SchedulerClient, event: EventPublishPost, cron : 
             },
         })
     );
-}
+};

@@ -1,26 +1,50 @@
-import { Button, Flex, Icon, Menu, MenuButton, MenuItem, MenuList, MenuDivider, Text, Skeleton, Center } from "@chakra-ui/react";
+import {
+  Button,
+  Flex,
+  Icon,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  MenuDivider,
+  Text,
+  Skeleton,
+  Center,
+} from "@chakra-ui/react";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { BiChevronDown } from "react-icons/bi";
-import { MdAdd, MdCheck, MdSettings, MdCampaign, MdPhotoFilter, MdHome } from "react-icons/md";
+import { RxComponent1 } from "react-icons/rx";
+import {
+  MdAdd,
+  MdCheck,
+  MdSettings,
+  MdCampaign,
+  MdPhotoFilter,
+  MdHome,
+} from "react-icons/md";
 import Link from "next/link";
 
 export default function DashboardSidebar() {
-
   const router = useRouter();
 
-  const { data: restaurants } = api.restaurant.getByOrganizationId.useQuery({
-    organizationId: router.query.organizationId as string,
-  }, {
-    enabled: !!router.query.organizationId,
-  });
+  const { data: restaurants } = api.restaurant.getByOrganizationId.useQuery(
+    {
+      organizationId: router.query.organizationId as string,
+    },
+    {
+      enabled: !!router.query.organizationId,
+    }
+  );
 
-  const { data: currentRestaurant } = api.restaurant.getById.useQuery({
-    id: router.query.restaurantId as string,
-  }, {
-    enabled: !!router.query.restaurantId,
-  });
-  
+  const { data: currentRestaurant } = api.restaurant.getById.useQuery(
+    {
+      id: router.query.restaurantId as string,
+    },
+    {
+      enabled: !!router.query.restaurantId,
+    }
+  );
 
   const links = [
     {
@@ -38,15 +62,30 @@ export default function DashboardSidebar() {
       slug: "campaigns",
       icon: MdCampaign,
     },
+  ];
+
+  const settings = [
+    {
+      name: "Plateformes",
+      slug: "platforms",
+      icon: RxComponent1,
+    },
     {
       name: "Paramètres",
       slug: "settings",
       icon: MdSettings,
     },
-  ]
+  ];
 
   return (
-    <Flex direction="column" alignItems="center" h="full" w={1/6} borderRight="1px" pt={6}>
+    <Flex
+      direction="column"
+      alignItems="center"
+      h="full"
+      minW={200}
+      borderRight="1px"
+      pt={6}
+    >
       <Menu>
         <MenuButton as={Button} variant="unstyled">
           <Skeleton isLoaded={!!currentRestaurant}>
@@ -58,7 +97,12 @@ export default function DashboardSidebar() {
         </MenuButton>
         <MenuList>
           {restaurants?.map((restaurant) => (
-            <Link href={`/dashboard/${router.query.organizationId as string}/restaurant/${restaurant.id}`} key={restaurant.id}>
+            <Link
+              href={`/dashboard/${
+                router.query.organizationId as string
+              }/restaurant/${restaurant.id}`}
+              key={restaurant.id}
+            >
               <MenuItem>
                 <Text>{restaurant.name}</Text>
                 {currentRestaurant?.id === restaurant.id && (
@@ -76,7 +120,33 @@ export default function DashboardSidebar() {
       </Menu>
       <Flex direction="column" alignItems="start" gap={4} mt={12}>
         {links.map(({ slug, name, icon }) => (
-          <Link href={`/dashboard/${router.query.organizationId as string}/restaurant/${router.query.restaurantId as string}/${slug}`} style={{ width: "100%" }} key={slug}>
+          <Link
+            href={`/dashboard/${
+              router.query.organizationId as string
+            }/restaurant/${router.query.restaurantId as string}/${slug}`}
+            style={{ width: "100%" }}
+            key={slug}
+          >
+            <Button
+              w="full"
+              justifyContent="start"
+              variant="ghost"
+              leftIcon={<Icon as={icon} w={5} h={5} />}
+            >
+              {name}
+            </Button>
+          </Link>
+        ))}
+      </Flex>
+      <Flex direction="column" alignItems="start" gap={4} mt={12}>
+        {settings.map(({ slug, name, icon }) => (
+          <Link
+            href={`/dashboard/${
+              router.query.organizationId as string
+            }/restaurant/${router.query.restaurantId as string}/${slug}`}
+            style={{ width: "100%" }}
+            key={slug}
+          >
             <Button
               w="full"
               justifyContent="start"
@@ -89,5 +159,5 @@ export default function DashboardSidebar() {
         ))}
       </Flex>
     </Flex>
-  )
+  );
 }

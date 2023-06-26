@@ -12,28 +12,22 @@ datasource db {
 }
 
 model Campaign {
-  id           String       @id @default(uuid()) @db.Uuid
+  id           String     @id @default(uuid()) @db.Uuid
   name         String
-  creatorId    String       @db.Uuid
-  restaurantId String       @db.Uuid
-  typeId       String       @db.Uuid
+  creatorId    String     @db.Uuid
+  restaurantId String     @db.Uuid
   status       String
   template     Int
   subject      String
   body         String
   url          String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  user         User         @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  type         CampaignType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+  fromName     String     @default("Jone's burgers")
+  fromEmail    String     @default("jonesburgers@gmail.com")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  user         User       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   mail         Mail[]
-}
-
-model CampaignType {
-  id       String     @id @default(uuid()) @db.Uuid
-  name     String     @unique
-  Campaign Campaign[]
 }
 
 model Mail {
@@ -51,20 +45,20 @@ model Mail {
 }
 
 model Client {
-  id        String    @id @default(uuid()) @db.Uuid
-  email     String    @unique
-  name      String
-  firstname String?
-  phone     String?
-  image     String?
-  address   String?
-  city      String?
-  state     String?
-  zip       String?
-  lastLogin DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Mail      Mail[]
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  name         String
+  firstname    String?
+  phone        String?
+  image        String?
+  address      String?
+  city         String?
+  unsubscribed Boolean?  @default(false)
+  zip          String?
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  Mail         Mail[]
 }
 
 model Category {
@@ -91,15 +85,16 @@ model Organization {
 model Restaurant {
   id        String  @id @default(uuid()) @db.Uuid
   name      String
+  category  String?
   address   String?
   latitude  Float?
   longitude Float?
+  logo      String?
 
   organizationId String       @db.Uuid
   organization   Organization @relation(fields: [organizationId], references: [id])
-  categoryId     String       @db.Uuid
-  category       Category     @relation(fields: [categoryId], references: [id])
   campaigns      Campaign[]
+	platforms      Platform[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -168,25 +163,49 @@ model Story {
   name        String
   publishedAt DateTime?
   posts       Post[]
+	platformId  String 	@db.Uuid
+	platform    Platform	@relation(fields: [platformId], references: [id], onDelete: Cascade)
   status      StoryStatus
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+enum PostType {
+  IMAGE
+  VIDEO
 }
 
 model Post {
-  id       String @id @default(uuid()) @db.Uuid
-  url      String
-  story    Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
-  storyId  String @db.Uuid
-  position Int
-  type     String
+  id  String @id @default(uuid()) @db.Uuid
+  name String @db.Uuid @unique
+  originalUrl String
+  convertedUrl String?
+  story Story?  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  storyId String? @db.Uuid
+  position Int?
+  type PostType
+	socialPostId String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 enum PlatformKey {
   TWITTER
   INSTAGRAM
   FACEBOOK
+	TIKTOK
 }
 
 model Platform {
   id  String      @id @default(uuid()) @db.Uuid
   key PlatformKey
+	login String
+	password String
+	
+	restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+	restaurantId String @db.Uuid
+	stories Story[]
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }

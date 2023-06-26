@@ -22,17 +22,15 @@ import {
   Input,
   InputRightAddon,
   InputGroup,
-  CircularProgress,
   Flex,
   Tooltip,
   IconButton,
   Text,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   Select,
+  Stat,
+  StatHelpText,
+  StatNumber,
+  Switch,
 } from "@chakra-ui/react";
 import {
   ArrowRightIcon,
@@ -40,19 +38,16 @@ import {
   ChevronRightIcon,
   ChevronLeftIcon,
 } from "@chakra-ui/icons";
-import { type Campaign } from "@prisma/client";
+import { type Recipient } from "..";
 
 interface RecipientStepProps {
   columns: Column<object>[];
-  data: Partial<Campaign>[];
-  isFetching: boolean;
+  data: Row<object>[];
+  recipients: Recipient[];
+  setRecipients: (recipients: Recipient[]) => void;
 }
 
-export const RecipientStep = ({
-  columns,
-  data,
-  isFetching,
-}: RecipientStepProps) => {
+export const RecipientStep = ({ columns, data, recipients, setRecipients }: RecipientStepProps) => {
   const {
     getTableBodyProps,
     headerGroups,
@@ -75,17 +70,35 @@ export const RecipientStep = ({
     },
     usePagination
   );
+  React.useEffect(() => {
+    const recipients = page.map((row: Row<object>) => {
+      const recipient = row.original as Recipient;
+      recipient.selected = true;
+      return recipient;
+    }) as unknown as Recipient[];
+    setRecipients(recipients);
+  }, [data]);
 
   return (
     <Box>
-      <FormControl>
-        <InputGroup>
-          <Input type="text" placeholder="Ajouter un destinataire" />
-          <InputRightAddon>
-            <MdSearch />
-          </InputRightAddon>
-        </InputGroup>
-      </FormControl>
+      <Flex gap={4}>
+        <FormControl>
+          <InputGroup>
+            <Input type="text" placeholder="Ajouter un destinataire" />
+            <InputRightAddon>
+              <MdSearch />
+            </InputRightAddon>
+          </InputGroup>
+        </FormControl>
+        <Stat>
+          <Flex gap={2} textAlign={"center"}>
+            <StatNumber>
+              {recipients?.filter((recipient) => recipient.selected).length}
+            </StatNumber>
+            <StatHelpText>destinataires sélectionnés</StatHelpText>
+          </Flex>
+        </Stat>
+      </Flex>
       <br />
       <Box border="1px" borderColor="#EDF2F7" py={4} borderRadius="0.375rem">
         <TableContainer>
@@ -110,25 +123,43 @@ export const RecipientStep = ({
             </Thead>
 
             <Tbody {...getTableBodyProps()}>
-              {page.map((row: Row<object>) => {
-                prepareRow(row);
-                const { key, ...rowProps } = row.getRowProps();
-                return (
-                  <Tr key={key} {...rowProps}>
-                    {row.cells.map((cell: Cell) => {
-                      const { key, ...cellProps } = cell.getCellProps();
-                      return (
-                        <Td key={key} {...cellProps}>
-                          {cell.render("Cell")}
-                        </Td>
-                      );
-                    })}
-                  </Tr>
-                );
-              })}
+              {page &&
+                page.length > 0 &&
+                page.map((row: Row<object>) => {
+                  prepareRow(row);
+                  const { key, ...rowProps } = row.getRowProps();
+                  return (
+                    <Tr key={key} {...rowProps}>
+                      {row.cells.map((cell: Cell) => {
+                        const { key, ...cellProps } = cell.getCellProps();
+                        const recipient = row.original as Recipient;
+                        if (cell.column.id === "selected") {
+                          return (
+                            <Td key={key} {...cellProps}>
+                              <Switch
+                                {...cellProps}
+                                isChecked={recipient.selected === true}
+                                defaultChecked={true}
+                                onChange={() => {
+                                  recipient.selected = !recipient.selected;
+                                  setRecipients([...recipients]);
+                                }}
+                              />
+                            </Td>
+                          );
+                        }
+                        return (
+                          <Td key={key} {...cellProps}>
+                            {cell.render("Cell")}
+                          </Td>
+                        );
+                      })}
+                    </Tr>
+                  );
+                })}
             </Tbody>
           </Table>
-          {data && data.length === 0 ? (
+          {!page || page.length === 0 ? (
             <Box
               display="flex"
               justifyContent="center"
@@ -142,11 +173,6 @@ export const RecipientStep = ({
                 <br />
                 veuillez importer ou ajouter des clients
               </Text>
-            </Box>
-          ) : null}
-          {isFetching ? (
-            <Box mt={"4"} w={"full"} display={"flex"} justifyContent={"center"}>
-              <CircularProgress isIndeterminate color="green.300" size={8} />
             </Box>
           ) : null}
         </TableContainer>
@@ -178,33 +204,13 @@ export const RecipientStep = ({
             <Text flexShrink="0" mr={8}>
               Page{" "}
               <Text fontWeight="bold" as="span">
-                {pageIndex + 1}
+                {pageIndex + 1 ?? 1}
               </Text>{" "}
               /{" "}
               <Text fontWeight="bold" as="span">
-                {pageOptions.length}
+                {pageOptions?.length ?? 1}
               </Text>
             </Text>
-            <Text flexShrink="0">Aller à la page</Text>{" "}
-            <NumberInput
-              size="sm"
-              ml={2}
-              mr={8}
-              w={28}
-              min={1}
-              max={pageOptions.length || 1}
-              onChange={(value) => {
-                const page = Number(value) ? Number(value) - 1 : 0;
-                gotoPage(page);
-              }}
-              defaultValue={pageIndex + 1}
-            >
-              <NumberInputField />
-              <NumberInputStepper>
-                <NumberIncrementStepper />
-                <NumberDecrementStepper />
-              </NumberInputStepper>
-            </NumberInput>
             <Select
               size="sm"
               w={32}
