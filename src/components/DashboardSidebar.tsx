@@ -10,6 +10,7 @@ import {
   Text,
   Skeleton,
   Center,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
@@ -24,9 +25,11 @@ import {
   MdHome,
 } from "react-icons/md";
 import Link from "next/link";
+import ModalNewRestaurant from "./modals/newRestaurant";
 
 export default function DashboardSidebar() {
   const router = useRouter();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const { data: restaurants } = api.restaurant.getByOrganizationId.useQuery(
     {
@@ -78,86 +81,89 @@ export default function DashboardSidebar() {
   ];
 
   return (
-    <Flex
-      direction="column"
-      alignItems="center"
-      h="full"
-      minW={200}
-      borderRight="1px"
-      pt={6}
-    >
-      <Menu>
-        <MenuButton as={Button} variant="unstyled">
-          <Skeleton isLoaded={!!currentRestaurant}>
-            <Center minW={28}>
-              {currentRestaurant?.name}
-              <Icon as={BiChevronDown} mt={0.5} ml={0.5} />
-            </Center>
-          </Skeleton>
-        </MenuButton>
-        <MenuList>
-          {restaurants?.map((restaurant) => (
+    <>
+      <Flex
+        direction="column"
+        alignItems="center"
+        h="full"
+        minW={200}
+        borderRight="1px"
+        pt={6}
+      >
+        <Menu>
+          <MenuButton as={Button} variant="unstyled">
+            <Skeleton isLoaded={!!currentRestaurant}>
+              <Center minW={28}>
+                {currentRestaurant?.name}
+                <Icon as={BiChevronDown} mt={0.5} ml={0.5} />
+              </Center>
+            </Skeleton>
+          </MenuButton>
+          <MenuList>
+            {restaurants?.map((restaurant) => (
+              <Link
+                href={`/dashboard/${
+                  router.query.organizationId as string
+                }/restaurant/${restaurant.id}`}
+                key={restaurant.id}
+              >
+                <MenuItem>
+                  <Text>{restaurant.name}</Text>
+                  {currentRestaurant?.id === restaurant.id && (
+                    <Icon as={MdCheck} ml="auto" />
+                  )}
+                </MenuItem>
+              </Link>
+            ))}
+            <MenuDivider />
+            <MenuItem onClick={() => onOpen()}>
+              <Text mr={4}>Créer un nouveau restaurant</Text>
+              <Icon as={MdAdd} ml="auto" />
+            </MenuItem>
+          </MenuList>
+        </Menu>
+        <Flex direction="column" alignItems="start" gap={4} mt={12}>
+          {links.map(({ slug, name, icon }) => (
             <Link
               href={`/dashboard/${
                 router.query.organizationId as string
-              }/restaurant/${restaurant.id}`}
-              key={restaurant.id}
+              }/restaurant/${router.query.restaurantId as string}/${slug}`}
+              style={{ width: "100%" }}
+              key={slug}
             >
-              <MenuItem>
-                <Text>{restaurant.name}</Text>
-                {currentRestaurant?.id === restaurant.id && (
-                  <Icon as={MdCheck} ml="auto" />
-                )}
-              </MenuItem>
+              <Button
+                w="full"
+                justifyContent="start"
+                variant="ghost"
+                leftIcon={<Icon as={icon} w={5} h={5} />}
+              >
+                {name}
+              </Button>
             </Link>
           ))}
-          <MenuDivider />
-          <MenuItem>
-            <Text mr={4}>Créer un nouveau restaurant</Text>
-            <Icon as={MdAdd} ml="auto" />
-          </MenuItem>
-        </MenuList>
-      </Menu>
-      <Flex direction="column" alignItems="start" gap={4} mt={12}>
-        {links.map(({ slug, name, icon }) => (
-          <Link
-            href={`/dashboard/${
-              router.query.organizationId as string
-            }/restaurant/${router.query.restaurantId as string}/${slug}`}
-            style={{ width: "100%" }}
-            key={slug}
-          >
-            <Button
-              w="full"
-              justifyContent="start"
-              variant="ghost"
-              leftIcon={<Icon as={icon} w={5} h={5} />}
+        </Flex>
+        <Flex direction="column" alignItems="start" gap={4} mt={12}>
+          {settings.map(({ slug, name, icon }) => (
+            <Link
+              href={`/dashboard/${
+                router.query.organizationId as string
+              }/restaurant/${router.query.restaurantId as string}/${slug}`}
+              style={{ width: "100%" }}
+              key={slug}
             >
-              {name}
-            </Button>
-          </Link>
-        ))}
+              <Button
+                w="full"
+                justifyContent="start"
+                variant="ghost"
+                leftIcon={<Icon as={icon} w={5} h={5} />}
+              >
+                {name}
+              </Button>
+            </Link>
+          ))}
+        </Flex>
       </Flex>
-      <Flex direction="column" alignItems="start" gap={4} mt={12}>
-        {settings.map(({ slug, name, icon }) => (
-          <Link
-            href={`/dashboard/${
-              router.query.organizationId as string
-            }/restaurant/${router.query.restaurantId as string}/${slug}`}
-            style={{ width: "100%" }}
-            key={slug}
-          >
-            <Button
-              w="full"
-              justifyContent="start"
-              variant="ghost"
-              leftIcon={<Icon as={icon} w={5} h={5} />}
-            >
-              {name}
-            </Button>
-          </Link>
-        ))}
-      </Flex>
-    </Flex>
+      <ModalNewRestaurant isOpen={isOpen} onClose={onClose} />
+    </>
   );
 }
