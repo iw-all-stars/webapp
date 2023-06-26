@@ -66,6 +66,7 @@ model Category {
   name        String       @unique
   color       String?      @default("#000000")
   icon        String?      @default("🍔")
+
   restaurants Restaurant[]
 }
 
@@ -85,7 +86,6 @@ model Organization {
 model Restaurant {
   id        String  @id @default(uuid()) @db.Uuid
   name      String
-  category  String?
   address   String?
   latitude  Float?
   longitude Float?
@@ -93,6 +93,8 @@ model Restaurant {
 
   organizationId String       @db.Uuid
   organization   Organization @relation(fields: [organizationId], references: [id])
+  categoryId     String?      @db.Uuid
+  category       Category?    @relation(fields: [categoryId], references: [id])
   campaigns      Campaign[]
 	platforms      Platform[]
 
