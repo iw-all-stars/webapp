@@ -11,6 +11,10 @@ export const restaurantRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string(),
+        categoryId: z.string(),
+        address: z.string(),
+        latitude: z.number(),
+        longitude: z.number(),
         organizationId: z.string()
       })
     )

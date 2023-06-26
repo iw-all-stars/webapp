@@ -27,6 +27,7 @@ const server = z.object({
  */
 const client = z.object({
   NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
+  NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().min(1),
 });
 
 /**
@@ -41,6 +42,7 @@ const processEnv = {
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
   NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+  NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
 };
 
 // Don't touch the part below

@@ -19,3 +19,7 @@ a {
 html, body, #__next {
   height: 100%;
 }
+
+.pac-container {
+  z-index: 1400 !important;
+}
