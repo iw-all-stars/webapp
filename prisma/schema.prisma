@@ -62,12 +62,35 @@ model Client {
 }
 
 model Category {
-  id          String       @id @default(uuid()) @db.Uuid
-  name        String       @unique
-  color       String?      @default("#000000")
-  icon        String?      @default("🍔")
+  id    String  @id @default(uuid()) @db.Uuid
+  name  String  @unique
+  color String? @default("#000000")
+  icon  String? @default("🍔")
 
   restaurants Restaurant[]
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Invitation {
+  id     String           @id @default(uuid()) @db.Uuid
+  status InvitationStatus
+
+  senderId String @unique @db.Uuid
+  sender   User   @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  receiverId String @unique @db.Uuid
+  receiver   User   @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Organization {
@@ -75,9 +98,9 @@ model Organization {
   name        String
   description String?
 
-  userId      String       @db.Uuid
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  users       User[]
   restaurants Restaurant[]
+  invitations Invitation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -96,7 +119,7 @@ model Restaurant {
   categoryId     String?      @db.Uuid
   category       Category?    @relation(fields: [categoryId], references: [id])
   campaigns      Campaign[]
-	platforms      Platform[]
+  platforms      Platform[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -130,18 +153,20 @@ model Session {
 }
 
 model User {
-  id            String         @id @default(uuid()) @db.Uuid
-  name          String?
-  email         String?        @unique
-  emailVerified DateTime?
-  image         String?
-  lastLogin     DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  Campaign      Campaign[]
-  Organization  Organization[]
+  id                  String                   @id @default(uuid()) @db.Uuid
+  name                String?
+  email               String?                  @unique
+  emailVerified       DateTime?
+  image               String?
+  lastLogin           DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  accounts            Account[]
+  sessions            Session[]
+  Campaign            Campaign[]
+  Organization        Organization[]
+  senderInvitations   Invitation[] @relation("sender")
+  receiverInvitations Invitation[] @relation("receiver")
 }
 
 model VerificationToken {
@@ -165,11 +190,11 @@ model Story {
   name        String
   publishedAt DateTime?
   posts       Post[]
-	platformId  String 	@db.Uuid
-	platform    Platform	@relation(fields: [platformId], references: [id], onDelete: Cascade)
+  platformId  String      @db.Uuid
+  platform    Platform    @relation(fields: [platformId], references: [id], onDelete: Cascade)
   status      StoryStatus
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 enum PostType {
@@ -178,36 +203,36 @@ enum PostType {
 }
 
 model Post {
-  id  String @id @default(uuid()) @db.Uuid
-  name String @db.Uuid @unique
-  originalUrl String
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique @db.Uuid
+  originalUrl  String
   convertedUrl String?
-  story Story?  @relation(fields: [storyId], references: [id], onDelete: Cascade)
-  storyId String? @db.Uuid
-  position Int?
-  type PostType
-	socialPostId String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  story        Story?   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  storyId      String?  @db.Uuid
+  position     Int?
+  type         PostType
+  socialPostId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 enum PlatformKey {
   TWITTER
   INSTAGRAM
   FACEBOOK
-	TIKTOK
+  TIKTOK
 }
 
 model Platform {
-  id  String      @id @default(uuid()) @db.Uuid
-  key PlatformKey
-	login String
-	password String
-	
-	restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-	restaurantId String @db.Uuid
-	stories Story[]
+  id       String      @id @default(uuid()) @db.Uuid
+  key      PlatformKey
+  login    String
+  password String
 
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurantId String     @db.Uuid
+  stories      Story[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

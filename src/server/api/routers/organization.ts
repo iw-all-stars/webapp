@@ -11,7 +11,16 @@ export const organizationRouter = createTRPCRouter({
       })
     )
     .mutation(({ ctx, input }) => {
-      return ctx.prisma.organization.create({ data: input });
+      return ctx.prisma.organization.create({ 
+        data: {
+          name: input.name,
+          users: {
+            connect: {
+              id: input.userId,
+            }
+          },
+        }
+      });
     }),
 
   update: publicProcedure
@@ -47,10 +56,14 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  getByUserId: publicProcedure.query(({ ctx }) => {
+  getByCurrentUser: publicProcedure.query(({ ctx }) => {
     return ctx.prisma.organization.findMany({
       where: {
-        userId: ctx.session?.user.id,
+        users: {
+          some: {
+            id: ctx.session?.user.id,
+          }
+        }
       },
       include: {
         restaurants: {

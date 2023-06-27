@@ -14,14 +14,18 @@ type RestaurantFormValues = {
 }
 
 const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
-  const { register, formState: { errors }, handleSubmit, control, reset } = useForm<RestaurantFormValues>();
 
+  const context = api.useContext();
   const router = useRouter();
   const { data: session } = useSession();
 
+  const { register, formState: { errors }, handleSubmit, control, reset } = useForm<RestaurantFormValues>();
+
   const { data: categories } = api.category.getAll.useQuery();
 
-  const addRestaurant = api.restaurant.add.useMutation();
+  const addRestaurant = api.restaurant.add.useMutation({
+    onSuccess: () => context.restaurant.getByOrganizationId.invalidate(),
+  });
 
   const handleAddRestaurant: SubmitHandler<RestaurantFormValues> = async (newRestaurantForm) => {
     if (session && router.query.organizationId) {

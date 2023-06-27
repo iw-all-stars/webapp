@@ -38,7 +38,7 @@ const DashboardSettings: NextPage = () => {
   const updateOrganization = api.organization.update.useMutation({
     onSuccess: () => {
       context.organization.getById.invalidate({ id: organizationId as string })
-      context.organization.getByUserId.invalidate()
+      context.organization.getByCurrentUser.invalidate()
     }
   });
   const updateRestaurant = api.restaurant.update.useMutation({

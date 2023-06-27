@@ -47,14 +47,14 @@ const Home: NextPage = () => {
   const { data: session, status: sessionStatus } = useSession();
 
   const { data: categories } = api.category.getAll.useQuery();
-  const organizations = api.organization.getByUserId.useQuery();
+  const organizations = api.organization.getByCurrentUser.useQuery();
 
   const addOrganization = api.organization.add.useMutation({
-    onSuccess: () => utils.organization.getByUserId.invalidate(),
+    onSuccess: () => utils.organization.getByCurrentUser.invalidate(),
   });
 
   const addRestaurant = api.restaurant.add.useMutation({
-    onSuccess: () => utils.organization.getByUserId.invalidate(),
+    onSuccess: () => utils.organization.getByCurrentUser.invalidate(),
   });
 
   const handleOrganization: SubmitHandler<RestaurantFormValues> = async (restaurantForm) => {
