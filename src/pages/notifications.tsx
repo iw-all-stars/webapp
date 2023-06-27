@@ -22,11 +22,10 @@ import {
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { api } from "~/utils/api";
 import { useMemo } from "react";
-import { Invitation } from "@prisma/client";
+import { type Invitation } from "@prisma/client";
 
 type InvitationFormValues = {
   organizationId: string;
@@ -37,7 +36,6 @@ const Home: NextPage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { register, formState: { errors }, handleSubmit, reset } = useForm<InvitationFormValues>();
 
-  const router = useRouter();
   const utils = api.useContext();
 
   const { data: session, status: sessionStatus } = useSession();
