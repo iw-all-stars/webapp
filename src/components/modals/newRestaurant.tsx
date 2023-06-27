@@ -92,14 +92,14 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
             </FormControl>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme='blue' mr={3} type="submit">
+            <Button colorScheme="blue" mr={3} type="submit">
               Valider
             </Button>
             <Button onClick={onClose}>Annuler</Button>
           </ModalFooter>
-          </form>
-        </ModalContent>
-      </Modal>
+        </form>
+      </ModalContent>
+    </Modal>
   )
 }
 
