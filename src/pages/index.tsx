@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import {
     Box,
     Button,
@@ -18,48 +17,57 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
+    Select,
     Skeleton, SkeletonCircle, Text,
     useDisclosure
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import { api } from "~/utils/api";
+import Autocomplete from "react-google-autocomplete";
 
-type FormValues = {
+type RestaurantFormValues = {
   organizationName: string;
-  restaurantName: string;
+  name: string;
+  categoryId: string;
+  address: string;
+  latitude: number;
+  longitude: number;
 };
 
 const Home: NextPage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { register, formState: { errors }, handleSubmit, reset } = useForm<FormValues>();
+  const { register, formState: { errors }, handleSubmit, control, reset } = useForm<RestaurantFormValues>();
 
   const router = useRouter();
   const utils = api.useContext();
 
   const { data: session, status: sessionStatus } = useSession();
 
-  const organizations = api.organization.getByUserId.useQuery();
+  const { data: categories } = api.category.getAll.useQuery();
+  const organizations = api.organization.getByCurrentUser.useQuery();
 
   const addOrganization = api.organization.add.useMutation({
-    onSuccess: () => utils.organization.getByUserId.invalidate(),
+    onSuccess: () => utils.organization.getByCurrentUser.invalidate(),
   });
 
   const addRestaurant = api.restaurant.add.useMutation({
-    onSuccess: () => utils.organization.getByUserId.invalidate(),
+    onSuccess: () => utils.organization.getByCurrentUser.invalidate(),
   });
 
-  const handleOrganization: SubmitHandler<FormValues> = async ({ organizationName, restaurantName }) => {
+  const handleOrganization: SubmitHandler<RestaurantFormValues> = async (restaurantForm) => {
     if (session) {
+      const { organizationName, ...restaurant } = restaurantForm;
+
       const newOrganization = await addOrganization.mutateAsync({
         name: organizationName,
         userId: session.user.id,
       })
 
       addRestaurant.mutate({
-        name: restaurantName,
+        ...restaurant,
         organizationId: newOrganization.id,
       });
 
@@ -108,7 +116,7 @@ const Home: NextPage = () => {
       </Box>
       <Modal isOpen={isOpen} onClose={onClose} closeOnOverlayClick={false} onCloseComplete={() => reset()}>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent zIndex={0}>
           <form onSubmit={handleSubmit(handleOrganization)}>
             <ModalHeader>Créer votre organisation</ModalHeader>
             <ModalCloseButton />
@@ -120,10 +128,51 @@ const Home: NextPage = () => {
                 </FormControl>
                 <Divider mt={8} mb={6} />
                 <Heading size="md">Restaurant par défaut</Heading>
-                <FormControl mt={4} isInvalid={!!errors.restaurantName}>
+                <FormControl mt={4} isInvalid={!!errors.name}>
                   <FormLabel>Nom de votre restaurant</FormLabel>
-                  <Input {...register("restaurantName", { required: true })} />
+                  <Input {...register("name", { required: true })} />
                   <FormErrorMessage>Le nom du restaurant est obligatoire !</FormErrorMessage>
+                </FormControl>
+                <FormControl mt={4} isInvalid={!!errors.categoryId}>
+                  <FormLabel>Catégorie</FormLabel>
+                  <Select {...register("categoryId", { required: true })} placeholder="Choissisez une catégorie">
+                    {categories?.map((category) => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl mt={4} isInvalid={!!errors.address} aria-autocomplete="none">
+                  <FormLabel>Adresse</FormLabel>
+                  <Controller
+                    name="address"
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) =>
+                      <Autocomplete
+                        apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+                        onPlaceSelected={(place: { formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
+                          field.onChange(place.formatted_address);
+                          register("latitude", { value: place.geometry.location.lat(), required: true });
+                          register("longitude", { value: place.geometry.location.lng(), required: true });
+                        }}
+                        style={{
+                          width: "100%",
+                          height: "var(--chakra-sizes-10)",
+                          borderRadius: "var(--chakra-radii-md)",
+                          border: "1px solid",
+                          borderColor: "inherit",
+                          paddingInlineStart: "var(--chakra-space-4)",
+                          paddingInlineEnd: "var(--chakra-space-4)",
+                        }}
+                        options={{
+                          types: ["address"],
+                          componentRestrictions: { country: "fr" },
+                        }}
+                        {...field}
+                      />
+                    }
+                  />
+                  <FormErrorMessage>{errors.address?.type}</FormErrorMessage>
                 </FormControl>
             </ModalBody>
             <ModalFooter>

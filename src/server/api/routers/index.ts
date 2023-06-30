@@ -4,5 +4,8 @@ export { clientRouter as customer } from './client';
 export { mailRouter as mail } from './mail';
 export { restaurantRouter as restaurant } from './restaurant';
 export { storyRouter as story } from './story';
+export { categoryRouter as category } from './category';
 export { postRouter as post } from './post';
 export { platformRouter as platform } from './platform';
+export { invitationRouter as invitation } from './invitation';
+export { userRouter as user } from './user';
