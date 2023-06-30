@@ -53,11 +53,14 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
+    redirect: ({ baseUrl }) => {
+      return baseUrl;
+    }
   },
   adapter: PrismaAdapter(prisma),
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: "jwt",
+    strategy: "jwt"
   },
   providers: [
     /**

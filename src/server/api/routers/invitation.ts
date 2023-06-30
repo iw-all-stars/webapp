@@ -33,6 +33,8 @@ export const invitationRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { invitationId, organizationId, status } = input;
 
+      // check if invitation exists and user id matches as user id of invitation
+
       if (status === "ACCEPTED") {
         await ctx.prisma.organization.update({
           where: { id: organizationId },
