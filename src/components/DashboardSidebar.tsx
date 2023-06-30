@@ -16,13 +16,14 @@ import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { BiChevronDown } from "react-icons/bi";
 import { RxComponent1 } from "react-icons/rx";
+import { TbUsers } from "react-icons/tb";
 import {
   MdAdd,
   MdCheck,
   MdSettings,
   MdCampaign,
   MdPhotoFilter,
-  MdHome,
+  MdHome,  
 } from "react-icons/md";
 import Link from "next/link";
 import ModalNewRestaurant from "./modals/newRestaurant";
@@ -72,6 +73,11 @@ export default function DashboardSidebar() {
       name: "Plateformes",
       slug: "platforms",
       icon: RxComponent1,
+    },
+    {
+      name: "Utilisateurs",
+      slug: "users",
+      icon: TbUsers,
     },
     {
       name: "Paramètres",

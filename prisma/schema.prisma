@@ -70,20 +70,13 @@ model Category {
   restaurants Restaurant[]
 }
 
-enum InvitationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-}
-
 model Invitation {
   id     String           @id @default(uuid()) @db.Uuid
-  status InvitationStatus
 
-  senderId String @unique @db.Uuid
+  senderId String @db.Uuid
   sender   User   @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
 
-  receiverId String @unique @db.Uuid
+  receiverId String @db.Uuid
   receiver   User   @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
   organizationId String       @db.Uuid
@@ -93,12 +86,32 @@ model Invitation {
   updatedAt DateTime @updatedAt
 }
 
+enum RoleUserOnOrganization {
+  ADMIN
+  USER
+}
+
+model UsersOnOrganizations {
+  userId String @db.Uuid
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  role RoleUserOnOrganization
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, organizationId])
+}
+
 model Organization {
   id          String  @id @default(uuid()) @db.Uuid
   name        String
   description String?
 
-  users       User[]
+  users       UsersOnOrganizations[]
   restaurants Restaurant[]
   invitations Invitation[]
 
@@ -164,7 +177,7 @@ model User {
   accounts            Account[]
   sessions            Session[]
   Campaign            Campaign[]
-  Organization        Organization[]
+  organizations       UsersOnOrganizations[]
   senderInvitations   Invitation[] @relation("sender")
   receiverInvitations Invitation[] @relation("receiver")
 }

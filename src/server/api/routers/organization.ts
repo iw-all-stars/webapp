@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -15,9 +16,14 @@ export const organizationRouter = createTRPCRouter({
         data: {
           name: input.name,
           users: {
-            connect: {
-              id: input.userId,
-            }
+            create: [{
+              role: "ADMIN",
+              user: {
+                connect: {
+                  id: input.userId,
+                }
+              }
+            }]
           },
         }
       });
@@ -61,7 +67,9 @@ export const organizationRouter = createTRPCRouter({
       where: {
         users: {
           some: {
-            id: ctx.session?.user.id,
+            user: {
+              id: ctx.session?.user.id,
+            }
           }
         }
       },
@@ -78,6 +86,50 @@ export const organizationRouter = createTRPCRouter({
       }
     });
   }),
+
+  removeUser: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        userId: z.string(),  
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, userId } = input;
+
+      const currentUser = await ctx.prisma.user.findUnique({
+        where: { id: ctx.session?.user.id },
+        include: {
+          organizations: {
+            where: {
+              organizationId: id,
+              role: "ADMIN",
+            }
+          }
+        }
+      });
+
+      if (!currentUser || currentUser.organizations.length === 0) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You are not authorized to perform this action.",
+        });
+      }
+
+      return ctx.prisma.organization.update({
+        where: { id },
+        data: {
+          users: {
+            delete: [{
+              userId_organizationId: {
+                userId,
+                organizationId: id,
+              }
+            }]
+          }
+        }
+      })
+    }),
 });
 
 export default organizationRouter;
