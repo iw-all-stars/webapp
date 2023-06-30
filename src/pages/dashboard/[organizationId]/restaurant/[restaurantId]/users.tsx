@@ -22,12 +22,29 @@ const DashboardInvitations: NextPage = () => {
     organizationId: organizationId as string
   }, { enabled: !!organizationId });
 
+  const isAdmin = useMemo(() => (
+    users?.find(user => user.id === session?.user.id)?.organizations
+      .find(organization => organization.organizationId === organizationId as string)?.role === "ADMIN"
+  ), [users, session, organizationId]);
+
   const usersFromOrganization = useMemo(() => (
-    users?.filter(user => user.organizations.some(organization => organization.id === organizationId as string)) ?? []
+    users?.filter(user => user.organizations.some(organization => organization.organizationId === organizationId as string))
+      .map(user => {
+        const organization = user.organizations.find(organization => organization.organizationId === organizationId as string);
+        return {
+          ...user,
+          role: organization?.role,
+        }
+      })
+      .sort((a, b) => {
+        if (a.role === "ADMIN") return -1;
+        if (b.role === "ADMIN") return 1;
+        return 0;
+      }) ?? []
   ), [users, organizationId]);
 
   const usersNotInOrganizationOptions = useMemo(() => (
-    users?.filter(user => !user.organizations.some(organization => organization.id === organizationId as string))
+    users?.filter(user => !user.organizations.some(organization => organization.organizationId === organizationId as string))
       .filter(user => !invitations?.some(invitation => invitation.receiverId === user.id))
       .map(user => ({
         value: user.id,
@@ -71,6 +88,7 @@ const DashboardInvitations: NextPage = () => {
   const handleRemoveInvitation = (invitationId: string) => {
     deleteInvitation.mutate({
       id: invitationId,
+      organizationId: organizationId as string,
     })
   }
 
@@ -78,32 +96,34 @@ const DashboardInvitations: NextPage = () => {
     <Box py={8}>
       <Heading mb={5}>Utilisateurs</Heading>
       <Flex direction="column" bg="white" rounded="lg" border="1px solid" borderColor="gray.400">
-        <Flex alignItems="center" py={6} px={4}>
-          <ReactSelect
-            isMulti
-            options={usersNotInOrganizationOptions}
-            value={usersNotInOrganizationOptions.filter(user => usersToInvite.includes(user.value))}
-            onChange={users => setUsersToInvite(users.map(user => user.value))}
-            placeholder="Inviter un utilisateur"
-            noOptionsMessage={() => "Aucun utilisateurs"}
-            chakraStyles={{
-              container: (styles) => ({
-                ...styles,
-                width: "100%",
-              }),
-              dropdownIndicator: () => ({
-                display: "none",
-              }),
-            }}
-          />
-          <Button ml={4} colorScheme="blue" onClick={() => handleAddInvitation()}>Inviter</Button>
-        </Flex>
+        {isAdmin && (
+          <Flex alignItems="center" py={6} px={4}>
+            <ReactSelect
+              isMulti
+              options={usersNotInOrganizationOptions}
+              value={usersNotInOrganizationOptions.filter(user => usersToInvite.includes(user.value))}
+              onChange={users => setUsersToInvite(users.map(user => user.value))}
+              placeholder="Inviter un utilisateur"
+              noOptionsMessage={() => "Aucun utilisateurs"}
+              chakraStyles={{
+                container: (styles) => ({
+                  ...styles,
+                  width: "100%",
+                }),
+                dropdownIndicator: () => ({
+                  display: "none",
+                }),
+              }}
+            />
+            <Button ml={4} colorScheme="blue" onClick={() => handleAddInvitation()}>Inviter</Button>
+          </Flex>
+        )}
         {!usersFromOrganization.length ? (
           <Skeleton height="192px" />
         ) : 
           usersFromOrganization?.map((user, index) => (
             <Fragment key={user.id}>
-              {index === 0 && <Divider borderColor="gray.400" />}
+              {index === 0 && isAdmin && <Divider borderColor="gray.400" />}
               <Flex alignItems="center" justifyContent="space-between" py={6} px={4}>
                 <Flex alignItems="center">
                   <Avatar src={user.image ?? undefined} name={user.name ?? undefined} mr={4} />
@@ -112,43 +132,52 @@ const DashboardInvitations: NextPage = () => {
                     <Text fontSize="sm" color="gray.500">{user.email}</Text>
                   </Flex>
                 </Flex>
-                {user.id !== session?.user.id && (
-                  <Button colorScheme="red" onClick={() => handleRemoveUserFromOrganization(user.id)}>Supprimer</Button>
-                )}
+                <Flex alignItems="center" gap={6}>
+                  <Text textColor="gray.500">
+                    {user.role === "ADMIN" ? "Administrateur" : "Membre"}
+                  </Text>
+                  {isAdmin && user.id !== session?.user.id && (
+                    <Button colorScheme="red" onClick={() => handleRemoveUserFromOrganization(user.id)}>Supprimer</Button>
+                  )}
+                </Flex>
               </Flex>
               {index !== usersFromOrganization.length - 1 && <Divider borderColor="gray.400" />}
             </Fragment>
           ))
         }
       </Flex>
-      <Heading mt={6} mb={5}>Invitations en attente</Heading>
-      <Flex direction="column" bg="white" rounded="lg" border="1px solid" borderColor="gray.400">
-        <Flex alignItems="center" py={6} px={4}>
-          {isLoadingInvitations ? (
-            <Skeleton height="96px" />
-          ) :
-            invitations?.length === 0 ? (
-              <Center w="full" h="96px">Aucune invitation en attente</Center>
-            ) : (
-              invitations?.map((invitation, index) => (
-                <Fragment key={invitation.id}>
-                  <Flex w="full" alignItems="center" justifyContent="space-between">
-                    <Flex alignItems="center">
-                      <Avatar src={invitation.receiver.image ?? undefined} name={invitation.receiver.name ?? undefined} mr={4} />
-                      <Flex direction="column">
-                        <Text>{invitation.receiver.name}</Text>
-                        <Text fontSize="sm" color="gray.500">{invitation.receiver.email}</Text>
+      {isAdmin && (
+        <>
+          <Heading mt={6} mb={5}>Invitations en attente</Heading>
+          <Flex direction="column" bg="white" rounded="lg" border="1px solid" borderColor="gray.400">
+            <Flex alignItems="center" py={6} px={4}>
+              {isLoadingInvitations ? (
+                <Skeleton height="96px" />
+              ) :
+                invitations?.length === 0 ? (
+                  <Center w="full" h="96px">Aucune invitation en attente</Center>
+                ) : (
+                  invitations?.map((invitation, index) => (
+                    <Fragment key={invitation.id}>
+                      <Flex w="full" alignItems="center" justifyContent="space-between">
+                        <Flex alignItems="center">
+                          <Avatar src={invitation.receiver.image ?? undefined} name={invitation.receiver.name ?? undefined} mr={4} />
+                          <Flex direction="column">
+                            <Text>{invitation.receiver.name}</Text>
+                            <Text fontSize="sm" color="gray.500">{invitation.receiver.email}</Text>
+                          </Flex>
+                        </Flex>
+                        <Button colorScheme="red" onClick={() => handleRemoveInvitation(invitation.id)}>Annuler l'invitation</Button>
                       </Flex>
-                    </Flex>
-                    <Button colorScheme="red" onClick={() => handleRemoveInvitation(invitation.id)}>Annuler l'invitation</Button>
-                  </Flex>
-                  {index !== invitations.length - 1 && <Divider borderColor="gray.400" />}
-                </Fragment>
-              )
-            ))
-          }
-        </Flex>
-      </Flex>
+                      {index !== invitations.length - 1 && <Divider borderColor="gray.400" />}
+                    </Fragment>
+                  )
+                ))
+              }
+            </Flex>
+          </Flex>
+        </>
+      )}
     </Box>
   );
 };

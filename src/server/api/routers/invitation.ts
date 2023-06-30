@@ -12,10 +12,27 @@ export const invitationRouter = createTRPCRouter({
         organizationId: z.string(),
       })
     )
-    .mutation(({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { receiverIds, ...data } = input;
 
-      console.log("user", ctx.session?.user)
+      const currentUser = await ctx.prisma.user.findUnique({
+        where: { id: ctx.session?.user.id },
+        include: {
+          organizations: {
+            where: {
+              organizationId: input.organizationId,
+              role: "ADMIN",
+            }
+          }
+        }
+      });
+
+      if (!currentUser || currentUser.organizations.length === 0) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You are not authorized to perform this action.",
+        });
+      }
 
       return ctx.prisma.invitation.createMany({
         data: receiverIds.map(receiverId => ({
@@ -54,9 +71,14 @@ export const invitationRouter = createTRPCRouter({
           where: { id: organizationId },
           data: {
             users: {
-              connect: {
-                id: ctx.session?.user.id
-              }
+              create: [{
+                role: "USER",
+                user: {
+                  connect: {
+                    id: ctx.session?.user.id
+                  }
+                }
+              }]
             }
           }
         });
@@ -109,9 +131,30 @@ export const invitationRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
+        organizationId: z.string(),
       })
     )
-    .mutation(({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
+
+      const currentUser = await ctx.prisma.user.findUnique({
+        where: { id: ctx.session?.user.id },
+        include: {
+          organizations: {
+            where: {
+              organizationId: input.organizationId,
+              role: "ADMIN",
+            }
+          }
+        }
+      });
+
+      if (!currentUser || currentUser.organizations.length === 0) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You are not authorized to perform this action.",
+        });
+      }
+
       return ctx.prisma.invitation.delete({
         where: { id: input.id }
       });

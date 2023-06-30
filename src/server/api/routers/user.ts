@@ -6,7 +6,11 @@ export const userRouter = createTRPCRouter({
   getAll: publicProcedure.query(({ ctx }) => {
     return ctx.prisma.user.findMany({
       include: {
-        organizations: true,
+        organizations: {
+          include: {
+            organization: true
+          }
+        },
       },
     });
   }),
@@ -22,8 +26,8 @@ export const userRouter = createTRPCRouter({
         where: {
           organizations: {
             some: {
-              id: input.id,
-            },
+              organizationId: input.id,
+            }
           }
         },
       });
