@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -15,7 +16,6 @@ export const invitationRouter = createTRPCRouter({
     .mutation(({ ctx, input }) => {
       return ctx.prisma.invitation.create({
         data: {
-          status: "PENDING",
           ...input
         }
       });
@@ -33,7 +33,16 @@ export const invitationRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { invitationId, organizationId, status } = input;
 
-      // check if invitation exists and user id matches as user id of invitation
+      const currentInvitation = await ctx.prisma.invitation.findUnique({
+        where: { id: invitationId }
+      });
+
+      if (currentInvitation?.receiverId !== ctx.session?.user.id) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You are not authorized to change this invitation status"
+        })
+      }
 
       if (status === "ACCEPTED") {
         await ctx.prisma.organization.update({
@@ -48,11 +57,8 @@ export const invitationRouter = createTRPCRouter({
         });
       }
 
-      return await ctx.prisma.invitation.update({
-        where: { id: invitationId },
-        data: {
-          status,
-        }
+      return await ctx.prisma.invitation.delete({
+        where: { id: invitationId }
       });
     }
   ),
@@ -65,10 +71,7 @@ export const invitationRouter = createTRPCRouter({
     .query(({ ctx }) => {
       return ctx.prisma.invitation.findMany({
         where: {
-          OR: [
-            { receiverId: ctx.session?.user.id },
-            { senderId: ctx.session?.user.id }
-          ]
+          receiverId: ctx.session?.user.id
         },
         include: {
           sender: true,

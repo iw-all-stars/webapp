@@ -1,8 +1,10 @@
 import {
+  Avatar,
   Box,
   Button,
   Card, CardBody,
   CardFooter,
+  Center,
   Flex,
   FormControl,
   FormLabel,
@@ -93,13 +95,19 @@ const Home: NextPage = () => {
             <GridItem key={invitation.id} w="full">
               <Card w="full" mx="auto">
                 <CardBody>
-                  <Text>Organisation : {invitation.organization.name}</Text>
-                  <Text>Envoyeur : {invitation.sender.name}</Text>
-                  <Text>Destinataire : {invitation.receiver.name}</Text>
-                  <Text>Status : {invitation.status}</Text>
+                  <Center flexDirection="column">
+                    <Avatar h={10} w={10} rounded="full" src={invitation.sender.image ?? undefined} name={invitation.sender.name ?? undefined} />
+                    <Text align="center" mt={2}>
+                      <Text as='b'>{invitation.sender.name}</Text>
+                      <br/>
+                      vous a envoyé une invitation pour rejoindre l'organisation
+                      <br/>
+                      <Text as='b'>{invitation.organization.name}</Text>
+                    </Text>
+                  </Center>
                 </CardBody>
-                {invitation.status === "PENDING" && invitation.receiverId === session?.user.id && (
-                  <CardFooter justifyContent="end" gap={4}>
+                {invitation.receiverId === session?.user.id && (
+                  <CardFooter justifyContent="center" pt={0} gap={4}>
                     <Button colorScheme="red" onClick={() => handleStateInvitation(invitation, "REJECTED")}>Refuser</Button>
                     <Button colorScheme="green" onClick={() => handleStateInvitation(invitation, "ACCEPTED")}>Accepter</Button>
                   </CardFooter>

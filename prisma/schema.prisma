@@ -70,15 +70,8 @@ model Category {
   restaurants Restaurant[]
 }
 
-enum InvitationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-}
-
 model Invitation {
   id     String           @id @default(uuid()) @db.Uuid
-  status InvitationStatus
 
   senderId String @unique @db.Uuid
   sender   User   @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
