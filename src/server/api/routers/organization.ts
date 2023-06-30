@@ -78,6 +78,27 @@ export const organizationRouter = createTRPCRouter({
       }
     });
   }),
+
+  removeUser: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        userId: z.string(),  
+      })
+    )
+    .mutation(({ ctx, input }) => {
+      const { id, userId } = input;
+      return ctx.prisma.organization.update({
+        where: { id },
+        data: {
+          users: {
+            disconnect: {
+              id: userId,
+            }
+          }
+        }
+      })
+    }),
 });
 
 export default organizationRouter;

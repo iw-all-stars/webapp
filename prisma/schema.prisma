@@ -73,10 +73,10 @@ model Category {
 model Invitation {
   id     String           @id @default(uuid()) @db.Uuid
 
-  senderId String @unique @db.Uuid
+  senderId String @db.Uuid
   sender   User   @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
 
-  receiverId String @unique @db.Uuid
+  receiverId String @db.Uuid
   receiver   User   @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
   organizationId String       @db.Uuid
@@ -157,7 +157,7 @@ model User {
   accounts            Account[]
   sessions            Session[]
   Campaign            Campaign[]
-  Organization        Organization[]
+  organizations       Organization[]
   senderInvitations   Invitation[] @relation("sender")
   receiverInvitations Invitation[] @relation("receiver")
 }

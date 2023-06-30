@@ -8,16 +8,21 @@ export const invitationRouter = createTRPCRouter({
   add: publicProcedure
     .input(
       z.object({
-        receiverId: z.string(),
-        senderId: z.string(),
+        receiverIds: z.array(z.string()),
         organizationId: z.string(),
       })
     )
     .mutation(({ ctx, input }) => {
-      return ctx.prisma.invitation.create({
-        data: {
-          ...input
-        }
+      const { receiverIds, ...data } = input;
+
+      console.log("user", ctx.session?.user)
+
+      return ctx.prisma.invitation.createMany({
+        data: receiverIds.map(receiverId => ({
+          receiverId,
+          senderId: ctx.session?.user.id as string,
+          ...data,
+        })),
       });
     }
   ),
@@ -67,6 +72,25 @@ export const invitationRouter = createTRPCRouter({
     return ctx.prisma.invitation.findMany();
   }),
 
+  getByOrganizationId: publicProcedure
+    .input(
+      z.object({
+        organizationId: z.string(),
+      })
+    )
+    .query(({ ctx, input }) => {
+      return ctx.prisma.invitation.findMany({
+        where: {
+          organizationId: input.organizationId
+        },
+        include: {
+          sender: true,
+          receiver: true,
+          organization: true
+        }
+      });
+  }),
+
   getByCurrentUser: publicProcedure
     .query(({ ctx }) => {
       return ctx.prisma.invitation.findMany({
@@ -80,6 +104,19 @@ export const invitationRouter = createTRPCRouter({
         }
       });
     }),
+
+  delete: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .mutation(({ ctx, input }) => {
+      return ctx.prisma.invitation.delete({
+        where: { id: input.id }
+      });
+    }
+  ),
 
 });
 
