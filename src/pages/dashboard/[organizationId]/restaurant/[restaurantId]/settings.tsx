@@ -93,7 +93,7 @@ const DashboardSettings: NextPage = () => {
   }, [currentOrganization]);
 
   return (
-    <Box h="full" w="full" pt={8}>
+    <Box py={8}>
       <Heading pb={5}>Paramètres</Heading>
       <Flex direction="column" gap={8}>
         <Box as="form" onSubmit={handleSubmitOrganization(handleUpdateOrganization)} bg="white" shadow="sm" rounded="xl" ring={1} ringColor="gray.900">

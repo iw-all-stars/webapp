@@ -32,7 +32,7 @@ export default function LayoutBase({
         }}
       >
         {isDashboard && <DashboardSidebar />}
-        <Container h="full" bgColor={"#F9FAFF"} px={isAuth ? 0 : 4} minW={isAuth ? "full" : "calc(100% - 200px)"}>
+        <Container h="full" overflowY="scroll" bgColor={"#F9FAFF"} px={isAuth ? 0 : 4} minW={isAuth ? "full" : "calc(100% - 200px)"}>
           {children}
         </Container>
       </main>
