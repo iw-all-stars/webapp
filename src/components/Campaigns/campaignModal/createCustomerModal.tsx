@@ -28,8 +28,9 @@ export const CreateCustomerModal = ({ isOpen, onClose, onOpen }: Props) => {
     router.push(
       `/dashboard/${router.query.organizationId as string}/restaurant/${
         router.query.restaurantId as string
-      }/resources/?panel=clients`
+      }/campaigns?tab=customers`
     );
+    onClose();
   };
 
   return (
@@ -60,8 +61,7 @@ export const CreateCustomerModal = ({ isOpen, onClose, onOpen }: Props) => {
             <Text fontSize={13} fontWeight={400}>
               Pour lancer une campagne,
               <br />
-              vous devez ajouter des contacts dans la partie
-              "Ressources/Clients"
+              vous devez ajouter des clients dans l'onglet "Clients"
             </Text>
           </Box>
         </ModalBody>
@@ -72,7 +72,7 @@ export const CreateCustomerModal = ({ isOpen, onClose, onOpen }: Props) => {
           gap={1}
         >
           <Button onClick={onClose} mr={3}>
-            Ajouter plus tard
+            Plus tard
           </Button>
           <Button colorScheme={"purple"} onClick={addCustomer}>
             Ajouter maintenant

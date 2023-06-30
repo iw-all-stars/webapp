@@ -1,27 +1,49 @@
 import {
   Box,
   Button,
+  Heading,
   Image,
+  Input,
+  InputGroup,
+  InputRightElement,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
+  Table,
+  TableContainer,
+  Tbody,
+  Td,
   Text,
+  Th,
+  Thead,
+  Tr,
   useDisclosure,
 } from "@chakra-ui/react";
 import React, { useEffect } from "react";
 import { api } from "~/utils/api";
 import CreateClientModal from "./CreateClientModal";
+import { SearchIcon } from "@chakra-ui/icons";
+import { type Client } from "@prisma/client";
 
 export const Clients = () => {
   const getClients = api.customer.getClients.useQuery();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [editClient, setEditClient] = React.useState<Client | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     getClients.refetch();
-  }, []);
+  }, [isOpen]);
 
   const onCreateClient = () => {
+    setEditClient(undefined);
+    onOpen();
+  };
+
+  const handleEditClient = (client: Client) => {
+    setEditClient(client);
     onOpen();
   };
 
@@ -54,11 +76,90 @@ export const Clients = () => {
             <MenuItem>Importer un fichier</MenuItem>
           </MenuList>
         </Menu>
-        <CreateClientModal isOpen={isOpen} onClose={onClose} />
+        <CreateClientModal
+          isOpen={isOpen}
+          onClose={onClose}
+          editClient={editClient}
+        />
       </Box>
     );
 
-  return <></>;
+  return (
+    <Box h="full" w="full" pt={8}>
+      <Box
+        w="full"
+        display="flex"
+        justifyContent="space-between"
+        gap={4}
+        alignItems={"center"}
+      >
+        <Heading
+          display={"flex"}
+          flexDirection={"row"}
+          gap={1}
+          fontSize={18}
+          fontWeight={400}
+        >
+          <b>Clients</b>
+          <Text letterSpacing={"widest"} fontStyle={"italic"}>
+            ({getClients.data?.length})
+          </Text>
+        </Heading>
+        <InputGroup>
+          <Input placeholder="Recherche" />
+          <InputRightElement children={<SearchIcon />} />
+        </InputGroup>
+        <Button
+          onClick={onCreateClient}
+          fontSize={12}
+          colorScheme="green"
+          variant="solid"
+          minW={"min-content"}
+        >
+          Ajouter un client
+        </Button>
+      </Box>
+      <br />
+      <TableContainer>
+        <Table variant="striped" size="md" fontSize={13}>
+          <Thead>
+            <Tr>
+              <Th></Th>
+              <Th>Prénom</Th>
+              <Th>Nom</Th>
+              <Th>Email</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {getClients?.data?.map((client) => (
+              <Tr
+                key={client.id}
+                onClick={() => handleEditClient(client)}
+                cursor={"pointer"}
+              >
+                <Td>
+                  <Image
+                    borderRadius="full"
+                    boxSize="30px"
+                    src={client.image || "https://i.pravatar.cc/150?img=68"}
+                    alt={client.name || "image"}
+                  />
+                </Td>
+                <Td>{client.firstname}</Td>
+                <Td>{client.name}</Td>
+                <Td>{client.email}</Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </TableContainer>
+      <CreateClientModal
+        isOpen={isOpen}
+        onClose={onClose}
+        editClient={editClient}
+      />
+    </Box>
+  );
 };
 
 export default Clients;

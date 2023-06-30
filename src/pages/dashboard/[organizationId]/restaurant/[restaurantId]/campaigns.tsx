@@ -1,9 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/router";
 import { Box, Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
+
 import Clients from "~/components/Campaigns/Clients";
+
 import DashboardCampaign from "../../../../../components/Campaigns/campaigns";
 
 export const Campaigns = () => {
+  const router = useRouter();
+  const [tabIndex, setTabIndex] = React.useState(0);
+
   const tabs = [
     {
       title: "Campagnes",
@@ -17,6 +23,12 @@ export const Campaigns = () => {
     },
   ];
 
+  useEffect(() => {
+    if (router.query.tab === "customers") {
+      setTabIndex(1);
+    }
+  }, [router.query.tab]);
+
   return (
     <Box h="full" w="full" pt={8}>
       <Box
@@ -26,14 +38,31 @@ export const Campaigns = () => {
         gap={4}
         alignItems={"center"}
       >
-        <Tabs w="full">
+        <Tabs
+          w="full"
+          index={tabIndex}
+          onChange={(index) => {
+            setTabIndex(index);
+            if (index === 0) {
+              router.push(
+                `/dashboard/${
+                  router.query.organizationId as string
+                }/restaurant/${router.query.restaurantId as string}/campaigns`
+              );
+            } else if (index === 1) {
+              router.push(
+                `/dashboard/${
+                  router.query.organizationId as string
+                }/restaurant/${
+                  router.query.restaurantId as string
+                }/campaigns?tab=customers`
+              );
+            }
+          }}
+        >
           <TabList>
             {tabs.map((tab) => (
-              <Tab
-                key={tab.slug}
-              >
-                {tab.title}
-              </Tab>
+              <Tab key={tab.slug}>{tab.title}</Tab>
             ))}
           </TabList>
 

@@ -204,6 +204,7 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
   const save = async () => {
     if (lastStep) {
       sendCampaignToClients(recipients);
+      onClose();
       return; // If it's the last step, we're done here
     }
 
