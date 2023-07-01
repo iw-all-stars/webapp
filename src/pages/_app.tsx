@@ -17,7 +17,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
-  const [campaign, setCampaign] = useState<Partial<Campaign> | undefined>(undefined);
+  const [campaign, setCampaign] = useState<Partial<Campaign> | undefined>(
+    undefined
+  );
 
   return (
     <SessionProvider session={session}>

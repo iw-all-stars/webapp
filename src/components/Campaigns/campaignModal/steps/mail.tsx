@@ -91,24 +91,26 @@ export const MailStep = ({ disabled }: MailProps) => {
 
       <FormControl mb={8} isInvalid={!!errors.body}>
         <FormLabel>Votre message</FormLabel>
-        <Flex gap={2} mt={4} mb={4}>
-          <Button
-            size={"sm"}
-            fontWeight={500}
-            colorScheme="pink"
-            onClick={() => addMailParam("@Prénom_client")}
-          >
-            @Prénom_client
-          </Button>
-          <Button
-            size={"sm"}
-            fontWeight={500}
-            colorScheme="facebook"
-            onClick={() => addMailParam(currentRestaurant?.name || "")}
-          >
-            @Nom_Etablissement
-          </Button>
-        </Flex>
+        {!disabled && (
+          <Flex gap={2} mt={4} mb={4}>
+            <Button
+              size={"sm"}
+              fontWeight={500}
+              colorScheme="pink"
+              onClick={() => addMailParam("@Prénom_client")}
+            >
+              @Prénom_client
+            </Button>
+            <Button
+              size={"sm"}
+              fontWeight={500}
+              colorScheme="facebook"
+              onClick={() => addMailParam(currentRestaurant?.name || "")}
+            >
+              @Nom_Etablissement
+            </Button>
+          </Flex>
+        )}
         <Textarea
           id="body"
           {...register("body", { required: true })}

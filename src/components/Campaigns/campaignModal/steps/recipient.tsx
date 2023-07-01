@@ -31,6 +31,7 @@ import {
   StatHelpText,
   StatNumber,
   Switch,
+  Icon,
 } from "@chakra-ui/react";
 import {
   ArrowRightIcon,
@@ -39,15 +40,25 @@ import {
   ChevronLeftIcon,
 } from "@chakra-ui/icons";
 import { type Recipient } from "..";
+import { RxPaperPlane } from "react-icons/rx";
 
 interface RecipientStepProps {
+  sent: boolean;
   columns: Column<object>[];
   data: Row<object>[];
   recipients: Recipient[];
   setRecipients: (recipients: Recipient[]) => void;
+  setSearch: (search: string) => void;
 }
 
-export const RecipientStep = ({ columns, data, recipients, setRecipients }: RecipientStepProps) => {
+export const RecipientStep = ({
+  sent,
+  columns,
+  data,
+  recipients,
+  setRecipients,
+  setSearch,
+}: RecipientStepProps) => {
   const {
     getTableBodyProps,
     headerGroups,
@@ -71,6 +82,7 @@ export const RecipientStep = ({ columns, data, recipients, setRecipients }: Reci
     usePagination
   );
   React.useEffect(() => {
+    if (sent) return;
     const recipients = page.map((row: Row<object>) => {
       const recipient = row.original as Recipient;
       recipient.selected = true;
@@ -81,24 +93,30 @@ export const RecipientStep = ({ columns, data, recipients, setRecipients }: Reci
 
   return (
     <Box>
-      <Flex gap={4}>
-        <FormControl>
-          <InputGroup>
-            <Input type="text" placeholder="Ajouter un destinataire" />
-            <InputRightAddon>
-              <MdSearch />
-            </InputRightAddon>
-          </InputGroup>
-        </FormControl>
-        <Stat>
-          <Flex gap={2} textAlign={"center"}>
-            <StatNumber>
-              {recipients?.filter((recipient) => recipient.selected).length}
-            </StatNumber>
-            <StatHelpText>destinataires sélectionnés</StatHelpText>
-          </Flex>
-        </Stat>
-      </Flex>
+      {!sent && (
+        <Flex gap={4}>
+          <FormControl>
+            <InputGroup>
+              <Input
+                type="text"
+                placeholder="Ajouter un destinataire"
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <InputRightAddon>
+                <MdSearch />
+              </InputRightAddon>
+            </InputGroup>
+          </FormControl>
+          <Stat>
+            <Flex gap={2} textAlign={"center"}>
+              <StatNumber>
+                {recipients?.filter((recipient) => recipient.selected).length}
+              </StatNumber>
+              <StatHelpText>destinataires sélectionnés</StatHelpText>
+            </Flex>
+          </Stat>
+        </Flex>
+      )}
       <br />
       <Box border="1px" borderColor="#EDF2F7" py={4} borderRadius="0.375rem">
         <TableContainer>
@@ -134,6 +152,15 @@ export const RecipientStep = ({ columns, data, recipients, setRecipients }: Reci
                         const { key, ...cellProps } = cell.getCellProps();
                         const recipient = row.original as Recipient;
                         if (cell.column.id === "selected") {
+                          if (sent) {
+                            return (
+                              <Td key={key} {...cellProps}>
+                                <Box color="green.500" height={6} width={6}>
+                                  <Icon as={RxPaperPlane} h={6} w={6} />
+                                </Box>
+                              </Td>
+                            );
+                          }
                           return (
                             <Td key={key} {...cellProps}>
                               <Switch

@@ -27,22 +27,24 @@ const updateCampaignSchema = z.object({
 
 export const campaignRouter = createTRPCRouter({
   getCampaigns: protectedProcedure
-  .input(z.string().optional())
-  .query(({ ctx, input = "" }) => {
-    return ctx.prisma.campaign.findMany({
-      include: { mail: true },
-      where: {
-        OR: [
-          { name: { contains: input, mode: "insensitive" } },
-          { subject: { contains: input, mode: "insensitive" } },
-        ],
-      },
-    });
-  }),
+    .input(z.string().optional())
+    .query(({ ctx, input = "" }) => {
+      return ctx.prisma.campaign.findMany({
+        include: { mail: true },
+        where: {
+          OR: [
+            { name: { contains: input, mode: "insensitive" } },
+            { subject: { contains: input, mode: "insensitive" } },
+          ],
+        },
+      });
+    }),
   findCampaignByName: protectedProcedure
-    .input(z.object({
-      name: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        name: z.string().optional(),
+      })
+    )
     .query(({ ctx, input }) => {
       if (!input.name) return null;
       return ctx.prisma.campaign.findFirst({
@@ -77,7 +79,16 @@ export const campaignRouter = createTRPCRouter({
       });
     }),
   initializeCampaign: protectedProcedure
-    .input(campaignSchema.omit({ id: true, creatorId: true, status: true, subject: true, body: true, url: true }))
+    .input(
+      campaignSchema.omit({
+        id: true,
+        creatorId: true,
+        status: true,
+        subject: true,
+        body: true,
+        url: true,
+      })
+    )
     .mutation(({ ctx, input }) => {
       return ctx.prisma.campaign.create({
         data: {

@@ -19,17 +19,19 @@ const sendCampaignSchema = z.object({
 });
 
 export const mailRouter = createTRPCRouter({
-  getMails: protectedProcedure.query(({ ctx, input }) => {
-    return ctx.prisma.mail.findMany({
-      where: {
-        campaignId: input,
-      },
-      include: {
-        campaign: true,
-        client: true,
-      },
-    });
-  }),
+  getMails: protectedProcedure
+    .input(z.string().optional())
+    .query(({ ctx, input }) => {
+      return ctx.prisma.mail.findMany({
+        where: {
+          campaignId: input,
+          status: "sent",
+        },
+        include: {
+          client: true,
+        },
+      });
+    }),
 
   createMail: protectedProcedure
     .input(mailSchema.omit({ id: true }))
@@ -66,7 +68,6 @@ export const mailRouter = createTRPCRouter({
         body: mail.campaign.body,
         mailId: mail.id,
         restaurant: mail.campaign.restaurant.name,
-        rateURL: `https://www.google.com/search?q=${mail.campaign.restaurant.name}`, // todo: replace with real url
         logoURL: mail.campaign.restaurant.logo as string,
       });
 
