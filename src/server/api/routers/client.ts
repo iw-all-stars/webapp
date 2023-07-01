@@ -15,11 +15,23 @@ const clientSchema = z.object({
 });
 
 export const clientRouter = createTRPCRouter({
-  getClients: protectedProcedure.query(({ ctx }) => {
-    return ctx.prisma.client.findMany({
-      where: { unsubscribed: false },
-    });
-  }),
+  getClients: protectedProcedure
+    .input(z.string().optional())
+    .query(({ ctx, input = "" }) => {
+      return ctx.prisma.client.findMany({
+        where: {
+          unsubscribed: false,
+          OR: [
+            { name: { contains: input, mode: "insensitive" } },
+            { firstname: { contains: input, mode: "insensitive" } },
+            { email: { contains: input, mode: "insensitive" } },
+            { address: { contains: input, mode: "insensitive" } },
+            { city: { contains: input, mode: "insensitive" } },
+            { zip: { contains: input, mode: "insensitive" } },
+          ],
+        },
+      });
+    }),
   getClient: protectedProcedure
     .input(z.string().nonempty())
     .query(({ ctx, input }) => {

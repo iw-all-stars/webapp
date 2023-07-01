@@ -27,11 +27,13 @@ import { SearchIcon } from "@chakra-ui/icons";
 import { type Client } from "@prisma/client";
 
 export const Clients = () => {
-  const getClients = api.customer.getClients.useQuery();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [editClient, setEditClient] = React.useState<Client | undefined>(
     undefined
   );
+  const [search, setSearch] = React.useState("");
+
+  const getClients = api.customer.getClients.useQuery(search);
 
   useEffect(() => {
     getClients.refetch();
@@ -47,7 +49,14 @@ export const Clients = () => {
     onOpen();
   };
 
-  if (!getClients.data?.length)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      getClients.refetch();
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  if (!getClients.data?.length && !search)
     return (
       <Box
         pt={20}
@@ -106,7 +115,7 @@ export const Clients = () => {
           </Text>
         </Heading>
         <InputGroup>
-          <Input placeholder="Recherche" />
+          <Input placeholder="Recherche" onChange={(e) => setSearch(e.target.value)} />
           <InputRightElement children={<SearchIcon />} />
         </InputGroup>
         <Button

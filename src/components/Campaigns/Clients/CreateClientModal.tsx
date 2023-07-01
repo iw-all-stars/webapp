@@ -28,7 +28,7 @@ interface Props {
 }
 
 export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
-  const [client, setClient] = React.useState<Client | null>(null);
+  const [client, setClient] = React.useState<Partial<Client> | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   const createClient = api.customer.createClient.useMutation();
@@ -42,21 +42,16 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
     setError(null);
 
     if (!client?.id) {
-      createClient.mutate(client, {
+      return createClient.mutate(client as Client, {
         onSuccess: () => {
           onClose();
         },
-        onError: (error) => {
-          // [ { "code": "invalid_type", "expected": "string", "received": "undefined", "path": [ "phone" ], "message": "Required" }, { "code": "invalid_type", "expected": "string", "received": "undefined", "path": [ "image" ], "message": "Required" } ]
-          const errors = error.message;
-          console.log(errors);
-          return;
-          setError(errors);
+        onError: () => {
+          setError("Veuillez remplir tous les champs");
         },
       });
-      return;
     }
-    updateClient.mutate(client, {
+    updateClient.mutate(client as Client, {
       onSuccess: () => {
         onClose();
       },
