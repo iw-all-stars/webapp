@@ -28,7 +28,7 @@ import { type createUpdatePlatformParams } from "~/pages/dashboard/[organization
 import { api } from "~/utils/api";
 
 interface PlatformCardProps {
-    platform?: Platform;
+    platform?: Omit<Platform, 'password'>;
     platformKey: PlatformKey;
     available: boolean;
     createUpdatePlatform: (data: createUpdatePlatformParams) => void;
@@ -62,7 +62,7 @@ export const PlatformCard = ({
         },
     });
 
-    const renderBottom = (available: boolean, platform?: Platform) => {
+    const renderBottom = (available: boolean, platform?: Omit<Platform, 'password'>) => {
         if (platform) {
             return (
                 <Skeleton isLoaded={!isLoading}>

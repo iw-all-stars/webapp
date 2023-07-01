@@ -16,7 +16,7 @@ export const PLATFORMS = [
 export type createUpdatePlatformParams = {
     dataForm: Pick<Platform, "login" | "password">;
     key: PlatformKey;
-    platform?: Platform;
+    platform?: Omit<Platform, 'password'>;
     options?: MutateOptions;
 };
 
@@ -39,12 +39,6 @@ const DashboardPlatforms: NextPage = () => {
     });
 
     const updatePlatformMutation = api.platform.updateById.useMutation({
-        onSuccess: () => {
-            utils.platform.getAllByRestaurantId.invalidate();
-        },
-    });
-
-    const deletePlatformMutation = api.platform.deleteById.useMutation({
         onSuccess: () => {
             utils.platform.getAllByRestaurantId.invalidate();
         },
@@ -75,11 +69,6 @@ const DashboardPlatforms: NextPage = () => {
         }
     };
 
-    const deletePlatformById = (id: string) => {
-        deletePlatformMutation.mutate({
-            id,
-        });
-    };
 
     return (
         <Box h="full" w="full" pt={8}>

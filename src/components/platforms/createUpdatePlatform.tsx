@@ -23,7 +23,7 @@ import { type createUpdatePlatformParams } from "~/pages/dashboard/[organization
 
 interface CreateUpdatePlatformProps {
     platformKey: PlatformKey;
-    platform?: Platform;
+    platform?: Omit<Platform, 'password'>;
     createUpdatePlatform: (data: createUpdatePlatformParams) => void;
     isLoadingCreateUpdatePlatform: boolean;
     isOpen: boolean;
@@ -69,7 +69,6 @@ const CreateUpdatePlatform = ({
                     // set errors
                     setError("login", {
                         type: "manual",
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                         message:
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                             e?.data?.httpStatus === 401
@@ -79,7 +78,6 @@ const CreateUpdatePlatform = ({
 
                     setError("password", {
                         type: "manual",
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                         message:
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                             e?.data?.httpStatus === 401
