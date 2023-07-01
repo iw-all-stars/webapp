@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -26,13 +26,14 @@ import CreateCustomerModal from "~/components/Campaigns/campaignModal/createCust
 import { CampaignContext } from "./CampaignContext";
 
 const DashboardCampaign: React.FC = () => {
+  const [search, setSearch] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isCreateCustomerModalOpen,
     onOpen: onOpenCreateCustomerModal,
     onClose: onCloseCreateCustomerModal,
   } = useDisclosure();
-  const getCampaigns = api.campaign.getCampaigns.useQuery();
+  const getCampaigns = api.campaign.getCampaigns.useQuery(search);
   const getClients = api.customer.getClients.useQuery();
   const context = useContext(CampaignContext);
 
@@ -63,6 +64,13 @@ const DashboardCampaign: React.FC = () => {
     context?.setCampaign(undefined);
   }, []);
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      getCampaigns.refetch();
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
   return (
     <Box h="full" w="full" pt={8}>
       <Box
@@ -85,7 +93,7 @@ const DashboardCampaign: React.FC = () => {
           </Text>
         </Heading>
         <InputGroup>
-          <Input placeholder="Recherche" />
+          <Input placeholder="Recherche" onChange={(e) => setSearch(e.target.value)} />
           <InputRightElement children={<SearchIcon />} />
         </InputGroup>
         <Button
@@ -149,7 +157,7 @@ const DashboardCampaign: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {getCampaigns.data?.map((campaign) => {
+            {(search || getCampaigns?.data?.length) && getCampaigns.data?.map((campaign) => {
               const sentMails = campaign.mail.length;
               const openRate =
                 campaign.mail.length === 0

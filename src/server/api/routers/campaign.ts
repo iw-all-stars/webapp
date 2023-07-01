@@ -26,10 +26,17 @@ const updateCampaignSchema = z.object({
 });
 
 export const campaignRouter = createTRPCRouter({
-  getCampaigns: protectedProcedure.query(({ ctx }) => {
-    // get mails for each campaignId
+  getCampaigns: protectedProcedure
+  .input(z.string().optional())
+  .query(({ ctx, input = "" }) => {
     return ctx.prisma.campaign.findMany({
       include: { mail: true },
+      where: {
+        OR: [
+          { name: { contains: input, mode: "insensitive" } },
+          { subject: { contains: input, mode: "insensitive" } },
+        ],
+      },
     });
   }),
   findCampaignByName: protectedProcedure
