@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
-	StoryStatus,
-	type Prisma,
-	type PrismaClient,
-	type Story,
+    StoryStatus,
+    type Prisma,
+    type PrismaClient,
+    type Story,
 } from "@prisma/client";
 import { IgApiClient } from "instagram-private-api";
 import { Duration } from "luxon";
 import {
-	deleteStorySchedule,
-	scheduleStory,
+    deleteStorySchedule,
+    scheduleStory,
 } from "~/server/services/storyScheduler.service";
 import { isElapsedTimesBetweenDatesGreaterThanDuration } from "~/utils/date";
 import { decrypt } from "~/utils/decrypte-password";
@@ -31,6 +31,9 @@ export class StoryHook implements Hook {
                 params.model == "Story" &&
                 ["create", "update"].includes(params.action)
             ) {
+                console.log("🟩🟩🟩🟩UPDATE_CREATE🟩🟩🟩🟩");
+                console.log(result);
+                console.log("🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦");
                 const storyWithPosts = await prismaClient.story.findUnique({
                     where: {
                         id: (result as Story).id,
@@ -41,11 +44,11 @@ export class StoryHook implements Hook {
                     },
                 });
 
-				try {
-					await deleteStorySchedule((result as Story).id);
-				} catch (_) {
-					console.log('no schedule to delete');
-				}
+                try {
+                    await deleteStorySchedule((result as Story).id);
+                } catch (_) {
+                    console.log("no schedule to delete");
+                }
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 if (
@@ -53,27 +56,27 @@ export class StoryHook implements Hook {
                     (result as Partial<Story>)?.publishedAt &&
                     (result as Partial<Story>)?.status !== StoryStatus.DRAFT
                 ) {
-					const platform = await prismaClient.platform.findFirst({
-						where: {
-							id: storyWithPosts.platformId,
-						},
-						include: {
-							restaurant: true,
-						},
-					});
-					const restaurantWithOrga = await prismaClient.restaurant.findFirst({
-						where: {
-							id: platform?.restaurantId,
-						},
-						include: {
-							organization: true,
-						},
-					})
+                    const platform = await prismaClient.platform.findFirst({
+                        where: {
+                            id: storyWithPosts.platformId,
+                        },
+                        include: {
+                            restaurant: true,
+                        },
+                    });
+                    const restaurantWithOrga =
+                        await prismaClient.restaurant.findFirst({
+                            where: {
+                                id: platform?.restaurantId,
+                            },
+                            include: {
+                                organization: true,
+                            },
+                        });
 
-					if (restaurantWithOrga) {
-						await scheduleStory(storyWithPosts, restaurantWithOrga);
-					}
-
+                    if (restaurantWithOrga) {
+                        await scheduleStory(storyWithPosts, restaurantWithOrga);
+                    }
                 }
             }
 
@@ -83,6 +86,9 @@ export class StoryHook implements Hook {
 
         prismaClient.$use(async (params, next) => {
             if (params.model == "Story" && ["delete"].includes(params.action)) {
+                console.log("🟩🟩🟩🟩DELETE🟩🟩🟩🟩");
+                console.log(params);
+                console.log("🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦");
                 const storyId = params.args.where.id as string;
                 const story = await prismaClient.story.findUnique({
                     where: {
