@@ -31,9 +31,6 @@ export class StoryHook implements Hook {
                 params.model == "Story" &&
                 ["create", "update"].includes(params.action)
             ) {
-                console.log("🟩🟩🟩🟩UPDATE_CREATE🟩🟩🟩🟩");
-                console.log(result);
-                console.log("🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦");
                 const storyWithPosts = await prismaClient.story.findUnique({
                     where: {
                         id: (result as Story).id,

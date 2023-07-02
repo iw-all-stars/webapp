@@ -1,18 +1,17 @@
 import {
-    CreateScheduleCommand,
-    DeleteScheduleCommand,
-    SchedulerClient,
+	CreateScheduleCommand,
+	DeleteScheduleCommand,
+	SchedulerClient,
 } from "@aws-sdk/client-scheduler";
 import {
-    PlatformKey,
-    type Platform,
-    type Post,
-    type Story,
-    type Organization,
-    type Restaurant,
+	PlatformKey,
+	type Organization,
+	type Platform,
+	type Post,
+	type Restaurant,
+	type Story,
 } from "@prisma/client";
 import { DateTime } from "luxon";
-import { encrypt } from "~/utils/decrypte-password";
 
 const client = new SchedulerClient({
     region: process.env.AWS_REGION,
@@ -58,16 +57,20 @@ export const scheduleStory = async (
     );
 };
 
-export const deleteStorySchedule = async (storyId: string) => {
+export const deleteStorySchedule = async (storyId: string): Promise<boolean> => {
     return client
         .send(
             new DeleteScheduleCommand({
                 Name: storyId,
             })
         )
+		.then(() => {
+			console.log("[CRON deleted] : ", storyId);
+			return true;
+		})
         .catch((err: Error) => {
             console.error("[CRON doesnt exist] : ", err);
-            return err;
+            return false;
         });
 };
 

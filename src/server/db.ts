@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { type PrismaClient } from "@prisma/client";
+import prismaInstance from './client.prisma';
 
-import { env } from "~/env.mjs";
-import { setupHooks } from "./hooks/setup.hook";
+import { env } from "../env.mjs";
 
 const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined;
@@ -9,14 +9,7 @@ const globalForPrisma = globalThis as unknown as {
 
 const prismaClient =
     globalForPrisma.prisma ??
-    new PrismaClient({
-        log:
-            env.NODE_ENV === "development"
-                ? ["query", "error", "warn"]
-                : ["error"],
-    });
-
-setupHooks(prismaClient);
+    prismaInstance
 
 export const prisma = prismaClient;
 
