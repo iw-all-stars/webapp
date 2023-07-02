@@ -111,10 +111,6 @@ async function igLogin(
     password: string
 ) {
     try {
-		console.log('🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩')
-		console.log(username)
-		console.log(password)
-		console.log('🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦')
         switch (platformKey) {
             case PlatformKey.INSTAGRAM:
                 const ig = new IgApiClient();
