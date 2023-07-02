@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { DateTime } from "luxon";
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { StoryStatusHandler } from "~/server/services/storyStatusHandler.service";
 
 const createPost = z.object({
     id: z.string(),
@@ -128,40 +129,49 @@ export const storyRouter = createTRPCRouter({
                 publishedAt = new Date(input.data.publishedAt as string);
             }
 
-            return !input.id
-                ? ctx.prisma.story.create({
-                      data: {
-                          name: input.data.name,
-                          publishedAt: publishedAt,
-                          status: input.data.status,
-                          platformId: input.data.platformId,
-                          posts: {
-                              connect: input.data.posts.map((post) => ({
-                                  id: post.id,
-                              })),
-                          },
-                      },
-                  })
-                : ctx.prisma.story.update({
-                      where: {
-                          id: input.id,
-                      },
-                      data: {
-                          name: input.data.name,
-                          publishedAt: publishedAt,
-                          status: input.data.status,
-                          posts: {
-                              set: input.data.posts.map((post) => ({
-                                  id: post.id,
-                              })),
-                          },
-                      },
-                  });
+            if (!input.id) {
+                const newStory = await ctx.prisma.story.create({
+                    data: {
+                        name: input.data.name,
+                        publishedAt: publishedAt,
+                        status: input.data.status,
+                        platformId: input.data.platformId,
+                        posts: {
+                            connect: input.data.posts.map((post) => ({
+                                id: post.id,
+                            })),
+                        },
+                    },
+                });
+                const handler = new StoryStatusHandler(newStory.id, "create");
+                await handler.handle();
+                return newStory;
+            }
+            const storyUpdated = await ctx.prisma.story.update({
+                where: {
+                    id: input.id,
+                },
+                data: {
+                    name: input.data.name,
+                    publishedAt: publishedAt,
+                    status: input.data.status,
+                    posts: {
+                        set: input.data.posts.map((post) => ({
+                            id: post.id,
+                        })),
+                    },
+                },
+            });
+            const handler = new StoryStatusHandler(storyUpdated.id, "update");
+            await handler.handle();
+            return storyUpdated;
         }),
 
     delete: publicProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
+			const handler = new StoryStatusHandler(input.id, "delete");
+            await handler.handle();
             return ctx.prisma.story.delete({
                 where: {
                     id: input.id,
