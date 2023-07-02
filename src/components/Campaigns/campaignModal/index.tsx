@@ -26,6 +26,7 @@ import { CheckIcon, CloseIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/router";
 import { CampaignContext } from "../CampaignContext";
 import { env } from "~/env.mjs";
+import StatsStep from "./steps/stats";
 
 interface ICampaignModal {
   isOpen: boolean;
@@ -51,10 +52,15 @@ export interface Columns {
 export type Recipient = Client & { selected: boolean };
 
 export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
+  const context = useContext(CampaignContext);
+
   const steps = [
     { title: "Campagne" },
     { title: "Message" },
     { title: "Clients" },
+    ...(context?.campaign?.status === "sent"
+      ? [{ title: "Statistiques" }]
+      : []),
   ];
 
   const initialRef = React.useRef(null);
@@ -77,8 +83,6 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
   const [search, setSearch] = useState<string | undefined>(undefined);
 
   const [recipients, setRecipients] = useState<Recipient[]>([]);
-
-  const context = useContext(CampaignContext);
 
   const customers = api.customer.getClients.useQuery(search);
   const createCampaign = api.campaign.createCampaign.useMutation();
@@ -107,8 +111,14 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
   }, [context?.campaign]);
 
   useEffect(() => {
-    setLastStep(activeStep === 2);
+    setLastStep(activeStep === steps.length - 1);
   }, [activeStep]);
+
+  useEffect(() => {
+    if (context?.campaign?.id && context?.campaign?.status === "sent") {
+      setActiveStep(3);
+    }
+  }, [context?.campaign?.id, context?.campaign?.status]);
 
   useEffect(() => {
     customers.refetch();
@@ -238,6 +248,9 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
       ],
     ]);
 
+    if (context?.campaign?.id && context?.campaign?.status === "sent") {
+      steps.set(3, <StatsStep key={context?.campaign?.id} />);
+    }
     return steps.get(activeStep);
   };
 

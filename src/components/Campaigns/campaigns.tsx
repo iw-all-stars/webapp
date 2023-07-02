@@ -132,25 +132,13 @@ const DashboardCampaign: React.FC = () => {
               >
                 Date
               </Th>
-              <Th
-                fontSize={12}
-                fontWeight={500}
-                textTransform="capitalize"
-              >
+              <Th fontSize={12} fontWeight={500} textTransform="capitalize">
                 Mails envoyés
               </Th>
-              <Th
-                fontSize={12}
-                fontWeight={500}
-                textTransform="capitalize"
-              >
+              <Th fontSize={12} fontWeight={500} textTransform="capitalize">
                 Taux d'ouverture
               </Th>
-              <Th
-                fontSize={12}
-                fontWeight={500}
-                textTransform="capitalize"
-              >
+              <Th fontSize={12} fontWeight={500} textTransform="capitalize">
                 Désabonnement
               </Th>
               <Th fontSize={12} fontWeight={500} textTransform="capitalize">
@@ -165,19 +153,23 @@ const DashboardCampaign: React.FC = () => {
                 const openRate =
                   campaign.mail.length === 0
                     ? 0
-                    : (campaign.mail
-                        .map((mail) => mail.opened)
-                        .filter((opened) => opened).length /
-                        sentMails) *
-                      100;
+                    : (
+                        (campaign.mail
+                          .map((mail) => mail.opened)
+                          .filter((opened) => opened).length /
+                          sentMails) *
+                        100
+                      ).toFixed(1);
                 const unsubscribeRate =
                   campaign.mail.length === 0
                     ? 0
-                    : (campaign.mail
-                        .map((mail) => mail.unsub)
-                        .filter((unsub) => unsub).length /
-                        sentMails) *
-                      100;
+                    : (
+                        (campaign.mail
+                          .map((mail) => mail.unsub)
+                          .filter((unsub) => unsub).length /
+                          sentMails) *
+                        100
+                      ).toFixed(1);
                 const date = format(new Date(campaign.createdAt), "dd/MM/yyyy");
                 return (
                   <Tr
