@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import {
+  Badge,
   Box,
   Button,
   Heading,
@@ -62,6 +63,7 @@ const DashboardCampaign: React.FC = () => {
   const closeModal = useCallback(() => {
     onClose();
     context?.setCampaign(undefined);
+    getCampaigns.refetch();
   }, []);
 
   useEffect(() => {
@@ -93,7 +95,10 @@ const DashboardCampaign: React.FC = () => {
           </Text>
         </Heading>
         <InputGroup>
-          <Input placeholder="Recherche" onChange={(e) => setSearch(e.target.value)} />
+          <Input
+            placeholder="Recherche"
+            onChange={(e) => setSearch(e.target.value)}
+          />
           <InputRightElement children={<SearchIcon />} />
         </InputGroup>
         <Button
@@ -110,7 +115,7 @@ const DashboardCampaign: React.FC = () => {
       <TableContainer>
         <Table variant="striped" colorScheme="gray" size="md" fontSize={13}>
           <Thead>
-            <Tr>
+            <Tr bg="gray.200" borderTopRadius={50}>
               <Th
                 fontSize={12}
                 fontWeight={500}
@@ -131,7 +136,6 @@ const DashboardCampaign: React.FC = () => {
                 fontSize={12}
                 fontWeight={500}
                 textTransform="capitalize"
-                isNumeric
               >
                 Mails envoyés
               </Th>
@@ -139,7 +143,6 @@ const DashboardCampaign: React.FC = () => {
                 fontSize={12}
                 fontWeight={500}
                 textTransform="capitalize"
-                isNumeric
               >
                 Taux d'ouverture
               </Th>
@@ -147,7 +150,6 @@ const DashboardCampaign: React.FC = () => {
                 fontSize={12}
                 fontWeight={500}
                 textTransform="capitalize"
-                isNumeric
               >
                 Désabonnement
               </Th>
@@ -157,40 +159,53 @@ const DashboardCampaign: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {(search || getCampaigns?.data?.length) && getCampaigns.data?.map((campaign) => {
-              const sentMails = campaign.mail.length;
-              const openRate =
-                campaign.mail.length === 0
-                  ? 0
-                  : (campaign.mail
-                      .map((mail) => mail.opened)
-                      .filter((opened) => opened).length /
-                      sentMails) *
-                    100;
-              const unsubscribeRate =
-                campaign.mail.length === 0
-                  ? 0
-                  : (campaign.mail
-                      .map((mail) => mail.unsub)
-                      .filter((unsub) => unsub).length /
-                      sentMails) *
-                    100;
-              const date = format(new Date(campaign.createdAt), "dd/MM/yyyy");
-              return (
-                <Tr
-                  key={campaign.id}
-                  cursor={"pointer"}
-                  onClick={() => editCampaign(campaign)}
-                >
-                  <Td>{campaign.name}</Td>
-                  <Td>{date}</Td>
-                  <Td>{sentMails}</Td>
-                  <Td>{openRate} %</Td>
-                  <Td>{unsubscribeRate} %</Td>
-                  <Td>{campaign.status}</Td>
-                </Tr>
-              );
-            })}
+            {(search || getCampaigns?.data?.length) &&
+              getCampaigns.data?.map((campaign) => {
+                const sentMails = campaign.mail.length;
+                const openRate =
+                  campaign.mail.length === 0
+                    ? 0
+                    : (campaign.mail
+                        .map((mail) => mail.opened)
+                        .filter((opened) => opened).length /
+                        sentMails) *
+                      100;
+                const unsubscribeRate =
+                  campaign.mail.length === 0
+                    ? 0
+                    : (campaign.mail
+                        .map((mail) => mail.unsub)
+                        .filter((unsub) => unsub).length /
+                        sentMails) *
+                      100;
+                const date = format(new Date(campaign.createdAt), "dd/MM/yyyy");
+                return (
+                  <Tr
+                    key={campaign.id}
+                    cursor={"pointer"}
+                    onClick={() => editCampaign(campaign)}
+                  >
+                    <Td fontWeight={500}>{campaign.name}</Td>
+                    <Td fontWeight={500}>{date}</Td>
+                    <Td fontWeight={700}>{sentMails}</Td>
+                    <Td fontWeight={700}>{openRate} %</Td>
+                    <Td fontWeight={700}>{unsubscribeRate} %</Td>
+                    <Td>
+                      <Badge
+                        colorScheme={
+                          campaign.status === "draft"
+                            ? "gray"
+                            : campaign.status === "sent"
+                            ? "green"
+                            : "red"
+                        }
+                      >
+                        {campaign.status === "draft" ? "Brouillon" : "Envoyée"}
+                      </Badge>
+                    </Td>
+                  </Tr>
+                );
+              })}
           </Tbody>
           {getCampaigns.data && getCampaigns.data?.length > 20 ? (
             <Tfoot>
@@ -206,10 +221,7 @@ const DashboardCampaign: React.FC = () => {
           ) : null}
         </Table>
       </TableContainer>
-      <CampaignModal
-        isOpen={isOpen}
-        onClose={closeModal}
-      />
+      <CampaignModal isOpen={isOpen} onClose={closeModal} />
       <CreateCustomerModal
         isOpen={isCreateCustomerModalOpen}
         onClose={onCloseCreateCustomerModal}

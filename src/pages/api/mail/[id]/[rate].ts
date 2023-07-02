@@ -30,7 +30,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         },
       });
     }
-    return res.redirect(mail.campaign.url);
+
+    return res.redirect(301, 'https://' + mail.campaign.url);
   } catch (err) {
     console.log(err);
     res.status(400).json({ message: err });

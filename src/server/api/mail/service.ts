@@ -4,7 +4,6 @@ const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi()
 apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, process.env.SENDINBLUE_API_KEY as string)
 
 interface IMail {
-  templateId: number;
   restaurant: string;
   email: string;
   firstname: string;
@@ -15,7 +14,7 @@ interface IMail {
   logoURL?: string;
 }
 
-const sendEmail = ({ templateId, restaurant, email, firstname, subject, body, mailId, logoURL }: IMail): Promise<unknown> => {
+const sendEmail = ({ restaurant, email, firstname, subject, body, mailId, logoURL }: IMail): Promise<unknown> => {
   const sendSmtpEmail = {
     to: [
       {
@@ -24,7 +23,7 @@ const sendEmail = ({ templateId, restaurant, email, firstname, subject, body, ma
       },
     ],
     subject,
-    templateId,
+    templateId: Number(process.env.NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID as string),
     params: {
       firstname,
       body,
@@ -32,12 +31,12 @@ const sendEmail = ({ templateId, restaurant, email, firstname, subject, body, ma
       subject,
       restaurant,
       logoURL,
-      unsubscribeURL: new URL(process.env.NEXTAUTH_URL as string).origin + `/mail/${mailId}/unsubscribe`,
-      rateURL1: new URL(process.env.NEXTAUTH_URL as string).origin + `/mail/${mailId}/1`,
-      rateURL2: new URL(process.env.NEXTAUTH_URL as string).origin + `/mail/${mailId}/2`,
-      rateURL3: new URL(process.env.NEXTAUTH_URL as string).origin + `/mail/${mailId}/3`,
-      rateURL4: new URL(process.env.NEXTAUTH_URL as string).origin + `/mail/${mailId}/4`,
-      rateURL5: new URL(process.env.NEXTAUTH_URL as string).origin + `/mail/${mailId}/5`,
+      unsubscribeURL: new URL(process.env.NEXTAUTH_URL as string).origin + `/api/mail/${mailId}/unsubscribe`,
+      rateURL1: new URL(process.env.NEXTAUTH_URL as string).origin + `/api/mail/${mailId}/1`,
+      rateURL2: new URL(process.env.NEXTAUTH_URL as string).origin + `/api/mail/${mailId}/2`,
+      rateURL3: new URL(process.env.NEXTAUTH_URL as string).origin + `/api/mail/${mailId}/3`,
+      rateURL4: new URL(process.env.NEXTAUTH_URL as string).origin + `/api/mail/${mailId}/4`,
+      rateURL5: new URL(process.env.NEXTAUTH_URL as string).origin + `/api/mail/${mailId}/5`,
     },
   };
 

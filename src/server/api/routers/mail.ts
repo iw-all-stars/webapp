@@ -61,7 +61,6 @@ export const mailRouter = createTRPCRouter({
       }
 
       sendEmail({
-        templateId: mail.campaign.template,
         email: mail.client.email,
         firstname: mail.client.firstname || mail.client.name,
         subject: mail.campaign.subject,
@@ -130,15 +129,17 @@ export const mailRouter = createTRPCRouter({
           if (!mail) {
             throw new Error("Erreur lors de l'envoi de la campagne");
           }
+          const body = campaign.body
+            .replaceAll(
+              "@Prénom_client",
+              mail.client.firstname || mail.client.name
+            )
+            .replaceAll("@Nom_Etablissement", campaign.restaurant.name);
           sendEmail({
-            templateId: campaign.template,
             email: mail.client.email,
             firstname: mail.client.firstname || mail.client.name,
             subject: campaign.subject,
-            body: campaign.body.replaceAll(
-              "@Prénom_client",
-              mail.client.firstname || mail.client.name
-            ),
+            body,
             mailId: mail.id,
             restaurant: campaign.restaurant.name,
             rateURL:

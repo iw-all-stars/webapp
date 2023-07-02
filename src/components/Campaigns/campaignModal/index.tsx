@@ -88,12 +88,15 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
   const router = useRouter();
 
   const close = useCallback(() => {
-    setError(undefined);
     onClose();
+    setError(undefined);
     setActiveStep(0);
     setIsSaved(false);
-    setIsSent(false);
-  }, [onClose]);
+    setRecipients([]);
+    createCampaign.reset();
+    updateCampaign.reset();
+    sendCampaign.reset();
+  }, [onClose, setActiveStep, createCampaign, updateCampaign, sendCampaign]);
 
   useEffect(() => {
     setEdit(!!context?.campaign?.id);
@@ -109,7 +112,8 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
 
   useEffect(() => {
     customers.refetch();
-  }, []);
+    setIsSending(false);
+  }, [isOpen]);
 
   useEffect(() => {
     if (updateCampaign.isSuccess) {
@@ -340,7 +344,7 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
                 <Text fontSize={13}>Campagne envoyée</Text>
               </Flex>
             )}
-            {error && (
+            {error && !isSending && (
               <Flex alignItems={"center"} gap={2}>
                 <CloseIcon color="red.500" />
                 <Text fontSize={13}>{error}</Text>
@@ -360,11 +364,8 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
                 Précedent
               </Button>
             )}
-            {!(
-              sentEmails &&
-              sentEmails?.data &&
-              sentEmails?.data?.length > 0
-            ) && (
+            {(context?.campaign?.status !== "sent" ||
+              (context?.campaign?.status === "sent" && !lastStep)) && (
               <Button
                 colorScheme={lastStep ? "green" : "blue"}
                 mr={3}

@@ -114,7 +114,7 @@ export const MailStep = ({ disabled }: MailProps) => {
         <Textarea
           id="body"
           {...register("body", { required: true })}
-          defaultValue={
+          value={
             context?.campaign?.body ||
             "Bonjour @Prénom_client," +
               "\n" +
