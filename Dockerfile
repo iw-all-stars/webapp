@@ -74,8 +74,10 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+RUN npx -y prisma generate
+
 USER nextjs
 EXPOSE 3000
 ENV PORT 3000
 
-CMD ["sh", "-c", "yarn prisma generate && npx -y prisma db push && node server.js"]
+CMD ["sh", "-c", "npx -y prisma db push && node server.js"]
