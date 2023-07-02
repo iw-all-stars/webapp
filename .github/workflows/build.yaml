@@ -32,6 +32,7 @@ jobs:
           SKIP_ENV_VALIDATION=1
 
   tests:
+    needs: build
     runs-on: ubuntu-latest
     steps:
 
