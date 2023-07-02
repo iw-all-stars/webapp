@@ -21,7 +21,7 @@ import { type NextPage } from "next";
 import { useRouter } from "next/router";
 import { BiSearch } from "react-icons/bi";
 import { BsPhone } from "react-icons/bs";
-import { GoSettings } from "react-icons/go";
+import { IoMdSettings } from "react-icons/io";
 import CreateUpdateStory from "~/components/stories/CreateUpdateStory";
 import { StoryCard } from "~/components/stories/storyCard";
 import { api } from "~/utils/api";
@@ -143,7 +143,7 @@ const DashboardStory: NextPage = () => {
                     </InputRightElement>
                 </InputGroup>
                 <Menu>
-                    <MenuButton as={IconButton} icon={<GoSettings />}>
+                    <MenuButton as={IconButton} icon={<IoMdSettings />}>
                         Actions
                     </MenuButton>
                     <MenuList>

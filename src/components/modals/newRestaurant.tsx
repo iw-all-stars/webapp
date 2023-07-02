@@ -67,30 +67,34 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
                 name="address"
                 control={control}
                 rules={{ required: true }}
-                render={({ field }) =>
-                  <Autocomplete
-                    apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
-                    onPlaceSelected={(place: { formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
-                      field.onChange(place.formatted_address);
-                      register("latitude", { value: place.geometry.location.lat(), required: true });
-                      register("longitude", { value: place.geometry.location.lng(), required: true });
-                    }}
-                    style={{
-                      width: "100%",
-                      height: "var(--chakra-sizes-10)",
-                      borderRadius: "var(--chakra-radii-md)",
-                      border: "1px solid",
-                      borderColor: "inherit",
-                      paddingInlineStart: "var(--chakra-space-4)",
-                      paddingInlineEnd: "var(--chakra-space-4)",
-                    }}
-                    options={{
-                      types: ["address"],
-                      componentRestrictions: { country: "fr" },
-                    }}
-                    {...field}
-                  />
-                }
+                render={({ field }) => {
+                  const { onChange, ...tmpField } = field;
+                  return (
+                    <Autocomplete
+                      apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+                      onPlaceSelected={(place: { formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
+                        field.onChange(place.formatted_address);
+                        register("latitude", { value: place.geometry.location.lat(), required: true });
+                        register("longitude", { value: place.geometry.location.lng(), required: true });
+                      }}
+                      style={{
+                        width: "100%",
+                        height: "var(--chakra-sizes-10)",
+                        borderRadius: "var(--chakra-radii-md)",
+                        border: "1px solid",
+                        borderColor: "inherit",
+                        paddingInlineStart: "var(--chakra-space-4)",
+                        paddingInlineEnd: "var(--chakra-space-4)",
+                      }}
+                      options={{
+                        types: ["address"],
+                        componentRestrictions: { country: "fr" },
+                      }}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+                      {...tmpField}
+                    />
+                  )
+                }}
               />
               <FormErrorMessage>{errors.address?.type}</FormErrorMessage>
             </FormControl>
