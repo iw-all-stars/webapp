@@ -52,6 +52,7 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
+RUN npx -y prisma generate
 RUN yarn build
 
 ##### RUNNER
@@ -73,8 +74,6 @@ COPY --from=builder /app/prisma ./prisma
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-RUN npx -y prisma generate
 
 USER nextjs
 EXPOSE 3000
