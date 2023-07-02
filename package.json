@@ -12,6 +12,9 @@
     "seed": "tsx ./prisma/seeds/index.ts",
     "test": "jest"
   },
+  "prisma": {
+    "seed": "tsx ./prisma/seeds/index.ts"
+  },
   "dependencies": {
     "@aws-sdk/client-scheduler": "^3.328.0",
     "@chakra-ui/icons": "^2.0.19",
