@@ -26,47 +26,9 @@ spec:
             memory: 512Mi
           requests:
             cpu: 200m
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-           secretKeyRef:
-              name: production-secret
-              key: db-url
-        - name: NEXT_PUBLIC_CLIENTVAR
-          valueFrom:
-           secretKeyRef:
-              name: production-secret
-              key: db-url
-        - name: NEXTAUTH_SECRET
-          valueFrom:
-           secretKeyRef:
-              name: production-secret
-              key: nextauth-secret
-        - name: NEXTAUTH_URL
-          valueFrom:
-           secretKeyRef:
-              name: production-secret
-              key: nextauth-url
-        - name: GOOGLE_CLIENT_ID
-          valueFrom:
-           secretKeyRef:
-              name: production-secret
-              key: google_client_id
-        - name: GOOGLE_CLIENT_SECRET
-          valueFrom:
-           secretKeyRef:
-              name: production-secret
-              key: google_client_secret
-        - name: SENDINBLUE_API_KEY
-          valueFrom:
-           secretKeyRef:
-              name: production-secret
-              key: sendinblue_api_key
-        - name: MAIL_TEMPLATE_CAMPAIGN_ID
-          valueFrom:
-           secretKeyRef:
-              name: production-secret
-              key: mail_template_campaign_id
+        envFrom:
+        - secretRef:
+            name: production-secret
 
 ---
 
