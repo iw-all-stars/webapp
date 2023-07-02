@@ -78,4 +78,4 @@ USER nextjs
 EXPOSE 3000
 ENV PORT 3000
 
-CMD ["sh", "-c", "npx -y prisma generate && npx -y prisma db push && node server.js"]
+CMD ["sh", "-c", "yarn generate && yarn prisma db push && node server.js"]
