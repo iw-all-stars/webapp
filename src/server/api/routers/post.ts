@@ -1,6 +1,6 @@
 import { PostType } from "@prisma/client";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToRestaurantProcedure } from "~/server/api/trpc";
 
 const createPost = z.object({
     originalUrl: z.string(),
@@ -11,15 +11,8 @@ const createPost = z.object({
 export type CreatePost = z.infer<typeof createPost>;
 
 export const postRouter = createTRPCRouter({
-    create: publicProcedure
-        .input(createPost)
-        .mutation(async ({ ctx, input }) => {
-            return ctx.prisma.post.create({
-                data: input,
-            });
-        }),
 
-    createMany: publicProcedure
+    createMany: hasAccessToRestaurantProcedure
         .input(z.array(createPost))
         .mutation(async ({ ctx, input }) => {
             await ctx.prisma.post.createMany({

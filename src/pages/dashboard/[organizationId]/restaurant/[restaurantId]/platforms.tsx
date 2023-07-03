@@ -1,10 +1,11 @@
 import { Box, Heading, Text } from "@chakra-ui/react";
 import { PlatformKey, type Platform } from "@prisma/client";
 import { type MutateOptions } from "@tanstack/react-query";
-import { type NextPage } from "next";
+import { type GetServerSideProps, type NextPage } from "next";
 import { useRouter } from "next/router";
 import { PlatformCard } from "~/components/platforms/platformCard";
 import { api } from "~/utils/api";
+import { hasAccessToRestaurant } from "~/utils/hasAccessToRestaurantServerSideProps";
 
 export const PLATFORMS = [
     PlatformKey.INSTAGRAM,
@@ -18,6 +19,10 @@ export type createUpdatePlatformParams = {
     key: PlatformKey;
     platform?: Omit<Platform, 'password'>;
     options?: MutateOptions;
+};
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    return hasAccessToRestaurant(context);
 };
 
 const DashboardPlatforms: NextPage = () => {

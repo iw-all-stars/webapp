@@ -36,7 +36,7 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
 
       reset();
       onClose();
-      router.push(`/dashboard/${router.query.organizationId}/restaurant/${newRestaurant.id}`);
+      router.push(`/dashboard/${router.query.organizationId}/restaurant/${newRestaurant.id}/stories`);
     }
   };
 

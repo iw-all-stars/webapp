@@ -96,7 +96,7 @@ const Home: NextPage = () => {
               <Grid templateColumns="repeat(3, 1fr)" gap={8} mt={8}>
                 {organizations.data?.map((organization) => (
                   <GridItem key={organization.id}>
-                    <Card variant="filled" borderRadius={6} minH={32} cursor="pointer" _hover={{ bg: "gray.200" }} onClick={() => router.push(`/dashboard/${organization.id}/restaurant/${organization.restaurants[0]?.id}`)}>
+                    <Card variant="filled" borderRadius={6} minH={32} cursor="pointer" _hover={{ bg: "gray.200" }} onClick={() => router.push(`/dashboard/${organization.id}/restaurant/${organization.restaurants[0]?.id}/stories`)}>
                       <CardBody display="flex" flexDirection="column" justifyContent="space-between">
                         <Text fontSize="2xl" fontWeight="bold">{organization.name}</Text>
                         <Text fontSize="md" color="gray.500">{organization.restaurants.length} restaurant{organization.restaurants.length > 1 ? "s" : ""}</Text>

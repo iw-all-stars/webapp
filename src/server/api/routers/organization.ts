@@ -1,10 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToOrganizationProcedure, isAdminOfOrganizationProcedure, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
 export const organizationRouter = createTRPCRouter({
-  add: publicProcedure
+  add: protectedProcedure
     .input(
       z.object({
         name: z.string(),
@@ -29,7 +29,7 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  update: publicProcedure
+  update: isAdminOfOrganizationProcedure
     .input(
       z.object({
         id: z.string(),
@@ -48,7 +48,7 @@ export const organizationRouter = createTRPCRouter({
     return ctx.prisma.organization.findMany();
   }),
 
-  getById: publicProcedure
+  getById: hasAccessToOrganizationProcedure
     .input(
       z.object({
         id: z.string()
@@ -62,7 +62,7 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  getByCurrentUser: publicProcedure.query(({ ctx }) => {
+  getByCurrentUser: protectedProcedure.query(({ ctx }) => {
     return ctx.prisma.organization.findMany({
       where: {
         users: {
@@ -87,7 +87,7 @@ export const organizationRouter = createTRPCRouter({
     });
   }),
 
-  removeUser: publicProcedure
+  removeUser: isAdminOfOrganizationProcedure
     .input(
       z.object({
         id: z.string(),

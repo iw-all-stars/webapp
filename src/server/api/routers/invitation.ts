@@ -1,11 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToOrganizationProcedure, isAdminOfOrganizationProcedure, publicProcedure } from "~/server/api/trpc";
 
 export const invitationRouter = createTRPCRouter({
 
-  add: publicProcedure
+  add: isAdminOfOrganizationProcedure
     .input(
       z.object({
         receiverIds: z.array(z.string()),
@@ -94,7 +94,7 @@ export const invitationRouter = createTRPCRouter({
     return ctx.prisma.invitation.findMany();
   }),
 
-  getByOrganizationId: publicProcedure
+  getByOrganizationId: hasAccessToOrganizationProcedure
     .input(
       z.object({
         organizationId: z.string(),
@@ -127,7 +127,7 @@ export const invitationRouter = createTRPCRouter({
       });
     }),
 
-  delete: publicProcedure
+  delete: isAdminOfOrganizationProcedure
     .input(
       z.object({
         id: z.string(),
