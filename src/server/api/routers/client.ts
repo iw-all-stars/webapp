@@ -26,16 +26,57 @@ const elkClient = new Client({
 })
 
 export const clientRouter = createTRPCRouter({
-  getClients: protectedProcedure
-    .input(z.string().optional())
-    .query(async ({ ctx, input = "" }) => {
 
-      const searchResult = await elkClient.search<ClientModel>({
+  getCountClients: protectedProcedure
+    .input(z.string().optional())
+    .query(async ({ input }) => {
+      
+      const countResult = await elkClient.count({
         index: "clients",
-        body: input !== "" ? {
+        body: input ? {
           query: {
             multi_match: {
               query: input,
+              fields: ["name", "firstname", "email"],
+              operator: "or",
+              type: "bool_prefix"
+            },
+          },
+        } : {
+          query: {
+            match_all: {}
+          }
+        }
+      })
+
+      return countResult.count;
+  }),
+
+  getClients: protectedProcedure
+    .input(
+      z.object({
+        input: z.string().optional(),
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+
+      const { input: searchInput, limit, offset } = input;
+
+      const searchResult = await elkClient.search<ClientModel>({
+        index: "clients",
+        from: offset,
+        size: limit,
+        sort: [{
+          "createdAt": {
+            order: "desc"
+          }
+        }],
+        body: searchInput ? {
+          query: {
+            multi_match: {
+              query: searchInput,
               fields: ["name", "firstname", "email"],
               operator: "or",
               type: "bool_prefix"
@@ -52,7 +93,7 @@ export const clientRouter = createTRPCRouter({
         id: client._id,
         ...client._source as Omit<ClientModel, "id">,
       }))
-
+      
       return clients;
     }),
   getClient: protectedProcedure

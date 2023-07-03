@@ -25,7 +25,6 @@ import { type Row, type Column } from "react-table";
 import { CheckIcon, CloseIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/router";
 import { CampaignContext } from "../CampaignContext";
-import { env } from "~/env.mjs";
 import StatsStep from "./steps/stats";
 
 interface ICampaignModal {
@@ -84,7 +83,9 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
 
   const [recipients, setRecipients] = useState<Recipient[]>([]);
 
-  const customers = api.customer.getClients.useQuery(search);
+  const customers = api.customer.getClients.useQuery({
+    input: search,
+  });
   const createCampaign = api.campaign.createCampaign.useMutation();
   const updateCampaign = api.campaign.updateCampaign.useMutation();
   const sendCampaign = api.mail.sendCampaign.useMutation();

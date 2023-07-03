@@ -30,7 +30,7 @@ export const Campaigns = () => {
   }, [router.query.tab]);
 
   return (
-    <Box h="full" w="full" pt={8}>
+    <Box h="full" w="full" pt={3}>
       <Box
         w="full"
         display="flex"
