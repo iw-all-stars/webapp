@@ -35,7 +35,7 @@ const DashboardCampaign: React.FC = () => {
     onClose: onCloseCreateCustomerModal,
   } = useDisclosure();
   const getCampaigns = api.campaign.getCampaigns.useQuery(search);
-  const getClients = api.customer.getClients.useQuery();
+  const getClients = api.customer.getClients.useQuery({});
   const context = useContext(CampaignContext);
 
   const editCampaign = (campaign: Campaign) => {
@@ -74,7 +74,7 @@ const DashboardCampaign: React.FC = () => {
   }, [search]);
 
   return (
-    <Box h="full" w="full" pt={8}>
+    <Box h="full" w="full" pt={2}>
       <Box
         w="full"
         display="flex"

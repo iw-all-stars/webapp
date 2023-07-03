@@ -21,9 +21,6 @@ const MyApp: AppType<{ session: Session | null }> = ({
     undefined
   );
 
-  console.log(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
-  console.log(process.env.NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID)
-
   return (
     <SessionProvider session={session}>
       <ChakraProvider theme={theme}>
