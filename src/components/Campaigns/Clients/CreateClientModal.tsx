@@ -16,6 +16,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  useToast,
 } from "@chakra-ui/react";
 import { type Client } from "@prisma/client";
 import React, { useEffect } from "react";
@@ -27,12 +28,69 @@ interface Props {
   editClient?: Client;
 }
 
+interface ErrorResponse {
+  code: string;
+  expected: string;
+  received: string;
+  path: string[];
+  message: string;
+}
+
+type ClientSchema = {
+  id?: string;
+  email: string;
+  name: string;
+  firstname?: string;
+  phone?: string;
+  image?: string;
+  address?: string;
+  city?: string;
+  zip?: string;
+};
+
 export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
   const [client, setClient] = React.useState<Partial<Client> | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const toast = useToast();
 
   const createClient = api.customer.createClient.useMutation();
   const updateClient = api.customer.updateClient.useMutation();
+  const deleteClient = api.customer.deleteClient.useMutation();
+
+  const parseJSON = (response: string) => {
+    try {
+      return JSON.parse(response) as ErrorResponse[];
+    } catch (error) {
+      return response;
+    }
+  };
+
+  function setApiError(response: string): string {
+    const responseError = parseJSON(response);
+
+    if (typeof responseError === "string") {
+      return responseError;
+    }
+
+    const fieldNames = {
+      email: "email",
+      phone: "numéro de téléphone",
+      name: "nom",
+      firstname: "prénom",
+      address: "adresse",
+      zip: "code postal",
+      city: "ville",
+    };
+
+    const errorMessages = responseError.map((error) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const fieldName = fieldNames[error.path[0] as keyof typeof fieldNames];
+      return `${fieldName}`;
+    });
+    return `Les champs suivants sont invalides : (${errorMessages.join(
+      ") ("
+    )})`;
+  }
 
   const createOrUpdateCustomer = () => {
     if (!client || !client.email || !client.name) {
@@ -42,23 +100,59 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
     setError(null);
 
     if (!client?.id) {
-      return createClient.mutate(client as Client, {
+      return createClient.mutate(client as ClientSchema, {
         onSuccess: () => {
           onClose();
+          toast({
+            title: "Client créé",
+            description: "Le client a été créé avec succès.",
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
         },
-        onError: () => {
-          setError("Veuillez remplir tous les champs");
+        onError: (error) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          setError(setApiError(error.message));
         },
       });
     }
-    updateClient.mutate(client as Client, {
+    updateClient.mutate(client as ClientSchema, {
       onSuccess: () => {
         onClose();
+        toast({
+          title: "Client modifié",
+          description: "Le client a été modifié avec succès.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
       },
       onError: (error) => {
-        console.log(error);
-        return;
-        setError(error.message);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        setError(setApiError(error.message));
+      },
+    });
+  };
+
+  const removeClient = () => {
+    if (!client?.id) {
+      return;
+    }
+    deleteClient.mutate(client.id, {
+      onSuccess: () => {
+        onClose();
+        toast({
+          title: "Client supprimé",
+          description: "Le client a été supprimé avec succès.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      },
+      onError: (error) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        setError(setApiError(error.message));
       },
     });
   };
@@ -69,6 +163,13 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
     }
     setClient(null);
   }, [editClient]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setError(null);
+      setClient(null);
+    }
+  }, [isOpen]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="2xl">
@@ -198,16 +299,28 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
         </ModalBody>
         <ModalFooter
           display="flex"
-          alignItems="center"
-          justifyContent="center"
-          gap={1}
+          justifyContent="space-between"
+          gap={4}
         >
-          <Button onClick={onClose} mr={3}>
-            Annuler
-          </Button>
-          <Button colorScheme={"purple"} onClick={createOrUpdateCustomer}>
-            {client?.id ? "Modifier" : "Ajouter"}
-          </Button>
+          {client?.id ? (
+            <Button
+              colorScheme={"red"}
+              onClick={removeClient}
+              isLoading={deleteClient.isLoading}
+            >
+              Supprimer
+            </Button>
+          ) : <div></div>}
+          <Flex gap={4} align="right">
+            <Button onClick={onClose}>Annuler</Button>
+            <Button
+              colorScheme={"purple"}
+              onClick={createOrUpdateCustomer}
+              isLoading={createClient.isLoading || updateClient.isLoading}
+            >
+              {client?.id ? "Modifier" : "Ajouter"}
+            </Button>
+          </Flex>
         </ModalFooter>
       </ModalContent>
     </Modal>

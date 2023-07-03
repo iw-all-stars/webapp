@@ -147,7 +147,7 @@ const DashboardCampaign: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {(search || getCampaigns?.data?.length) &&
+            {(search || (getCampaigns?.data && getCampaigns?.data?.length > 0)) &&
               getCampaigns.data?.map((campaign) => {
                 const sentMails = campaign.mail.length;
                 const openRate =
