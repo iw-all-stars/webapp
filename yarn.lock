@@ -1565,15 +1565,15 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@elastic/elasticsearch@8.7.0":
-  version "8.7.0"
-  resolved "https://registry.yarnpkg.com/@elastic/elasticsearch/-/elasticsearch-8.7.0.tgz#eb0396f6899e0000109af55cffee514811e571ee"
-  integrity sha512-0u12N7gvSpv99XiiYE7OlOtVy4oFx7KNYd+/SSt0GqIcpj4X8bcILjpkQqK3HZcvkvwc8bFL9J11EMmUlg6FYw==
+"@elastic/elasticsearch@8.8.1":
+  version "8.8.1"
+  resolved "https://registry.yarnpkg.com/@elastic/elasticsearch/-/elasticsearch-8.8.1.tgz#a3cee66f8588f3534eb6641530994daac9eb0caa"
+  integrity sha512-ibArPKHEmak3jao7xts2gROATiwPQo9aOrWWdix5mJcX1gnjm/UeJBVO901ROmaxFVPKxVnjC9Op3gJYkqagjg==
   dependencies:
-    "@elastic/transport" "^8.3.1"
+    "@elastic/transport" "^8.3.2"
     tslib "^2.4.0"
 
-"@elastic/transport@^8.3.1":
+"@elastic/transport@^8.3.2":
   version "8.3.2"
   resolved "https://registry.yarnpkg.com/@elastic/transport/-/transport-8.3.2.tgz#295e91f43e3a60a839f998ac3090a83ddb441592"
   integrity sha512-ZiBYRVPj6pwYW99fueyNU4notDf7ZPs7Ix+4T1btIJsKJmeaORIItIfs+0O7KV4vV+DcvyMhkY1FXQx7kQOODw==

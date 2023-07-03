@@ -25,6 +25,7 @@ import { api } from "~/utils/api";
 import CreateClientModal from "./CreateClientModal";
 import { SearchIcon } from "@chakra-ui/icons";
 import { type Client } from "@prisma/client";
+import { useDebounce } from "usehooks-ts";
 
 export const Clients = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -33,7 +34,9 @@ export const Clients = () => {
   );
   const [search, setSearch] = React.useState("");
 
-  const getClients = api.customer.getClients.useQuery(search);
+  const debouncedSearch = useDebounce(search, 300);
+
+  const getClients = api.customer.getClients.useQuery(debouncedSearch);
 
   useEffect(() => {
     getClients.refetch();
@@ -48,13 +51,6 @@ export const Clients = () => {
     setEditClient(client);
     onOpen();
   };
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      getClients.refetch();
-    }, 2000);
-    return () => clearTimeout(timeout);
-  }, [search]);
 
   if (!getClients.data?.length && !search)
     return (

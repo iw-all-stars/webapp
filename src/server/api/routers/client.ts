@@ -1,4 +1,6 @@
+import { Client } from "@elastic/elasticsearch";
 import { z } from "zod";
+import { type Client as ClientModel } from "@prisma/client";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
@@ -14,23 +16,44 @@ const clientSchema = z.object({
   zip: z.string().nullable(),
 });
 
+
+const elkClient = new Client({
+  node: process.env.ELASTICSEARCH_URL,
+  auth: {
+    username: process.env.ELASTICSEARCH_USERNAME as string,
+    password: process.env.ELASTICSEARCH_PASSWORD as string,
+  },
+})
+
 export const clientRouter = createTRPCRouter({
   getClients: protectedProcedure
     .input(z.string().optional())
-    .query(({ ctx, input = "" }) => {
-      return ctx.prisma.client.findMany({
-        where: {
-          unsubscribed: false,
-          OR: [
-            { name: { contains: input, mode: "insensitive" } },
-            { firstname: { contains: input, mode: "insensitive" } },
-            { email: { contains: input, mode: "insensitive" } },
-            { address: { contains: input, mode: "insensitive" } },
-            { city: { contains: input, mode: "insensitive" } },
-            { zip: { contains: input, mode: "insensitive" } },
-          ],
-        },
-      });
+    .query(async ({ ctx, input = "" }) => {
+
+      const searchResult = await elkClient.search<ClientModel>({
+        index: "clients",
+        body: input !== "" ? {
+          query: {
+            multi_match: {
+              query: input,
+              fields: ["name", "firstname", "email"],
+              operator: "or",
+              type: "bool_prefix"
+            },
+          },
+        } : {
+          query: {
+            match_all: {}
+          }
+        }
+      })
+
+      const clients = searchResult.hits.hits.map(client => ({
+        id: client._id,
+        ...client._source as Omit<ClientModel, "id">,
+      }))
+
+      return clients;
     }),
   getClient: protectedProcedure
     .input(z.string().nonempty())

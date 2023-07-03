@@ -4,10 +4,10 @@ import { Client as ClientElk } from "@elastic/elasticsearch";
 import { env } from "../env.mjs";
 
 const clientElk = new ClientElk({
-    node: "http://localhost:9200",
+    node: process.env.ELASTICSEARCH_URL,
     auth: {
-        username: "elastic",
-        password: "elastic_password"
+        username: process.env.ELASTICSEARCH_USERNAME as string,
+        password: process.env.ELASTICSEARCH_PASSWORD as string
     }
 })
 
@@ -29,21 +29,31 @@ prismaClient.$use(async (params, next) => {
         const newClient: ModelClient = structuredClone(result);
 
         const { id, ...restNewClient } = newClient;
-        // console.log('test', id)
-        await clientElk.create({
-            index: "clients",
-            id,
-            document: { ...restNewClient }
-        })
+
+        try {
+            await clientElk.get<ModelClient>({
+                index: "clients",
+                id,
+            })
+        } catch (error) {
+            await clientElk.create({
+                index: "clients",
+                id,
+                refresh: true,
+                document: { ...restNewClient }
+            })
+        }
     } else if (params.action === "update") {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const updatedClient: ModelClient = structuredClone(result);
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const { id, ...restUpdatedClient } = updatedClient;
+
         await clientElk.update({
             index: "clients",
             id,
+            refresh: true,
             doc: { ...restUpdatedClient }
         })
     } else if (params.action === "delete") {
@@ -54,6 +64,7 @@ prismaClient.$use(async (params, next) => {
         const { id } = deletedClient;
         await clientElk.delete({
             index: "clients",
+            refresh: true,
             id,
         })
     }
