@@ -137,7 +137,7 @@ const DashboardSettings: NextPage = () => {
                   const { onChange, ...tmpField } = field;
                   return (
                     <Autocomplete
-                      apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+                      apiKey="AIzaSyC4tPk2jjqzK6lXe6xCwCE6RGtLtIyh858"
                       onPlaceSelected={(place: { formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
                         field.onChange(place.formatted_address);
                         registerRestaurant("latitude", { value: place.geometry.location.lat(), required: true });

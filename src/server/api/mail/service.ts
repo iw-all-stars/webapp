@@ -23,7 +23,7 @@ const sendEmail = ({ restaurant, email, firstname, subject, body, mailId, logoUR
       },
     ],
     subject,
-    templateId: Number(process.env.NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID as string),
+    templateId: Number(5),
     params: {
       firstname,
       body,

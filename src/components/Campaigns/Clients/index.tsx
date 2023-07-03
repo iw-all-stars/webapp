@@ -26,9 +26,11 @@ import CreateClientModal from "./CreateClientModal";
 import { SearchIcon } from "@chakra-ui/icons";
 import { type Client } from "@prisma/client";
 import { useDebounce } from "usehooks-ts";
+import ImportClientModal from "./ImportClientModal";
 
 export const Clients = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isImportOpen, onOpen: onImportOpen, onClose: onImportClose } = useDisclosure();
   const [editClient, setEditClient] = React.useState<Client | undefined>(
     undefined
   );
@@ -50,6 +52,10 @@ export const Clients = () => {
   const handleEditClient = (client: Client) => {
     setEditClient(client);
     onOpen();
+  };
+
+  const onImportClient = () => {
+    onImportOpen();
   };
 
   if (!getClients.data?.length && !search)
@@ -123,6 +129,15 @@ export const Clients = () => {
         >
           Ajouter un client
         </Button>
+        <Button
+          onClick={onImportClient}
+          fontSize={12}
+          colorScheme="blue"
+          variant="solid"
+          minW={"min-content"}
+        >
+          Importer des clients (XSLX)
+        </Button>
       </Box>
       <br />
       <TableContainer>
@@ -163,6 +178,7 @@ export const Clients = () => {
         onClose={onClose}
         editClient={editClient}
       />
+      <ImportClientModal isOpen={isImportOpen} onClose={onImportClose} />
     </Box>
   );
 };

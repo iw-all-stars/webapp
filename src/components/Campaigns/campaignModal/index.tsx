@@ -264,7 +264,7 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
       const campaign = {
         name: context?.campaign.name,
         restaurantId: router.query.restaurantId as string,
-        template: Number(env.NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID),
+        template: Number(5),
         subject: context?.campaign.subject || "",
         body: context?.campaign.body || "",
         url: context?.campaign.url || "",

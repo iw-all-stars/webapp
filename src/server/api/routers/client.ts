@@ -8,12 +8,12 @@ const clientSchema = z.object({
   id: z.string().optional(),
   email: z.string(),
   name: z.string(),
-  firstname: z.string().nullable(),
-  phone: z.string().nullable(),
-  image: z.string().nullable(),
-  address: z.string().nullable(),
-  city: z.string().nullable(),
-  zip: z.string().nullable(),
+  firstname: z.string().optional(),
+  phone: z.string().optional(),
+  image: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  zip: z.string().optional(),
 });
 
 
@@ -63,18 +63,41 @@ export const clientRouter = createTRPCRouter({
   createClient: protectedProcedure
     .input(clientSchema.omit({ id: true, image: true }))
     .mutation(({ ctx, input }) => {
-      return ctx.prisma.client.create({
-        data: {
-          ...input,
-          image: "https://i.pravatar.cc/150",
-        },
-      });
+      const { email } = input;
+      return ctx.prisma.client
+        .findUnique({ where: { email } })
+        .then((client) => {
+          if (client) {
+            throw new Error("Un client avec cet email existe déjà");
+          }
+        })
+        .then(() => {
+          return ctx.prisma.client.create({
+            data: {
+              ...input,
+              image: "",
+            },
+          });
+        });
     }),
   updateClient: protectedProcedure
-    .input(clientSchema)
+    .input(clientSchema.omit({ image: true }))
     .mutation(({ ctx, input }) => {
-      const { id, ...data } = input;
-      return ctx.prisma.client.update({ where: { id }, data });
+      const { id, email, ...data } = input;
+      return ctx.prisma.client
+        .findUnique({ where: { email } })
+        .then((client) => {
+          if (client && client.id !== id) {
+            throw new Error("Un client avec cet email existe déjà");
+          }
+          return ctx.prisma.client.update({
+            where: { id },
+            data: {
+              ...data,
+              image: "",
+            },
+          });
+        });
     }),
   deleteClient: protectedProcedure
     .input(z.string().nonempty())
