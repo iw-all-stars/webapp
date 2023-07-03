@@ -53,7 +53,7 @@ COPY . .
 # ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN npx -y prisma generate
-RUN NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=NEXT_PUBLIC_GOOGLE_MAPS_API_KEY yarn build
+RUN yarn build
 
 ##### RUNNER
 

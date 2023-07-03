@@ -151,7 +151,7 @@ const Home: NextPage = () => {
                       const { onChange, ...tmpField } = field;
                       return (
                         <Autocomplete
-                          apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+                          apiKey=""
                           onPlaceSelected={(place: { formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
                             field.onChange(place.formatted_address);
                             register("latitude", { value: place.geometry.location.lat(), required: true });
