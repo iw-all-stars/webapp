@@ -70,7 +70,7 @@ export const Clients = () => {
       >
         <Image alt="erreur" src="/assets/Error1.svg" width={90} height={98} />
         <Text fontSize={18} fontWeight={700}>
-          "- Il s'appelle Juste Leblanc. – Ah bon, il n'a pas de prénom ? ...”
+          Il n'y aucun client par ici ...
         </Text>
         <Text fontSize={13} fontWeight={400} mb={4}>
           Ajoutez une liste de client pour pouvoir les contacter facilement lors

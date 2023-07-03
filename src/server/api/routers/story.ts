@@ -2,7 +2,7 @@ import { PostType, StoryStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { DateTime } from "luxon";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToRestaurantProcedure, publicProcedure } from "~/server/api/trpc";
 import { StoryStatusHandler } from "~/server/services/storyStatusHandler.service";
 
 const createPost = z.object({
@@ -73,7 +73,7 @@ export type CreateStory = z.infer<typeof createStory>;
 export type SearchStories = z.infer<typeof searchStories>;
 
 export const storyRouter = createTRPCRouter({
-    upsert: publicProcedure
+    upsert: hasAccessToRestaurantProcedure
         .input(
             z.object({
                 id: z.string().optional(),
@@ -167,7 +167,7 @@ export const storyRouter = createTRPCRouter({
             return storyUpdated;
         }),
 
-    delete: publicProcedure
+    delete: hasAccessToRestaurantProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
 			const handler = new StoryStatusHandler(input.id, "delete");
@@ -179,7 +179,7 @@ export const storyRouter = createTRPCRouter({
             });
         }),
 
-    getAll: publicProcedure.input(searchStories).query(({ ctx, input }) => {
+    getAll: hasAccessToRestaurantProcedure.input(searchStories).query(({ ctx, input }) => {
         let where = {};
         if (input?.name) {
             where = {
@@ -201,7 +201,12 @@ export const storyRouter = createTRPCRouter({
         }
 
         return ctx.prisma.story.findMany({
-            where,
+            where: {
+				platformId: {
+					in: ctx.restaurant.platforms.map((platform) => platform.id)
+				},
+				...where,
+			},
             orderBy: {
                 publishedAt: "desc",
             },
