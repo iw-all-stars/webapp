@@ -27,3 +27,7 @@ html, body, #__next {
 * {
 	word-wrap: unset !important;
 }
+
+*::-webkit-scrollbar{
+    display: none;
+  }

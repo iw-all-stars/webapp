@@ -2,7 +2,7 @@ import { PlatformKey } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { IgApiClient } from "instagram-private-api";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToRestaurantProcedure, publicProcedure } from "~/server/api/trpc";
 import { encrypt } from "~/utils/decrypte-password";
 
 const createPlatform = z.object({
@@ -26,7 +26,7 @@ const updatePlatform = z.object({
 export type CreatePlatform = z.infer<typeof createPlatform>;
 
 export const platformRouter = createTRPCRouter({
-    create: publicProcedure
+    create: hasAccessToRestaurantProcedure
         .input(createPlatform)
         .mutation(async ({ ctx, input }) => {
             await igLogin(input.key, input.login, input.password);
@@ -46,7 +46,7 @@ export const platformRouter = createTRPCRouter({
             });
         }),
 
-    updateById: publicProcedure
+    updateById: hasAccessToRestaurantProcedure
         .input(updatePlatform)
         .mutation(async ({ ctx, input }) => {
             const platform = await ctx.prisma.platform.findUnique({
@@ -86,7 +86,7 @@ export const platformRouter = createTRPCRouter({
             });
         }),
 
-    getAllByRestaurantId: publicProcedure
+    getAllByRestaurantId: hasAccessToRestaurantProcedure
         .input(z.string())
         .query(({ ctx, input }) => {
             return ctx.prisma.platform.findMany({

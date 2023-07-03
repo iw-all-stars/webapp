@@ -1,37 +1,40 @@
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import {
-    Avatar,
-    AvatarGroup,
-    Box,
-    Button,
-    Icon,
-    IconButton,
-    Input,
-    InputGroup,
-    InputRightElement,
-    Menu,
-    MenuButton,
-    MenuList,
-    Skeleton,
-    SkeletonCircle,
-    Text,
-    useDisclosure,
+	Avatar,
+	AvatarGroup,
+	Box,
+	Button,
+	Icon,
+	IconButton,
+	Input,
+	InputGroup,
+	InputRightElement,
+	Menu,
+	MenuButton,
+	MenuList,
+	Skeleton,
+	SkeletonCircle,
+	Text,
+	useDisclosure,
 } from "@chakra-ui/react";
-import { type NextPage } from "next";
+import { type GetServerSideProps, type NextPage } from "next";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { BiSearch } from "react-icons/bi";
-import { BsPhone } from "react-icons/bs";
 import { IoMdSettings } from "react-icons/io";
+import { MdPhotoFilter } from "react-icons/md";
+import { useDebounce } from "usehooks-ts";
 import CreateUpdateStory from "~/components/stories/CreateUpdateStory";
+import { NoResultsStories } from "~/components/stories/NoResultsStories";
 import { StoryCard } from "~/components/stories/storyCard";
 import { api } from "~/utils/api";
 import { PLATFORMS } from "./platforms";
-import { useEffect, useState } from "react";
-import { useDebounce } from "usehooks-ts";
-import { useForm } from "react-hook-form";
-import { dateFromBackend } from "~/utils/date";
-import { DateTime } from "luxon";
-import { NoResultsStories } from "~/components/stories/NoResultsStories";
+import { hasAccessToRestaurant } from "~/utils/hasAccessToRestaurantServerSideProps";
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    return hasAccessToRestaurant(context);
+};
 
 const DashboardStory: NextPage = () => {
     const router = useRouter();
@@ -39,7 +42,7 @@ const DashboardStory: NextPage = () => {
     const [search, setSearch] = useState<string>("");
 
     const debouncedSearchTerm = useDebounce(search, 500);
-    const { register, watch, getValues, reset, setValue } = useForm<{
+    const { register, watch, getValues, setValue } = useForm<{
         startDate: string | undefined;
         endDate: string | undefined;
     }>({});
@@ -197,7 +200,7 @@ const DashboardStory: NextPage = () => {
                     </MenuList>
                 </Menu>
                 <Button
-                    leftIcon={<BsPhone />}
+                    leftIcon={<MdPhotoFilter />}
                     colorScheme="teal"
                     variant="solid"
                     onClick={onOpen}

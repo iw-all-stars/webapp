@@ -1,11 +1,16 @@
 import { Button, Heading, Flex, Divider, Avatar, Text, Skeleton, Center } from "@chakra-ui/react";
-import { type NextPage } from "next";
+import { type GetServerSideProps, type NextPage } from "next";
 import { Box } from "@chakra-ui/react";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { Fragment, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Select as ReactSelect } from "chakra-react-select";
+import { hasAccessToRestaurant } from "~/utils/hasAccessToRestaurantServerSideProps";
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    return hasAccessToRestaurant(context);
+};
 
 const DashboardInvitations: NextPage = () => {
 
@@ -17,6 +22,7 @@ const DashboardInvitations: NextPage = () => {
 
   const { data: session } = useSession();
 
+  // mouais
   const { data: users } = api.user.getAll.useQuery();
   const { data: invitations, isLoading: isLoadingInvitations } = api.invitation.getByOrganizationId.useQuery({
     organizationId: organizationId as string

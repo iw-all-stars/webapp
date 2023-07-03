@@ -17,6 +17,7 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { GoSignOut, GoBell } from "react-icons/go";
+import { DigidinerLogo } from "./logo/digidinerLogo.component";
 
 export default function Navbar() {
 
@@ -29,10 +30,11 @@ export default function Navbar() {
       py={7}
       alignItems="center"
       justifyContent="space-between"
-      borderBottom="1px solid black"
+      borderBottom="1px"
+	  borderColor="teal.500"
     >
       <Link href="/">
-        <Box>Logo</Box>
+        <DigidinerLogo />
       </Link>
       <Menu placement="bottom-end">
         <MenuButton

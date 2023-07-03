@@ -70,7 +70,7 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                             color="gray.500"
                             ml="2"
                         >
-                            Draft
+                            Brouillon
                         </Text>
                         <Icon as={BsFileText} color="gray.400" />
                     </>
@@ -84,7 +84,7 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                             color="gray.500"
                             ml="2"
                         >
-                            Published
+                            Publié
                         </Text>
                         <Icon as={BsFillCheckCircleFill} color="green.400" />
                     </>
@@ -98,7 +98,7 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                             color="gray.500"
                             ml="2"
                         >
-                            Scheduled
+                            Programmé
                         </Text>
                         <Icon boxSize="5" as={BiTime} color="orange.400" />
                     </>
@@ -112,7 +112,7 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                             color="gray.500"
                             ml="2"
                         >
-                            Error
+                            Erreur
                         </Text>
                         <Icon boxSize="5" as={TiDelete} color="red.400" />
                     </>
@@ -126,7 +126,7 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                             color="gray.500"
                             ml="2"
                         >
-                            Now
+                            En cours de publication
                         </Text>
                         <Icon
                             boxSize="5"

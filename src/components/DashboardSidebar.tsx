@@ -1,36 +1,41 @@
 import {
-  Button,
-  Flex,
-  Icon,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  MenuDivider,
-  Text,
-  Skeleton,
-  Center,
-  useDisclosure,
+	Box,
+	Button,
+	Center,
+	Flex,
+	Icon,
+	Menu,
+	MenuButton,
+	MenuDivider,
+	MenuItem,
+	MenuList,
+	Skeleton,
+	Text,
+	useDisclosure,
 } from "@chakra-ui/react";
-import { api } from "~/utils/api";
+import { type GetServerSideProps } from "next";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { BiChevronDown } from "react-icons/bi";
+import {
+	MdAdd,
+	MdCampaign,
+	MdCheck,
+	MdPhotoFilter,
+	MdSettings
+} from "react-icons/md";
 import { RxComponent1 } from "react-icons/rx";
 import { TbUsers } from "react-icons/tb";
-import {
-  MdAdd,
-  MdCheck,
-  MdSettings,
-  MdCampaign,
-  MdPhotoFilter,
-  MdHome,  
-} from "react-icons/md";
-import Link from "next/link";
+import { appRouter } from "~/server/api/root";
+import { prisma } from "~/server/db";
+import { api } from "~/utils/api";
 import ModalNewRestaurant from "./modals/newRestaurant";
 
 export default function DashboardSidebar() {
   const router = useRouter();
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const pathName = router.pathname;
 
   const { data: restaurants } = api.restaurant.getByOrganizationId.useQuery(
     {
@@ -51,11 +56,6 @@ export default function DashboardSidebar() {
   );
 
   const links = [
-    {
-      name: "Accueil",
-      slug: "",
-      icon: MdHome,
-    },
     {
       name: "Stories",
       slug: "stories",
@@ -87,13 +87,14 @@ export default function DashboardSidebar() {
   ];
 
   return (
-    <>
+    <Box bg="white">
       <Flex
         direction="column"
         alignItems="center"
         h="full"
         minW={200}
         borderRight="1px"
+		borderColor="teal.500"
         pt={6}
       >
         <Menu>
@@ -110,7 +111,7 @@ export default function DashboardSidebar() {
               <Link
                 href={`/dashboard/${
                   router.query.organizationId as string
-                }/restaurant/${restaurant.id}`}
+                }/restaurant/${restaurant.id}/stories`}
                 key={restaurant.id}
               >
                 <MenuItem>
@@ -140,6 +141,9 @@ export default function DashboardSidebar() {
               <Button
                 w="full"
                 justifyContent="start"
+				color={
+					pathName.includes(slug) ? "teal" : "black"
+				}
                 variant="ghost"
                 leftIcon={<Icon as={icon} w={5} h={5} />}
               >
@@ -160,6 +164,9 @@ export default function DashboardSidebar() {
               <Button
                 w="full"
                 justifyContent="start"
+				color={
+					pathName.includes(slug) ? "teal" : "black"
+				}
                 variant="ghost"
                 leftIcon={<Icon as={icon} w={5} h={5} />}
               >
@@ -170,6 +177,6 @@ export default function DashboardSidebar() {
         </Flex>
       </Flex>
       <ModalNewRestaurant isOpen={isOpen} onClose={onClose} />
-    </>
+    </Box>
   );
 }
