@@ -23,8 +23,8 @@ import { prisma } from "~/server/db";
 // import dbConnect from "../mongoose";
 
 type CreateContextOptions = {
-    session: Session | null;
-	pathNameReferer: string | null
+  session: Session | null;
+  pathNameReferer: string | null;
 };
 
 /**
@@ -38,11 +38,11 @@ type CreateContextOptions = {
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
-    return {
-        session: opts.session,
-		pathNameReferer: opts.pathNameReferer,
-        prisma,
-    };
+  return {
+    session: opts.session,
+    pathNameReferer: opts.pathNameReferer,
+    prisma,
+  };
 };
 
 /**
@@ -52,30 +52,30 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
  * @see https://trpc.io/docs/context
  */
 export const createTRPCContext = async (opts: CreateNextContextOptions) => {
-    const { req, res } = opts; 
+  const { req, res } = opts;
 
-	let pathNameReferer = null
+  let pathNameReferer = null;
 
-    const referer = req.headers['referer'];
+  const referer = req.headers["referer"];
 
+  if (referer) {
+    const url = new URL(referer);
+    const path = url.pathname;
 
-    if (referer) {
-        const url = new URL(referer);
-        const path = url.pathname;
-        
-		pathNameReferer = path;
-    }
+    pathNameReferer = path;
+  }
 
-    // Get the session from the server using the getServerSession wrapper function
-    const session = await getServerAuthSession({ req, res });
+  // Get the session from the server using the getServerSession wrapper function
+  const session = await getServerAuthSession({ req, res });
 
-    // Connect mongoose to the database
-    // await dbConnect();
+  // Connect mongoose to the database
 
-    return createInnerTRPCContext({
-        session,
-		pathNameReferer
-    });
+  await dbConnect();
+
+  return createInnerTRPCContext({
+    session,
+    pathNameReferer,
+  });
 };
 
 /**
@@ -85,26 +85,25 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
  * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
+import { RoleUserOnOrganization } from "@prisma/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import { getParamFromPathName } from "~/utils/getParamFromPathName";
-import { RoleUserOnOrganization } from "@prisma/client";
+import dbConnect from "../mongoose";
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
-    transformer: superjson,
-    errorFormatter({ shape, error }) {
-        return {
-            ...shape,
-            data: {
-                ...shape.data,
-                zodError:
-                    error.cause instanceof ZodError
-                        ? error.cause.flatten()
-                        : error.cause,
-            },
-        };
-    },
+  transformer: superjson,
+  errorFormatter({ shape, error }) {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        zodError:
+          error.cause instanceof ZodError ? error.cause.flatten() : error.cause,
+      },
+    };
+  },
 });
 
 /**
@@ -132,112 +131,133 @@ export const publicProcedure = t.procedure;
 
 /** Reusable middleware that enforces users are logged in before running the procedure. */
 const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
-    if (!ctx.session || !ctx.session.user) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({
-        ctx: {
-            // infers the `session` as non-nullable
-            session: { ...ctx.session, user: ctx.session.user },
-        },
-    });
+  if (!ctx.session || !ctx.session.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  return next({
+    ctx: {
+      // infers the `session` as non-nullable
+      session: { ...ctx.session, user: ctx.session.user },
+    },
+  });
 });
 
-const hasAccessToRestaurant = t.middleware(
-    async ({ ctx, next }) => {
-        if (!ctx.session || !ctx.session.user) {
-            throw new TRPCError({ code: "UNAUTHORIZED" });
-        }
+const hasAccessToRestaurant = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.session || !ctx.session.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
 
-		if (!ctx.pathNameReferer) {
-			throw new TRPCError({ code: "UNAUTHORIZED", message: "hasAccessToRestaurant_step0" });
-		}
+  if (!ctx.pathNameReferer) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "hasAccessToRestaurant_step0",
+    });
+  }
 
-		const restaurantId = getParamFromPathName(ctx.pathNameReferer, "restaurant");
+  const restaurantId = getParamFromPathName(ctx.pathNameReferer, "restaurant");
 
-        if (!restaurantId) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "hasAccessToRestaurant_step1" });
-        }
+  if (!restaurantId) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "hasAccessToRestaurant_step1",
+    });
+  }
 
-        const restaurant = await ctx.prisma.restaurant.findUnique({
-            where: {
-                id: restaurantId,
-            },
-            include: {
-                organization: true,
-				platforms: true
-            },
-        });
+  const restaurant = await ctx.prisma.restaurant.findUnique({
+    where: {
+      id: restaurantId,
+    },
+    include: {
+      organization: true,
+      platforms: true,
+    },
+  });
 
-        if (!restaurant) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "hasAccessToRestaurant_step2" });
-        }
+  if (!restaurant) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "hasAccessToRestaurant_step2",
+    });
+  }
 
-        const userToOrga = await ctx.prisma.usersOnOrganizations.findFirst({
-            where: {
-                userId: ctx.session.user.id,
-                organizationId: restaurant.organization.id,
-            },
-        });
+  const userToOrga = await ctx.prisma.usersOnOrganizations.findFirst({
+    where: {
+      userId: ctx.session.user.id,
+      organizationId: restaurant.organization.id,
+    },
+  });
 
-        if (!userToOrga) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "hasAccessToRestaurant_step3" });
-        }
+  if (!userToOrga) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "hasAccessToRestaurant_step3",
+    });
+  }
 
-        return next({
-            ctx: {
-				...ctx,
-				restaurant,
-			},
-        });
+  return next({
+    ctx: {
+      ...ctx,
+      restaurant,
+    },
+  });
+});
+
+const hasAccessToOrganization = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.session || !ctx.session.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  if (!ctx.pathNameReferer) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "hasAccessToOrganization_step0",
+    });
+  }
+
+  const organizationId = getParamFromPathName(
+    ctx.pathNameReferer,
+    "organization"
+  );
+
+  if (!organizationId) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "hasAccessToOrganization_step1",
+    });
+  }
+
+  const userToOrga = await ctx.prisma.usersOnOrganizations.findFirst({
+    where: {
+      userId: ctx.session.user.id,
+      organizationId: organizationId,
+    },
+  });
+
+  if (!userToOrga) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "step3" });
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      userToOrga,
+    },
+  });
+});
+
+const isAdminOfOrganization = hasAccessToOrganization.unstable_pipe(
+  ({ ctx, next }) => {
+    if (ctx.userToOrga.role !== RoleUserOnOrganization.ADMIN) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "isAdminOfOrganization_step0",
+      });
     }
+    return next({
+      ctx,
+    });
+  }
 );
-
-const hasAccessToOrganization = t.middleware(
-    async ({ ctx, next }) => {
-        if (!ctx.session || !ctx.session.user) {
-            throw new TRPCError({ code: "UNAUTHORIZED" });
-        }
-
-		if (!ctx.pathNameReferer) {
-			throw new TRPCError({ code: "UNAUTHORIZED", message: "hasAccessToOrganization_step0" });
-		}
-
-		const organizationId = getParamFromPathName(ctx.pathNameReferer, "organization");
-
-        if (!organizationId) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "hasAccessToOrganization_step1" });
-        }
-
-
-        const userToOrga = await ctx.prisma.usersOnOrganizations.findFirst({
-            where: {
-                userId: ctx.session.user.id,
-                organizationId: organizationId,
-            },
-        });
-
-        if (!userToOrga) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "step3" });
-        }
-
-        return next({
-            ctx: {
-				...ctx,
-				userToOrga,
-			},
-        });
-    }
-);
-
-const isAdminOfOrganization = hasAccessToOrganization.unstable_pipe(({ ctx, next}) => {
-	if(ctx.userToOrga.role !== RoleUserOnOrganization.ADMIN) {
-		throw new TRPCError({ code: "UNAUTHORIZED", message: "isAdminOfOrganization_step0" });
-	}
-	return next({
-		ctx
-	})
-})
 
 /**
  * Protected (authenticated) procedure
@@ -250,11 +270,13 @@ const isAdminOfOrganization = hasAccessToOrganization.unstable_pipe(({ ctx, next
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
 
 export const hasAccessToRestaurantProcedure = t.procedure
-    .use(enforceUserIsAuthed)
-    .use(hasAccessToRestaurant);
+  .use(enforceUserIsAuthed)
+  .use(hasAccessToRestaurant);
 
 export const hasAccessToOrganizationProcedure = t.procedure
-	.use(enforceUserIsAuthed)
-	.use(hasAccessToOrganization);
+  .use(enforceUserIsAuthed)
+  .use(hasAccessToOrganization);
 
-export const isAdminOfOrganizationProcedure = t.procedure.use(isAdminOfOrganization);
+export const isAdminOfOrganizationProcedure = t.procedure.use(
+  isAdminOfOrganization
+);
