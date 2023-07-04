@@ -1,70 +1,218 @@
 import {
-  Avatar,
-  Box,
-  Button,
-  Card, CardBody,
-  CardFooter,
-  Center,
-  Grid,
-  GridItem,
-  Heading,
-  Text
+    Avatar,
+    Box,
+    Button,
+    Card,
+    CardBody,
+    CardFooter,
+    Center,
+    Flex,
+    Grid,
+    GridItem,
+    Heading,
+    Image,
+    Skeleton,
+    SkeletonCircle,
+    Text,
+	useToast,
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { api } from "~/utils/api";
 import { type Invitation } from "@prisma/client";
+import { useRouter } from "next/router";
 
 const Home: NextPage = () => {
-  const utils = api.useContext();
+    const router = useRouter();
 
-  const { data: invitations } = api.invitation.getByCurrentUser.useQuery();
+	const toast = useToast();
 
-  const changeStatusInvitation = api.invitation.changeStatus.useMutation({
-    onSuccess: () => {
-		utils.invitation.getByCurrentUser.invalidate();
-		utils.invitation.getByCurrentUserCount.invalidate();
-	}
-  })
+    const utils = api.useContext();
 
-  const handleStateInvitation = async (invitation: Invitation, status: 'ACCEPTED' | 'REJECTED') => {
-    await changeStatusInvitation.mutateAsync({
-      invitationId: invitation.id,
-      organizationId: invitation.organizationId,
-      status
-    })
-  }
+    const { data: invitations, isLoading } =
+        api.invitation.getByCurrentUser.useQuery();
 
-  return (
-    <>
-      <Box h="full" w="full" pt={8}>
-        <Heading>Notifications en attentes</Heading>
-        <Grid templateColumns="repeat(auto-fill, minmax(300px, 1fr))" gap={4} mt={8}>
-          {invitations?.map((invitation) => (
-            <GridItem key={invitation.id} w="full">
-              <Card w="full" mx="auto">
-                <CardBody>
-                  <Center flexDirection="column">
-                    <Avatar h={10} w={10} rounded="full" src={invitation.sender.image ?? undefined} name={invitation.sender.name ?? undefined} />
-                    <Text align="center" mt={2}>
-                      <Text as='b'>{invitation.sender.name}</Text>
-                      <br/>
-                      vous a envoyé une invitation pour rejoindre l'organisation
-                      <br/>
-                      <Text as='b'>{invitation.organization.name}</Text>
-                    </Text>
-                  </Center>
-                </CardBody>
-                <CardFooter justifyContent="center" pt={0} gap={4}>
-                  <Button colorScheme="red" onClick={() => handleStateInvitation(invitation, "REJECTED")}>Refuser</Button>
-                  <Button colorScheme="green" onClick={() => handleStateInvitation(invitation, "ACCEPTED")}>Accepter</Button>
-                </CardFooter>
-              </Card>
-            </GridItem>
-          ))}
-        </Grid>
-      </Box>
-    </>
-  );
+    const changeStatusInvitation = api.invitation.changeStatus.useMutation({
+        onSuccess: () => {
+            utils.invitation.getByCurrentUser.invalidate();
+            utils.invitation.getByCurrentUserCount.invalidate();
+			toast({
+				title: "Invitation acceptée.",
+				description: "Vous avez bien rejoint l'organisation.",
+				status: "success",
+				duration: 5000,
+				isClosable: true,
+			  });
+        },
+    });
+
+    const handleStateInvitation = async (
+        invitation: Invitation,
+        status: "ACCEPTED" | "REJECTED"
+    ) => {
+        await changeStatusInvitation.mutateAsync({
+            invitationId: invitation.id,
+            organizationId: invitation.organizationId,
+            status,
+        });
+    };
+
+    return (
+            <Box h="full" w="full" pt={8}>
+                <Heading>Notifications en attentes</Heading>
+                {!isLoading ? (
+                    invitations?.length ?? 0 > 0 ? (
+                        <Box display="flex" flexWrap="wrap" gap="4" my={4}>
+                            {invitations?.map((invitation) => (
+                                <Card key={invitation.id} width="300px">
+                                    <CardBody>
+                                        <Center flexDirection="column">
+                                            <Avatar
+                                                h={10}
+                                                w={10}
+                                                rounded="full"
+                                                src={
+                                                    invitation.sender.image ??
+                                                    undefined
+                                                }
+                                                name={
+                                                    invitation.sender.name ??
+                                                    undefined
+                                                }
+                                            />
+                                            <Text align="center" mt={2}>
+                                                <Text as="b">
+                                                    {invitation.sender.name}
+                                                </Text>
+                                                <br />
+                                                vous a envoyé une invitation
+                                                pour rejoindre l'organisation
+                                                <br />
+                                                <Text as="b">
+                                                    {
+                                                        invitation.organization
+                                                            .name
+                                                    }
+                                                </Text>
+                                            </Text>
+                                        </Center>
+                                    </CardBody>
+                                    <CardFooter
+                                        justifyContent="center"
+                                        pt={0}
+                                        gap={4}
+                                    >
+                                        <Button
+                                            colorScheme="red"
+                                            onClick={() =>
+                                                handleStateInvitation(
+                                                    invitation,
+                                                    "REJECTED"
+                                                )
+                                            }
+                                        >
+                                            Refuser
+                                        </Button>
+                                        <Button
+                                            colorScheme="green"
+                                            onClick={() =>
+                                                handleStateInvitation(
+                                                    invitation,
+                                                    "ACCEPTED"
+                                                )
+                                            }
+                                        >
+                                            Accepter
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            ))}
+                        </Box>
+                    ) : (
+                        <Box
+                            h="full"
+                            w="full"
+                            display="flex"
+                            justifyContent="center"
+                            alignItems="center"
+                        >
+                            <Flex
+                                direction="column"
+                                alignItems="center"
+                                justifyContent="center"
+                                gap={4}
+                            >
+                                <Image
+                                    src="/assets/Error1.svg"
+                                    width={100}
+                                    height={100}
+                                    alt=""
+                                />
+                                <Text fontWeight="semibold">
+                                    Pas de notifications en attentes
+                                </Text>
+                                <Button
+                                    onClick={() => router.push("/")}
+                                    colorScheme="teal"
+                                >
+                                    Retourner à l'accueil
+                                </Button>
+                            </Flex>
+                        </Box>
+                    )
+                ) : (
+                    <Box display="flex" gap={4}>
+                        {Array.from({ length: 2 }).map((_, i) => (
+                            <Box
+                                key={i}
+                                bg="gray.100"
+                                height="244px"
+                                width="294px"
+                                marginTop="4"
+                                borderRadius="md"
+                                display="flex"
+                                flexDirection="column"
+                            >
+                                <Box
+                                    display="flex"
+                                    justifyContent="center"
+                                    alignItems="center"
+                                    margin="5"
+                                >
+                                    <SkeletonCircle
+                                        startColor="gree.100"
+                                        size="10"
+                                    />
+                                </Box>
+                                <Box
+                                    display="flex"
+                                    flexDirection="column"
+                                    justifyContent="center"
+                                    gap="4"
+                                    alignItems="center"
+                                    flex="1"
+                                    bg="gray.100"
+                                >
+                                    <Skeleton height="10px" width="150px" />
+                                    <Skeleton height="10px" width="100px" />
+                                    <Flex gap="4">
+                                        <Skeleton
+                                            height="30px"
+                                            width="80px"
+                                            borderRadius="8px"
+                                        />
+                                        <Skeleton
+                                            height="30px"
+                                            width="80px"
+                                            borderRadius="8px"
+                                        />
+                                    </Flex>
+                                </Box>
+                            </Box>
+                        ))}
+                    </Box>
+                )}
+            </Box>
+    );
 };
 
 export default Home;
