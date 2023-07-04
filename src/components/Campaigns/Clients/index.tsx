@@ -151,9 +151,9 @@ export const Clients = () => {
           fontWeight={400}
         >
           <Text fontWeight="bold">Clients</Text> 
-          <SkeletonCircle size="6" mt={0.5} isLoaded={!isRefetching}>
+          <SkeletonCircle size="6" mt={0.5} isLoaded={!isRefetching} w="fit-content">
             <Text letterSpacing="widest" fontStyle="italic">
-              ({data.length})
+              ({countClients})
             </Text>
           </SkeletonCircle>
         </Heading>

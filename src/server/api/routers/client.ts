@@ -2,25 +2,22 @@ import { Client } from "@elastic/elasticsearch";
 import { z } from "zod";
 import { type Client as ClientModel } from "@prisma/client";
 
-import { createTRPCRouter, hasAccessToRestaurantProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  hasAccessToRestaurantProcedure,
+} from "~/server/api/trpc";
 
 const clientSchema = z.object({
   id: z.string().optional(),
-  email: z.string(),
+  email: z.string().email(),
   name: z.string(),
   firstname: z.string().optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  zip: z.string().optional(),
 });
 
 export const clientRouter = createTRPCRouter({
-
   getCountClients: hasAccessToRestaurantProcedure
     .input(z.string().optional())
     .query(async ({ input }) => {
-
       const elkClient = new Client({
         node: process.env.ELASTICSEARCH_URL ?? "http://localhost:9200",
         auth: {
@@ -28,29 +25,31 @@ export const clientRouter = createTRPCRouter({
           password: process.env.ELASTICSEARCH_PASSWORD ?? "",
         },
       });
-      
+
       const countResult = await elkClient.count({
         index: "clients",
-        body: input ? {
-          query: {
-            multi_match: {
-              query: input,
-              fields: ["name", "firstname", "email"],
-              operator: "or",
-              type: "bool_prefix"
+        body: input
+          ? {
+              query: {
+                multi_match: {
+                  query: input,
+                  fields: ["name", "firstname", "email"],
+                  operator: "or",
+                  type: "bool_prefix",
+                },
+              },
+            }
+          : {
+              query: {
+                match_all: {},
+              },
             },
-          },
-        } : {
-          query: {
-            match_all: {}
-          }
-        }
-      })
+      });
 
       await elkClient.close();
 
       return countResult.count;
-  }),
+    }),
 
   getClients: hasAccessToRestaurantProcedure
     .input(
@@ -60,8 +59,7 @@ export const clientRouter = createTRPCRouter({
         offset: z.number().optional(),
       })
     )
-    .query(async ({ input }) => {
-
+    .query(async ({ ctx, input }) => {
       const { input: searchInput, limit, offset } = input;
 
       const elkClient = new Client({
@@ -76,34 +74,48 @@ export const clientRouter = createTRPCRouter({
         index: "clients",
         from: offset,
         size: limit,
-        sort: [{
-          "createdAt": {
-            order: "desc"
-          }
-        }],
-        body: searchInput ? {
-          query: {
-            multi_match: {
-              query: searchInput,
-              fields: ["name", "firstname", "email"],
-              operator: "or",
-              type: "bool_prefix"
+        sort: [
+          {
+            createdAt: {
+              order: "desc",
             },
           },
-        } : {
-          query: {
-            match_all: {}
-          }
-        }
-      })
+        ],
+        query: searchInput
+          ? {
+              bool: {
+                minimum_should_match: 2,
+                should: [
+                  {
+                    match: {
+                      restaurantId: ctx.restaurant.id,
+                    },
+                  },
+                  {
+                    multi_match: {
+                      query: searchInput,
+                      fields: ["name", "firstname", "email"],
+                      operator: "or",
+                      type: "bool_prefix",
+                    },
+                  },
+                ],
+              },
+            }
+          : {
+              match: {
+                restaurantId: ctx.restaurant.id,
+              },
+            },
+      });
 
-      const clients = searchResult.hits.hits.map(client => ({
+      const clients = searchResult.hits.hits.map((client) => ({
         id: client._id,
-        ...client._source as Omit<ClientModel, "id">,
-      }))
+        ...(client._source as Omit<ClientModel, "id">),
+      }));
 
       await elkClient.close();
-      
+
       return clients;
     }),
   getClient: hasAccessToRestaurantProcedure
@@ -127,7 +139,7 @@ export const clientRouter = createTRPCRouter({
             data: {
               ...input,
               restaurantId: ctx.restaurant.id,
-            }
+            },
           });
         });
     }),
@@ -145,6 +157,7 @@ export const clientRouter = createTRPCRouter({
             where: { id },
             data: {
               ...data,
+              email,
               image: "",
             },
           });
