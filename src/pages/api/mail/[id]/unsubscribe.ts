@@ -29,7 +29,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     });
     return res
       .status(200)
-      .json({ message: "You will no longer receive emails from us" });
+      .setHeader("Content-Type", "text/html")
+      .send(
+        "<html><body><h3>Vous avez &eacute;t&eacute; d&eacute;sinscrit avec succ&egrave;s de notre liste de diffusion &#128077;</h3></body></html>"
+      );
   } catch (err) {
     console.log(err);
     res.status(400).json({ message: err });

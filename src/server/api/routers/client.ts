@@ -2,7 +2,7 @@ import { Client } from "@elastic/elasticsearch";
 import { z } from "zod";
 import { type Client as ClientModel } from "@prisma/client";
 
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToRestaurantProcedure } from "~/server/api/trpc";
 
 const clientSchema = z.object({
   id: z.string().optional(),
@@ -10,7 +10,6 @@ const clientSchema = z.object({
   name: z.string(),
   firstname: z.string().optional(),
   phone: z.string().optional(),
-  image: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
   zip: z.string().optional(),
@@ -18,7 +17,7 @@ const clientSchema = z.object({
 
 export const clientRouter = createTRPCRouter({
 
-  getCountClients: protectedProcedure
+  getCountClients: hasAccessToRestaurantProcedure
     .input(z.string().optional())
     .query(async ({ input }) => {
 
@@ -53,7 +52,7 @@ export const clientRouter = createTRPCRouter({
       return countResult.count;
   }),
 
-  getClients: protectedProcedure
+  getClients: hasAccessToRestaurantProcedure
     .input(
       z.object({
         input: z.string().optional(),
@@ -107,13 +106,13 @@ export const clientRouter = createTRPCRouter({
       
       return clients;
     }),
-  getClient: protectedProcedure
+  getClient: hasAccessToRestaurantProcedure
     .input(z.string().nonempty())
     .query(({ ctx, input }) => {
       return ctx.prisma.client.findUnique({ where: { id: input } });
     }),
-  createClient: protectedProcedure
-    .input(clientSchema.omit({ id: true, image: true }))
+  createClient: hasAccessToRestaurantProcedure
+    .input(clientSchema.omit({ id: true }))
     .mutation(({ ctx, input }) => {
       const { email } = input;
       return ctx.prisma.client
@@ -127,13 +126,13 @@ export const clientRouter = createTRPCRouter({
           return ctx.prisma.client.create({
             data: {
               ...input,
-              image: "",
-            },
+              restaurantId: ctx.restaurant.id,
+            }
           });
         });
     }),
-  updateClient: protectedProcedure
-    .input(clientSchema.omit({ image: true }))
+  updateClient: hasAccessToRestaurantProcedure
+    .input(clientSchema)
     .mutation(({ ctx, input }) => {
       const { id, email, ...data } = input;
       return ctx.prisma.client
@@ -151,7 +150,7 @@ export const clientRouter = createTRPCRouter({
           });
         });
     }),
-  deleteClient: protectedProcedure
+  deleteClient: hasAccessToRestaurantProcedure
     .input(z.string().nonempty())
     .mutation(({ ctx, input }) => {
       return ctx.prisma.client.delete({ where: { id: input } });
