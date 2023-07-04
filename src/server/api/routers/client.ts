@@ -23,10 +23,10 @@ export const clientRouter = createTRPCRouter({
     .query(async ({ input }) => {
 
       const elkClient = new Client({
-        node: process.env.ELASTICSEARCH_URL || "http://localhost:9200",
+        node: process.env.ELASTICSEARCH_URL ?? "http://localhost:9200",
         auth: {
-          username: process.env.ELASTICSEARCH_USERNAME || "",
-          password: process.env.ELASTICSEARCH_PASSWORD || "",
+          username: process.env.ELASTICSEARCH_USERNAME ?? "",
+          password: process.env.ELASTICSEARCH_PASSWORD ?? "",
         },
       });
       
@@ -66,10 +66,10 @@ export const clientRouter = createTRPCRouter({
       const { input: searchInput, limit, offset } = input;
 
       const elkClient = new Client({
-        node: process.env.ELASTICSEARCH_URL || "http://localhost:9200",
+        node: process.env.ELASTICSEARCH_URL ?? "http://localhost:9200",
         auth: {
-          username: process.env.ELASTICSEARCH_USERNAME || "",
-          password: process.env.ELASTICSEARCH_PASSWORD || "",
+          username: process.env.ELASTICSEARCH_USERNAME ?? "",
+          password: process.env.ELASTICSEARCH_PASSWORD ?? "",
         },
       });
 
