@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToRestaurantProcedure } from "~/server/api/trpc";
 
 const campaignSchema = z.object({
   id: z.string(),
@@ -26,7 +26,7 @@ const updateCampaignSchema = z.object({
 });
 
 export const campaignRouter = createTRPCRouter({
-  getCampaigns: protectedProcedure
+  getCampaigns: hasAccessToRestaurantProcedure
     .input(z.string().optional())
     .query(({ ctx, input = "" }) => {
       return ctx.prisma.campaign.findMany({
@@ -39,7 +39,7 @@ export const campaignRouter = createTRPCRouter({
         },
       });
     }),
-  findCampaignByName: protectedProcedure
+  findCampaignByName: hasAccessToRestaurantProcedure
     .input(
       z.object({
         name: z.string().optional(),
@@ -54,7 +54,7 @@ export const campaignRouter = createTRPCRouter({
         include: { mail: true },
       });
     }),
-  getCampaign: protectedProcedure
+  getCampaign: hasAccessToRestaurantProcedure
     .input(z.string().nonempty())
     .query(({ ctx, input }) => {
       return ctx.prisma.campaign.findUnique({
@@ -62,9 +62,10 @@ export const campaignRouter = createTRPCRouter({
         include: { mail: true },
       });
     }),
-  createCampaign: protectedProcedure
+  createCampaign: hasAccessToRestaurantProcedure
     .input(campaignSchema.omit({ id: true, creatorId: true, status: true }))
     .mutation(({ ctx, input }) => {
+      if (!ctx.session?.user.id) throw new Error("No user in session");
       return ctx.prisma.campaign.create({
         data: {
           ...input,
@@ -78,7 +79,7 @@ export const campaignRouter = createTRPCRouter({
         },
       });
     }),
-  initializeCampaign: protectedProcedure
+  initializeCampaign: hasAccessToRestaurantProcedure
     .input(
       campaignSchema.omit({
         id: true,
@@ -90,6 +91,7 @@ export const campaignRouter = createTRPCRouter({
       })
     )
     .mutation(({ ctx, input }) => {
+      if (!ctx.session?.user.id) throw new Error("No user in session");
       return ctx.prisma.campaign.create({
         data: {
           ...input,
@@ -103,13 +105,13 @@ export const campaignRouter = createTRPCRouter({
         },
       });
     }),
-  updateCampaign: protectedProcedure
+  updateCampaign: hasAccessToRestaurantProcedure
     .input(updateCampaignSchema)
     .mutation(({ ctx, input }) => {
       const { id, ...data } = input;
       return ctx.prisma.campaign.update({ where: { id }, data });
     }),
-  deleteCampaign: protectedProcedure
+  deleteCampaign: hasAccessToRestaurantProcedure
     .input(z.string().nonempty())
     .mutation(({ ctx, input }) => {
       return ctx.prisma.campaign.delete({ where: { id: input } });

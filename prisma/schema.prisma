@@ -45,19 +45,21 @@ model Mail {
 }
 
 model Client {
-  id           String    @id @default(uuid()) @db.Uuid
-  email        String    @unique
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique
   name         String
   firstname    String?
   phone        String?
   image        String?
   address      String?
   city         String?
-  unsubscribed Boolean?  @default(false)
+  unsubscribed Boolean?   @default(false)
   zip          String?
+  restaurantId String     @db.Uuid
   lastLogin    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   Mail         Mail[]
 }
 
@@ -71,7 +73,7 @@ model Category {
 }
 
 model Invitation {
-  id     String           @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
   senderId String @db.Uuid
   sender   User   @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
@@ -93,7 +95,7 @@ enum RoleUserOnOrganization {
 
 model UsersOnOrganizations {
   userId String @db.Uuid
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   organizationId String       @db.Uuid
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -136,6 +138,7 @@ model Restaurant {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Client    Client[]
 }
 
 model Prospect {
@@ -176,20 +179,20 @@ model Session {
 }
 
 model User {
-  id                  String                   @id @default(uuid()) @db.Uuid
+  id                  String                 @id @default(uuid()) @db.Uuid
   name                String?
-  email               String?                  @unique
+  email               String?                @unique
   emailVerified       DateTime?
   image               String?
   lastLogin           DateTime?
-  createdAt           DateTime                 @default(now())
-  updatedAt           DateTime                 @updatedAt
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
   accounts            Account[]
   sessions            Session[]
   Campaign            Campaign[]
   organizations       UsersOnOrganizations[]
-  senderInvitations   Invitation[] @relation("sender")
-  receiverInvitations Invitation[] @relation("receiver")
+  senderInvitations   Invitation[]           @relation("sender")
+  receiverInvitations Invitation[]           @relation("receiver")
 }
 
 model VerificationToken {

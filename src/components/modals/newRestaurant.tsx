@@ -1,6 +1,7 @@
 import { Modal, ModalOverlay, ModalContent, FormControl, FormErrorMessage, ModalHeader, ModalCloseButton, ModalBody, Input, FormLabel, Select, ModalFooter, Button } from "@chakra-ui/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { useState } from "react";
 import Autocomplete from "react-google-autocomplete";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import { api } from "~/utils/api";
@@ -15,11 +16,13 @@ type RestaurantFormValues = {
 
 const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
 
+  const [placeId, setPlaceId] = useState<string | null>(null);
+
   const context = api.useContext();
   const router = useRouter();
   const { data: session } = useSession();
 
-  const { register, formState: { errors }, handleSubmit, control, reset } = useForm<RestaurantFormValues>();
+  const { register, formState: { errors, isValid }, handleSubmit, control, reset } = useForm<RestaurantFormValues>();
 
   const { data: categories } = api.category.getAll.useQuery();
 
@@ -50,7 +53,7 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
           <ModalBody pb={6}>
             <FormControl isInvalid={!!errors.name}>
               <FormLabel>Nom de votre restaurant</FormLabel>
-              <Input {...register("name", { required: true })} />
+              <Input {...register("name", { required: true })} placeholder="Nom de votre restaurant" />
               <FormErrorMessage>Le nom du restaurant est obligatoire !</FormErrorMessage>
             </FormControl>
             <FormControl mt={4} isInvalid={!!errors.categoryId}>
@@ -71,9 +74,11 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
                   const { onChange, ...tmpField } = field;
                   return (
                     <Autocomplete
+					placeholder="Entrez l'adresse de votre établissement"
                       apiKey="AIzaSyC4tPk2jjqzK6lXe6xCwCE6RGtLtIyh858"
-                      onPlaceSelected={(place: { formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
-                        field.onChange(place.formatted_address);
+                      onPlaceSelected={(place: { place_id: string, formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
+                        setPlaceId(place.place_id);
+						field.onChange(place.formatted_address);
                         register("latitude", { value: place.geometry.location.lat(), required: true });
                         register("longitude", { value: place.geometry.location.lng(), required: true });
                       }}
@@ -90,7 +95,10 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
                         types: ["address"],
                         componentRestrictions: { country: "fr" },
                       }}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+						setPlaceId(null);
+						onChange(e.target.value)
+					  }}
                       {...tmpField}
                     />
                   )
@@ -100,7 +108,9 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
             </FormControl>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" mr={3} type="submit">
+            <Button colorScheme="blue" mr={3} type="submit" isDisabled={
+				!isValid || !placeId
+			}>
               Valider
             </Button>
             <Button onClick={onClose}>Annuler</Button>

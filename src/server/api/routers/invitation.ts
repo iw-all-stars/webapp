@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { createTRPCRouter, hasAccessToOrganizationProcedure, isAdminOfOrganizationProcedure, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToOrganizationProcedure, isAdminOfOrganizationProcedure, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
 export const invitationRouter = createTRPCRouter({
 
@@ -44,7 +44,7 @@ export const invitationRouter = createTRPCRouter({
     }
   ),
 
-  changeStatus: publicProcedure
+  changeStatus: protectedProcedure
     .input(
       z.object({
         invitationId: z.string(),
@@ -90,7 +90,7 @@ export const invitationRouter = createTRPCRouter({
     }
   ),
 
-  getAll: publicProcedure.query(({ ctx }) => {
+  getAll: protectedProcedure.query(({ ctx }) => {
     return ctx.prisma.invitation.findMany();
   }),
 
@@ -113,7 +113,7 @@ export const invitationRouter = createTRPCRouter({
       });
   }),
 
-  getByCurrentUser: publicProcedure
+  getByCurrentUser: protectedProcedure
     .query(({ ctx }) => {
       return ctx.prisma.invitation.findMany({
         where: {
@@ -124,6 +124,15 @@ export const invitationRouter = createTRPCRouter({
           receiver: true,
           organization: true
         }
+      });
+    }),
+
+	getByCurrentUserCount: protectedProcedure
+    .query(({ ctx }) => {
+      return ctx.prisma.invitation.count({
+        where: {
+          receiverId: ctx.session?.user.id
+        },
       });
     }),
 

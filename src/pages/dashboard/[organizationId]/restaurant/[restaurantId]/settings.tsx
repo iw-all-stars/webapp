@@ -5,7 +5,7 @@ import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import Autocomplete from "react-google-autocomplete";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type OrganizationFormValues = {
   name: string;
@@ -25,14 +25,16 @@ const DashboardSettings: NextPage = () => {
   const router = useRouter();
   const { organizationId, restaurantId } = router.query;
 
+  const [placeId, setPlaceId] = useState<string | null>(null)
+
   const { data: currentRestaurant } = api.restaurant.getById.useQuery(
     { id: restaurantId as string },
-    { enabled: !!restaurantId }
+    { enabled: !!restaurantId, refetchOnWindowFocus: false }
   );
 
   const { data: currentOrganization } = api.organization.getById.useQuery(
     { id: organizationId as string },
-    { enabled: !!organizationId }
+    { enabled: !!organizationId, refetchOnWindowFocus: false }
   );
 
   const updateOrganization = api.organization.update.useMutation({
@@ -49,7 +51,9 @@ const DashboardSettings: NextPage = () => {
   });
 
   const { register: registerOrganization, formState: { errors: errorsOrganization, isSubmitting: isSubmittingOrganization }, handleSubmit: handleSubmitOrganization, reset: resetOrganization } = useForm<OrganizationFormValues>();
-  const { register: registerRestaurant, formState: { errors: errorsRestaurant, isSubmitting: isSubmittingRestaurant }, handleSubmit: handleSubmitRestaurant, control, reset: resetRestaurant } = useForm<RestaurantFormValues>();
+  const { register: registerRestaurant, formState: { errors: errorsRestaurant, isSubmitting: isSubmittingRestaurant, isValid: isValidFormRestaurant }, handleSubmit: handleSubmitRestaurant, control, reset: resetRestaurant } = useForm<RestaurantFormValues>({
+
+  });
 
   const { data: categories } = api.category.getAll.useQuery();
 
@@ -93,10 +97,11 @@ const DashboardSettings: NextPage = () => {
   }, [currentOrganization]);
 
   return (
-    <Box py={8}>
-      <Heading pb={5}>Paramètres</Heading>
+    <Box py={8} display="flex" flexDirection="column" h="full" w="full">
+      <Box display="flex" overflowY="auto" flexDirection="column">
+	  <Heading pb={5}>Paramètres</Heading>
       <Flex direction="column" gap={8}>
-        <Box as="form" onSubmit={handleSubmitOrganization(handleUpdateOrganization)} bg="white" shadow="sm" rounded="xl" ring={1} ringColor="gray.900">
+        <Box as="form" onSubmit={handleSubmitOrganization(handleUpdateOrganization)} bg="white" shadow="sm" rounded="xl" ringColor="gray.900">
           <Box px={4} py={6}>
             <Heading as="h4" size="lg" pb={6}>Modifier l'organisation</Heading>
             <FormControl isInvalid={!!errorsOrganization.name}>
@@ -111,7 +116,7 @@ const DashboardSettings: NextPage = () => {
             </Flex>
           </Box>
         </Box>
-        <Box as="form" onSubmit={handleSubmitRestaurant(handleUpdateRestaurant)} bg="white" shadow="sm" rounded="xl" ring={1} ringColor="gray.900">
+        <Box as="form" onSubmit={handleSubmitRestaurant(handleUpdateRestaurant)} bg="white" shadow="sm" rounded="xl" ringColor="gray.900">
           <Box px={4} py={6}>
             <Heading as="h4" size="lg" pb={6}>Modifier le restaurant</Heading>
             <FormControl isInvalid={!!errorsRestaurant.name}>
@@ -137,9 +142,11 @@ const DashboardSettings: NextPage = () => {
                   const { onChange, ...tmpField } = field;
                   return (
                     <Autocomplete
+					placeholder="Entrez l'adresse de votre établissement"
                       apiKey="AIzaSyC4tPk2jjqzK6lXe6xCwCE6RGtLtIyh858"
-                      onPlaceSelected={(place: { formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
-                        field.onChange(place.formatted_address);
+                      onPlaceSelected={(place: { place_id: string, formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
+						setPlaceId(place.place_id);
+						field.onChange(place.formatted_address);
                         registerRestaurant("latitude", { value: place.geometry.location.lat(), required: true });
                         registerRestaurant("longitude", { value: place.geometry.location.lng(), required: true });
                       }}
@@ -156,7 +163,10 @@ const DashboardSettings: NextPage = () => {
                         types: ["address"],
                         componentRestrictions: { country: "fr" },
                       }}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+						setPlaceId(null);
+						onChange(e.target.value)
+					  }}
                       {...tmpField}
                     />
                   )
@@ -165,13 +175,14 @@ const DashboardSettings: NextPage = () => {
               <FormErrorMessage>{errorsRestaurant.address?.type}</FormErrorMessage>
             </FormControl>
             <Flex justify="flex-end" mt={8}>
-              <Button type="submit" colorScheme="blue" isLoading={isSubmittingRestaurant}>
+              <Button type="submit" colorScheme="blue" isLoading={isSubmittingRestaurant} isDisabled={!isValidFormRestaurant || !placeId}>
                 Enregistrer
               </Button>
             </Flex>
           </Box>
         </Box>
       </Flex>
+	  </Box>
     </Box>
   );
 };
