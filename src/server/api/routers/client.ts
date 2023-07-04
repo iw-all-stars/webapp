@@ -20,8 +20,8 @@ const clientSchema = z.object({
 const elkClient = new Client({
   node: process.env.ELASTICSEARCH_URL,
   auth: {
-    username: process.env.ELASTICSEARCH_USERNAME as string,
-    password: process.env.ELASTICSEARCH_PASSWORD as string,
+    username: process.env.ELASTICSEARCH_USERNAME,
+    password: process.env.ELASTICSEARCH_PASSWORD
   },
 })
 
