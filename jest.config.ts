@@ -7,4 +7,7 @@ export default {
     transform: {
         "^.+\\.mjs$": "ts-jest",
     },
+    moduleNameMapper: {
+        '^~(.*)$': '<rootDir>/src/$1',
+    }
 };
