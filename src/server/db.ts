@@ -4,11 +4,11 @@ import { Client as ClientElk } from "@elastic/elasticsearch";
 import { env } from "../env.mjs";
 
 const clientElk = new ClientElk({
-    node: process.env.ELASTICSEARCH_URL,
-    auth: process.env.ELASTICSEARCH_USERNAME && process.env.ELASTICSEARCH_PASSWORD ? {
-        username: process.env.ELASTICSEARCH_USERNAME,
-        password: process.env.ELASTICSEARCH_PASSWORD
-    } : undefined,
+    node: process.env.ELASTICSEARCH_URL ?? "http://localhost:9200",
+    auth: {
+        username: process.env.ELASTICSEARCH_USERNAME ?? "elastic",
+        password: process.env.ELASTICSEARCH_PASSWORD ?? "changeme",
+    }
 })
 
 const globalForPrisma = globalThis as unknown as {
