@@ -93,10 +93,11 @@ const DashboardSettings: NextPage = () => {
   }, [currentOrganization]);
 
   return (
-    <Box py={8}>
-      <Heading pb={5}>Paramètres</Heading>
+    <Box py={8} display="flex" flexDirection="column" h="full" w="full">
+      <Box display="flex" overflowY="auto" flexDirection="column">
+	  <Heading pb={5}>Paramètres</Heading>
       <Flex direction="column" gap={8}>
-        <Box as="form" onSubmit={handleSubmitOrganization(handleUpdateOrganization)} bg="white" shadow="sm" rounded="xl" ring={1} ringColor="gray.900">
+        <Box as="form" onSubmit={handleSubmitOrganization(handleUpdateOrganization)} bg="white" shadow="sm" rounded="xl" ringColor="gray.900">
           <Box px={4} py={6}>
             <Heading as="h4" size="lg" pb={6}>Modifier l'organisation</Heading>
             <FormControl isInvalid={!!errorsOrganization.name}>
@@ -111,7 +112,7 @@ const DashboardSettings: NextPage = () => {
             </Flex>
           </Box>
         </Box>
-        <Box as="form" onSubmit={handleSubmitRestaurant(handleUpdateRestaurant)} bg="white" shadow="sm" rounded="xl" ring={1} ringColor="gray.900">
+        <Box as="form" onSubmit={handleSubmitRestaurant(handleUpdateRestaurant)} bg="white" shadow="sm" rounded="xl" ringColor="gray.900">
           <Box px={4} py={6}>
             <Heading as="h4" size="lg" pb={6}>Modifier le restaurant</Heading>
             <FormControl isInvalid={!!errorsRestaurant.name}>
@@ -172,6 +173,7 @@ const DashboardSettings: NextPage = () => {
           </Box>
         </Box>
       </Flex>
+	  </Box>
     </Box>
   );
 };

@@ -50,7 +50,7 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
           <ModalBody pb={6}>
             <FormControl isInvalid={!!errors.name}>
               <FormLabel>Nom de votre restaurant</FormLabel>
-              <Input {...register("name", { required: true })} />
+              <Input {...register("name", { required: true })} placeholder="Nom de votre restaurant" />
               <FormErrorMessage>Le nom du restaurant est obligatoire !</FormErrorMessage>
             </FormControl>
             <FormControl mt={4} isInvalid={!!errors.categoryId}>
@@ -71,6 +71,7 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
                   const { onChange, ...tmpField } = field;
                   return (
                     <Autocomplete
+					placeholder="Entrez l'adresse de votre établissement"
                       apiKey="AIzaSyC4tPk2jjqzK6lXe6xCwCE6RGtLtIyh858"
                       onPlaceSelected={(place: { formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
                         field.onChange(place.formatted_address);
