@@ -18,6 +18,9 @@ const server = z.object({
     // VERCEL_URL doesn't include `https` so it cant be validated as a URL
     process.env.VERCEL ? z.string().min(1) : z.string().url(),
     ),
+  ELASTICSEARCH_URL: z.string().url(),
+  ELASTICSEARCH_USERNAME: z.string().min(1),
+  ELASTICSEARCH_PASSWORD: z.string().min(1)
   // Add `.min(1) on ID and SECRET if you want to make sure they're not empty
 });
 
@@ -45,6 +48,9 @@ const processEnv = {
   NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR ?? "next",
   NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "g-key",
   NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID: process.env.NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID ?? "id",
+  ELASTICSEARCH_URL: process.env.ELASTICSEARCH_URL ?? "http://localhost:9200",
+  ELASTICSEARCH_USERNAME: process.env.ELASTICSEARCH_USERNAME ?? "elastic",
+  ELASTICSEARCH_PASSWORD: process.env.ELASTICSEARCH_PASSWORD ?? "changeme"
 };
 
 // Don't touch the part below

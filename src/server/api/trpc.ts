@@ -214,10 +214,7 @@ const hasAccessToOrganization = t.middleware(async ({ ctx, next }) => {
     });
   }
 
-  const organizationId = getParamFromPathName(
-    ctx.pathNameReferer,
-    "organization"
-  );
+  const organizationId = getParamFromPathName(ctx.pathNameReferer, "dashboard");
 
   if (!organizationId) {
     throw new TRPCError({

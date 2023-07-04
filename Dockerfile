@@ -41,6 +41,9 @@ ARG SENDINBLUE_API_KEY
 ARG NEXT_PUBLIC_MAIL_TEMPLATE_CAMPAIGN_ID
 ARG SKIP_ENV_VALIDATION
 ARG MAIL_TEMPLATE_CAMPAIGN_ID
+ARG ELASTICSEARCH_URL
+ARG ELASTICSEARCH_USERNAME
+ARG ELASTICSEARCH_PASSWORD
 
 WORKDIR /app
 
@@ -50,7 +53,7 @@ COPY . .
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN npx -y prisma generate
 RUN yarn build

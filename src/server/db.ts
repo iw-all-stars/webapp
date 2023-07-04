@@ -4,10 +4,10 @@ import { Client as ClientElk } from "@elastic/elasticsearch";
 import { env } from "../env.mjs";
 
 const clientElk = new ClientElk({
-    node: process.env.ELASTICSEARCH_URL,
+    node: process.env.ELASTICSEARCH_URL ?? "http://localhost:9200",
     auth: {
-        username: process.env.ELASTICSEARCH_USERNAME as string,
-        password: process.env.ELASTICSEARCH_PASSWORD as string
+        username: process.env.ELASTICSEARCH_USERNAME ?? "elastic",
+        password: process.env.ELASTICSEARCH_PASSWORD ?? "changeme",
     }
 })
 

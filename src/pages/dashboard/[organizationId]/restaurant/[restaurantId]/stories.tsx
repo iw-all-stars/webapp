@@ -29,8 +29,8 @@ import CreateUpdateStory from "~/components/stories/CreateUpdateStory";
 import { NoResultsStories } from "~/components/stories/NoResultsStories";
 import { StoryCard } from "~/components/stories/storyCard";
 import { api } from "~/utils/api";
-import { PLATFORMS } from "./platforms";
 import { hasAccessToRestaurant } from "~/utils/hasAccessToRestaurantServerSideProps";
+import { PLATFORMS } from "./platforms";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     return hasAccessToRestaurant(context);
