@@ -10,22 +10,21 @@ import {
   MenuButton,
   MenuItem,
   MenuList,
-  Table,
-  TableContainer,
-  Tbody,
-  Td,
+  SkeletonCircle,
   Text,
-  Th,
-  Thead,
-  Tr,
   useDisclosure,
 } from "@chakra-ui/react";
-import React, { useEffect } from "react";
+import React from "react";
 import { api } from "~/utils/api";
 import CreateClientModal from "./CreateClientModal";
 import { SearchIcon } from "@chakra-ui/icons";
 import { type Client } from "@prisma/client";
+import { useDebounce } from "usehooks-ts";
 import ImportClientModal from "./ImportClientModal";
+import { createColumnHelper } from "@tanstack/react-table";
+import { DataTable } from "~/components/DataTable";
+
+const defaultLimit = 5;
 
 export const Clients = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -34,12 +33,50 @@ export const Clients = () => {
     undefined
   );
   const [search, setSearch] = React.useState("");
+  const [pageIndex, setPageIndex] = React.useState(0);
 
-  const getClients = api.customer.getClients.useQuery(search);
+  const debouncedSearch = useDebounce(search, 300);
 
-  useEffect(() => {
-    getClients.refetch();
-  }, [isOpen]);
+  const { data: countClients } = api.customer.getCountClients.useQuery(debouncedSearch, {
+    initialData: 0,
+  });
+
+  const { data, isLoading, refetch, isRefetching } = api.customer.getClients.useQuery({
+    input: debouncedSearch,
+    limit: defaultLimit,
+    offset: pageIndex * defaultLimit,
+  }, { initialData: [], enabled: !!countClients });
+
+  const columnHelper = createColumnHelper<Client>();
+
+  const columns = [
+    columnHelper.accessor("firstname", {
+      cell: (info) => info.getValue(),
+      header: "Prénom"
+    }),
+    columnHelper.accessor("name", {
+      cell: (info) => info.getValue(),
+      header: "Nom"
+    }),
+    columnHelper.accessor("email", {
+      cell: (info) => info.getValue(),
+      header: "Email"
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: (info) => (
+        <Button
+          size="sm"
+          variant="outline"
+          colorScheme="blue"
+          onClick={() => handleEditClient(info.row.original)}
+        >
+          Modifier
+        </Button>
+      ),
+    }),
+  ];
 
   const onCreateClient = () => {
     setEditClient(undefined);
@@ -55,14 +92,11 @@ export const Clients = () => {
     onImportOpen();
   };
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      getClients.refetch();
-    }, 2000);
-    return () => clearTimeout(timeout);
-  }, [search]);
+  React.useEffect(() => {
+    refetch();
+  }, [onClose, onImportClose]);
 
-  if (!getClients.data?.length && !search)
+  if (isLoading && !search)
     return (
       <Box
         pt={20}
@@ -100,7 +134,7 @@ export const Clients = () => {
     );
 
   return (
-    <Box h="full" w="full" pt={8}>
+    <Box h="full" w="full" pt={2}>
       <Box
         w="full"
         display="flex"
@@ -110,15 +144,18 @@ export const Clients = () => {
       >
         <Heading
           display={"flex"}
+          alignItems="center"
           flexDirection={"row"}
           gap={1}
           fontSize={18}
           fontWeight={400}
         >
-          <b>Clients</b>
-          <Text letterSpacing={"widest"} fontStyle={"italic"}>
-            ({getClients.data?.length})
-          </Text>
+          <Text fontWeight="bold">Clients</Text> 
+          <SkeletonCircle size="6" mt={0.5} isLoaded={!isRefetching}>
+            <Text letterSpacing="widest" fontStyle="italic">
+              ({data.length})
+            </Text>
+          </SkeletonCircle>
         </Heading>
         <InputGroup>
           <Input placeholder="Recherche" onChange={(e) => setSearch(e.target.value)} />
@@ -144,39 +181,16 @@ export const Clients = () => {
         </Button>
       </Box>
       <br />
-      <TableContainer>
-        <Table variant="striped" size="md" fontSize={13}>
-          <Thead>
-            <Tr>
-              <Th></Th>
-              <Th>Prénom</Th>
-              <Th>Nom</Th>
-              <Th>Email</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {getClients?.data?.map((client) => (
-              <Tr
-                key={client.id}
-                onClick={() => handleEditClient(client)}
-                cursor={"pointer"}
-              >
-                <Td>
-                  <Image
-                    borderRadius="full"
-                    boxSize="30px"
-                    src={client.image || "https://i.pravatar.cc/150?img=68"}
-                    alt={client.name || "image"}
-                  />
-                </Td>
-                <Td>{client.firstname}</Td>
-                <Td>{client.name}</Td>
-                <Td>{client.email}</Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      </TableContainer>
+      <DataTable
+        columns={columns}
+        data={data}
+        countTotal={countClients}
+        pagination={{
+          pageSize: defaultLimit,
+          pageIndex,
+          setPageIndex
+        }}
+      />
       <CreateClientModal
         isOpen={isOpen}
         onClose={onClose}

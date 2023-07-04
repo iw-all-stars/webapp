@@ -2,6 +2,7 @@ version: "3.9"
 services:
   postgres:
     image: postgres:15.2-alpine
+    container_name: postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -12,6 +13,7 @@ services:
 
   mongo:
     image: mongo
+    container_name: mongo
     environment:
       MONGO_INITDB_ROOT_USERNAME: mongo
       MONGO_INITDB_ROOT_PASSWORD: mongo
@@ -19,6 +21,31 @@ services:
       - mongo:/data/db
     ports:
       - "27018:27017"
+
+  elasticsearch:
+    image: elasticsearch:8.8.1
+    container_name: elasticsearch
+    ports:
+      - 9200:9200
+      - 9300:9300
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+      # - certs:/usr/share/elasticsearch/config/certs
+    environment:
+      - discovery.type=single-node
+      - network.host=0.0.0.0
+      - ELASTIC_PASSWORD=elastic_password
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
 volumes:
   postgres:
   mongo:
+  es_data:
+  # certs:
