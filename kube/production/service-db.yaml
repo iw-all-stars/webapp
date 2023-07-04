@@ -6,7 +6,7 @@ metadata:
 spec:
   ports: 
     - port: 5432
-      targetPort: 5432
+      targetPort: 7966
 
 ---
 
@@ -17,6 +17,6 @@ metadata:
   namespace: production
 subsets:
   - addresses:
-      - ip: 3.65.142.85
+      - ip: 34.83.85.66
     ports:
-      - port: 5432
+      - port: 7966
