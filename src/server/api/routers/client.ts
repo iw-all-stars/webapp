@@ -19,10 +19,10 @@ const clientSchema = z.object({
 
 const elkClient = new Client({
   node: process.env.ELASTICSEARCH_URL,
-  auth: {
+  auth: process.env.ELASTICSEARCH_USERNAME && process.env.ELASTICSEARCH_PASSWORD ? {
     username: process.env.ELASTICSEARCH_USERNAME,
     password: process.env.ELASTICSEARCH_PASSWORD
-  },
+  } : undefined,
 })
 
 export const clientRouter = createTRPCRouter({
