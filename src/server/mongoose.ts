@@ -18,6 +18,8 @@ export interface RestaurantType {
   organizationId: string;
   categoryId: string;
   location: [number, number];
+  isProspect?: boolean;
+  comment?: string;
 }
 
 const RestaurantSchema = new mongoose.Schema({
@@ -27,6 +29,7 @@ const RestaurantSchema = new mongoose.Schema({
   organizationId: String,
   categoryId: String,
   isProspect: Boolean,
+  comment: String,
   location: {
     type: [Number],
     index: "2dsphere",
