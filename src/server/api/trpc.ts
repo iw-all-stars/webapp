@@ -203,7 +203,7 @@ const hasAccessToOrganization = t.middleware(
 			throw new TRPCError({ code: "UNAUTHORIZED", message: "hasAccessToOrganization_step0" });
 		}
 
-		const organizationId = getParamFromPathName(ctx.pathNameReferer, "organization");
+		const organizationId = getParamFromPathName(ctx.pathNameReferer, "dashboard");
 
         if (!organizationId) {
             throw new TRPCError({ code: "UNAUTHORIZED", message: "hasAccessToOrganization_step1" });

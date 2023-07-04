@@ -5,7 +5,7 @@ import { appRouter } from "~/server/api/root";
 import { prisma } from "~/server/db";
 
 export const hasAccessToRestaurant: GetServerSideProps = async (context) => {
-    const caller = appRouter.createCaller({ prisma: prisma, session: null });
+    const caller = appRouter.createCaller({ prisma: prisma, session: null, pathNameReferer: null });
 
     const hasAccessToRestaurant =
         await caller.restaurant.userHasAccessToRestaurant({
