@@ -37,7 +37,7 @@ export default function Navbar() {
             borderColor="teal.500"
         >
             <Link href="/">
-                <DigidinerLogo />
+                <DigidinerLogo width="120px" />
             </Link>
             <Menu placement="bottom-end">
                 <MenuButton
