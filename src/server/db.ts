@@ -2,15 +2,9 @@ import { type PrismaClient, type Client as ModelClient } from "@prisma/client";
 import prismaInstance from "./client.prisma";
 import { Client as ClientElk } from "@elastic/elasticsearch";
 import { env } from "../env.mjs";
+import { elkOptions } from "~/utils/elkClientOptions";
 
-const clientElk = new ClientElk({
-  node: process.env.ELASTICSEARCH_URL ?? "",
-  cloud: process.env.ELASTICSEARCH_CLOUD_ID ? { id: process.env.ELASTICSEARCH_CLOUD_ID } : undefined,
-  auth: {
-    username: process.env.ELASTICSEARCH_USERNAME ?? "",
-    password: process.env.ELASTICSEARCH_PASSWORD ?? "",
-  },
-});
+const clientElk = new ClientElk(elkOptions);
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

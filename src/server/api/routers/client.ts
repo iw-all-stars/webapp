@@ -1,4 +1,3 @@
-import { Client } from "@elastic/elasticsearch";
 import { z } from "zod";
 import { type Client as ClientModel } from "@prisma/client";
 
@@ -17,17 +16,9 @@ const clientSchema = z.object({
 export const clientRouter = createTRPCRouter({
   getCountClients: hasAccessToRestaurantProcedure
     .input(z.string().optional())
-    .query(async ({ input }) => {
-      const elkClient = new Client({
-        node: process.env.ELASTICSEARCH_URL ?? "",
-        cloud: process.env.ELASTICSEARCH_CLOUD_ID ? { id: process.env.ELASTICSEARCH_CLOUD_ID } : undefined,
-        auth: {
-          username: process.env.ELASTICSEARCH_USERNAME ?? "",
-          password: process.env.ELASTICSEARCH_PASSWORD ?? "",
-        },
-      });
+    .query(async ({ ctx, input }) => {
 
-      const countResult = await elkClient.count({
+      const countResult = await ctx.elkClient.count({
         index: "clients",
         body: input
           ? {
@@ -47,8 +38,6 @@ export const clientRouter = createTRPCRouter({
             },
       });
 
-      await elkClient.close();
-
       return countResult.count;
     }),
 
@@ -63,16 +52,7 @@ export const clientRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { input: searchInput, limit, offset } = input;
 
-      const elkClient = new Client({
-        node: process.env.ELASTICSEARCH_URL ?? "",
-        cloud: process.env.ELASTICSEARCH_CLOUD_ID ? { id: process.env.ELASTICSEARCH_CLOUD_ID } : undefined,
-        auth: {
-          username: process.env.ELASTICSEARCH_USERNAME ?? "",
-          password: process.env.ELASTICSEARCH_PASSWORD ?? "",
-        },
-      });
-
-      const searchResult = await elkClient.search<ClientModel>({
+      const searchResult = await ctx.elkClient.search<ClientModel>({
         index: "clients",
         from: offset,
         size: limit,
@@ -115,8 +95,6 @@ export const clientRouter = createTRPCRouter({
         id: client._id,
         ...(client._source as Omit<ClientModel, "id">),
       }));
-
-      await elkClient.close();
 
       return clients;
     }),

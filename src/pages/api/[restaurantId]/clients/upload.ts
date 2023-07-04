@@ -8,6 +8,7 @@ import XLSX, { type WorkSheet } from "xlsx";
 import { prisma } from "~/server/db";
 import { type Client } from "./template";
 import { Client as ClientElk } from "@elastic/elasticsearch";
+import { elkOptions } from "~/utils/elkClientOptions";
 
 interface File extends FormidableFile {
   path?: string;
@@ -102,14 +103,7 @@ router
         }
       }
 
-      const clientElk = new ClientElk({
-        node: process.env.ELASTICSEARCH_URL ?? "",
-        cloud: process.env.ELASTICSEARCH_CLOUD_ID ? { id: process.env.ELASTICSEARCH_CLOUD_ID } : undefined,
-        auth: {
-          username: process.env.ELASTICSEARCH_USERNAME ?? "",
-          password: process.env.ELASTICSEARCH_PASSWORD ?? "",
-        },
-      });
+      const clientElk = new ClientElk(elkOptions);
 
       const worksheet: WorkSheet = workbook.Sheets[firstSheetName] as WorkSheet;
       const data: Client[] = XLSX.utils.sheet_to_json(worksheet);
@@ -136,6 +130,8 @@ router
           client,
         ]),
       });
+
+      await clientElk.close();
 
       await prisma.client.createMany({
         data: createClients,

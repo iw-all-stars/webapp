@@ -3,9 +3,12 @@
 import { type GetServerSideProps } from "next";
 import { appRouter } from "~/server/api/root";
 import { prisma } from "~/server/db";
+import { elkOptions } from "./elkClientOptions";
+import { Client } from "@elastic/elasticsearch";
 
 export const hasAccessToRestaurant: GetServerSideProps = async (context) => {
-    const caller = appRouter.createCaller({ prisma: prisma, session: null, pathNameReferer: null });
+    const elkClient = new Client(elkOptions);
+    const caller = appRouter.createCaller({ prisma: prisma, session: null, pathNameReferer: null, elkClient: elkClient });
 
     const hasAccessToRestaurant =
         await caller.restaurant.userHasAccessToRestaurant({
@@ -21,6 +24,8 @@ export const hasAccessToRestaurant: GetServerSideProps = async (context) => {
             },
         };
     }
+
+    await elkClient.close();
 
     return {
         props: {},
