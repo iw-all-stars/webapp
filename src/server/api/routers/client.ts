@@ -16,20 +16,19 @@ const clientSchema = z.object({
   zip: z.string().optional(),
 });
 
-
-const elkClient = new Client({
-  node: process.env.ELASTICSEARCH_URL,
-  auth: process.env.ELASTICSEARCH_USERNAME && process.env.ELASTICSEARCH_PASSWORD ? {
-    username: process.env.ELASTICSEARCH_USERNAME,
-    password: process.env.ELASTICSEARCH_PASSWORD
-  } : undefined,
-})
-
 export const clientRouter = createTRPCRouter({
 
   getCountClients: protectedProcedure
     .input(z.string().optional())
     .query(async ({ input }) => {
+
+      const elkClient = new Client({
+        node: process.env.ELASTICSEARCH_URL,
+        auth: {
+          username: process.env.ELASTICSEARCH_USERNAME || "",
+          password: process.env.ELASTICSEARCH_PASSWORD || "",
+        },
+      });
       
       const countResult = await elkClient.count({
         index: "clients",
@@ -49,6 +48,8 @@ export const clientRouter = createTRPCRouter({
         }
       })
 
+      await elkClient.close();
+
       return countResult.count;
   }),
 
@@ -63,6 +64,14 @@ export const clientRouter = createTRPCRouter({
     .query(async ({ input }) => {
 
       const { input: searchInput, limit, offset } = input;
+
+      const elkClient = new Client({
+        node: process.env.ELASTICSEARCH_URL,
+        auth: {
+          username: process.env.ELASTICSEARCH_USERNAME || "",
+          password: process.env.ELASTICSEARCH_PASSWORD || "",
+        },
+      });
 
       const searchResult = await elkClient.search<ClientModel>({
         index: "clients",
@@ -93,6 +102,8 @@ export const clientRouter = createTRPCRouter({
         id: client._id,
         ...client._source as Omit<ClientModel, "id">,
       }))
+
+      await elkClient.close();
       
       return clients;
     }),
