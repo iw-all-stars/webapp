@@ -2,7 +2,7 @@ import { PostType, StoryStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { DateTime } from "luxon";
 import { z } from "zod";
-import { createTRPCRouter, hasAccessToRestaurantProcedure, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToRestaurantProcedure } from "~/server/api/trpc";
 import { StoryStatusHandler } from "~/server/services/storyStatusHandler.service";
 
 const createPost = z.object({

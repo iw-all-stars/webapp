@@ -13,7 +13,6 @@ import {
 	Text,
 	useDisclosure,
 } from "@chakra-ui/react";
-import { type GetServerSideProps } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { BiChevronDown } from "react-icons/bi";
@@ -26,8 +25,6 @@ import {
 } from "react-icons/md";
 import { RxComponent1 } from "react-icons/rx";
 import { TbUsers } from "react-icons/tb";
-import { appRouter } from "~/server/api/root";
-import { prisma } from "~/server/db";
 import { api } from "~/utils/api";
 import ModalNewRestaurant from "./modals/newRestaurant";
 

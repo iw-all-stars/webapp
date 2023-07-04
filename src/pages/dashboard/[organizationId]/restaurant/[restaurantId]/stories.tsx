@@ -102,10 +102,10 @@ const DashboardStory: NextPage = () => {
                         ))}
                     </AvatarGroup>
                     <Text fontSize="lg" fontWeight="bold">
-                        You are not connected to any platform
+                        Vous n'êtes connecté à aucune plateforme
                     </Text>
                     <Text fontSize="sm" color="gray.500">
-                        Connect to a platform to create a story
+                        Connectez vous a une plateforme pour créer des stories
                     </Text>
                     <Button
                         rightIcon={<ArrowForwardIcon />}
@@ -117,7 +117,7 @@ const DashboardStory: NextPage = () => {
                             );
                         }}
                     >
-                        Connect
+                       Connecter une plateforme
                     </Button>
                 </Box>
             </Box>

@@ -1,31 +1,31 @@
 import {
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogOverlay,
-    Avatar,
-    Box,
-    Button,
-    Divider,
-    Icon,
-    IconButton,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuList,
-    Skeleton,
-    Text,
-    useDisclosure,
+	AlertDialog,
+	AlertDialogBody,
+	AlertDialogContent,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogOverlay,
+	Avatar,
+	Box,
+	Button,
+	Divider,
+	Icon,
+	IconButton,
+	Menu,
+	MenuButton,
+	MenuItem,
+	MenuList,
+	Skeleton,
+	Text,
+	useDisclosure,
 } from "@chakra-ui/react";
 import { type Platform, type PlatformKey } from "@prisma/client";
-import { BsFillCheckCircleFill, BsThreeDotsVertical } from "react-icons/bs";
-import { MdDelete, MdOutlineModeEditOutline } from "react-icons/md";
-import CreateUpdatePlatform from "./createUpdatePlatform";
 import { useRef } from "react";
+import { BsFillCheckCircleFill, BsThreeDotsVertical } from "react-icons/bs";
+import { MdDelete } from "react-icons/md";
 import { type createUpdatePlatformParams } from "~/pages/dashboard/[organizationId]/restaurant/[restaurantId]/platforms";
 import { api } from "~/utils/api";
+import CreateUpdatePlatform from "./createUpdatePlatform";
 
 interface PlatformCardProps {
     platform?: Omit<Platform, 'password'>;

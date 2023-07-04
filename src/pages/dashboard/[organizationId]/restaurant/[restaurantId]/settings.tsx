@@ -1,4 +1,4 @@
-import { FormControl, FormErrorMessage, Input, FormLabel, Select, Button, Heading, Flex } from "@chakra-ui/react";
+import { FormControl, FormErrorMessage, Input, FormLabel, Select, Button, Heading, Flex, useToast } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { Box } from "@chakra-ui/react";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
@@ -21,6 +21,8 @@ type RestaurantFormValues = {
 
 const DashboardSettings: NextPage = () => {
 
+  const toast = useToast();
+
   const context = api.useContext();
   const router = useRouter();
   const { organizationId, restaurantId } = router.query;
@@ -41,12 +43,26 @@ const DashboardSettings: NextPage = () => {
     onSuccess: () => {
       context.organization.getById.invalidate({ id: organizationId as string })
       context.organization.getByCurrentUser.invalidate()
+	  toast({
+        title: "Organisation mise à jour",
+        description: "L'organisation a été mise à jour avec succès.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   });
   const updateRestaurant = api.restaurant.update.useMutation({
     onSuccess: () => {
       context.restaurant.getById.invalidate({ id: restaurantId as string })
       context.restaurant.getByOrganizationId.invalidate({ organizationId: organizationId as string })
+	  toast({
+        title: "Restaurant mis à jour",
+        description: "Le restaurant a été mis à jour avec succès.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   });
 
