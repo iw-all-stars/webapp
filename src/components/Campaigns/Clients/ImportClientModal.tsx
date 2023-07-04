@@ -10,6 +10,7 @@ import {
   Text,
   useToast,
 } from "@chakra-ui/react";
+import { useRouter } from "next/router";
 import React from "react";
 
 interface ImportClientModalProps {
@@ -22,11 +23,13 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
   onClose,
 }) => {
   const toast = useToast();
+  const router = useRouter();
+  const { restaurantId } = router.query;
 
   const importFile = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch("/api/clients/upload", {
+    const response = await fetch(`/api/${restaurantId}/clients/upload`, {
       method: "POST",
       body: formData,
     });
@@ -43,7 +46,7 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
       toast({
         title: "Erreur",
         description:
-          "Une erreur est survenue lors de l'importation. Veuillez réessayer.",
+          "Une erreur est survenue lors de l'importation.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -66,7 +69,7 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
               colorScheme="blue"
               onClick={() => {
                 window.open(
-                  window.location.origin + "/api/clients/template",
+                  window.location.origin + `/api/${restaurantId}/clients/template`,
                   "_blank"
                 );
               }}
