@@ -6,7 +6,9 @@ const dbConnect = async () => {
   }
   const uri = process.env.MONGODB_URL;
 
-  await mongoose.connect(uri, {});
+  await mongoose.connect(uri, {
+    ignoreUndefined: true,
+  });
 };
 
 export default dbConnect;

@@ -28,8 +28,7 @@ export const restaurantRouter = createTRPCRouter({
         name: restaurant.name,
         address: restaurant.address,
         organizationId: restaurant.organizationId,
-        latitude: restaurant.latitude,
-        longitude: restaurant.longitude,
+        location: [restaurant.longitude, restaurant.latitude],
         isProspect: false,
       });
 
@@ -54,7 +53,13 @@ export const restaurantRouter = createTRPCRouter({
         where: { id },
         data: data,
       });
-      await RestaurantModel.updateOne({ _id: id }, data);
+      await RestaurantModel.updateOne(
+        { _id: id },
+        {
+          location: [restaurant.longitude, restaurant.latitude],
+          ...data,
+        }
+      );
 
       return restaurant;
     }),
