@@ -20,7 +20,10 @@ const Home: NextPage = () => {
   const { data: invitations } = api.invitation.getByCurrentUser.useQuery();
 
   const changeStatusInvitation = api.invitation.changeStatus.useMutation({
-    onSuccess: () => utils.invitation.getByCurrentUser.invalidate()
+    onSuccess: () => {
+		utils.invitation.getByCurrentUser.invalidate();
+		utils.invitation.getByCurrentUserCount.invalidate();
+	}
   })
 
   const handleStateInvitation = async (invitation: Invitation, status: 'ACCEPTED' | 'REJECTED') => {
