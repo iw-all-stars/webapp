@@ -20,7 +20,7 @@
     "@chakra-ui/icons": "^2.0.19",
     "@chakra-ui/react": "^2.5.5",
     "@chakra-ui/stepper": "^2.2.0",
-    "@elastic/elasticsearch": "8.8.1",
+    "@elastic/elasticsearch": "8.7.0",
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
     "@next-auth/prisma-adapter": "^1.0.7",
