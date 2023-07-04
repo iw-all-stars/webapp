@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import * as React from "react";
-import { Table, Thead, Tbody, Tr, Th, Td, chakra, Tfoot, Button, Flex } from "@chakra-ui/react";
+import { Table, Thead, Tbody, Tr, Th, Td, chakra, Tfoot, Button, Flex, Skeleton } from "@chakra-ui/react";
 import { ChevronLeftIcon, ChevronRightIcon, TriangleDownIcon, TriangleUpIcon } from "@chakra-ui/icons";
 import {
   useReactTable,
@@ -13,7 +13,7 @@ import {
 } from "@tanstack/react-table";
 
 export type DataTableProps<Data extends object> = {
-  data: Data[];
+  data: Data[] | undefined;
   columns: ColumnDef<Data, any>[];
   pagination: {
     pageSize: number;
@@ -21,18 +21,37 @@ export type DataTableProps<Data extends object> = {
     setPageIndex: React.Dispatch<React.SetStateAction<number>>;
   };
   countTotal: number;
+  isLoading: boolean;
 };
 
 export function DataTable<Data extends object>({
   data,
   columns,
   pagination,
-  countTotal
+  countTotal,
+  isLoading
 }: DataTableProps<Data>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
+
+  const tableData = React.useMemo(
+    () => (isLoading ? Array(pagination.pageSize).fill({}) : data) as Data[],
+    [isLoading, data]
+  );
+
+  const tableColumns = React.useMemo(
+    () =>
+    isLoading
+        ? columns.map((column) => ({
+            ...column,
+            cell: () => <Skeleton w="full" h={8} />,
+          }))
+        : columns,
+    [isLoading, columns]
+  );
+
   const table = useReactTable({
-    columns,
-    data,
+    columns: tableColumns,
+    data: tableData,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),

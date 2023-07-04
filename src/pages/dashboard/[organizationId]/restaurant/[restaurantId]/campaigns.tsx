@@ -1,6 +1,6 @@
 import { Box, Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
 import { useRouter } from "next/router";
-import React, { useEffect } from "react";
+import React from "react";
 
 import Clients from "~/components/Campaigns/Clients";
 
@@ -14,7 +14,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 export const Campaigns = () => {
     const router = useRouter();
-    const [tabIndex, setTabIndex] = React.useState(0);
+    const tabIndex = router.query.tab === "customers" ? 1 : 0;
 
     const tabs = [
         {
@@ -29,12 +29,6 @@ export const Campaigns = () => {
         },
     ];
 
-    useEffect(() => {
-        if (router.query.tab === "customers") {
-            setTabIndex(1);
-        }
-    }, [router.query.tab]);
-
     return (
         <Box h="full" w="full" pt={3}>
             <Box
@@ -42,30 +36,15 @@ export const Campaigns = () => {
                 display="flex"
                 justifyContent="space-between"
                 gap={4}
-                alignItems={"center"}
+                alignItems="center"
             >
                 <Tabs
                     w="full"
                     index={tabIndex}
-                    onChange={(index) => {
-                        setTabIndex(index);
-                        if (index === 0) {
-                            router.push(
-                                `/dashboard/${
-                                    router.query.organizationId as string
-                                }/restaurant/${
-                                    router.query.restaurantId as string
-                                }/campaigns`
-                            );
-                        } else if (index === 1) {
-                            router.push(
-                                `/dashboard/${
-                                    router.query.organizationId as string
-                                }/restaurant/${
-                                    router.query.restaurantId as string
-                                }/campaigns?tab=customers`
-                            );
-                        }
+                    defaultIndex={tabIndex}
+                    onChange={index => {
+                        index === 1 ? router.query.tab = "customers" : delete router.query.tab;
+                        router.push(router);
                     }}
                 >
                     <TabList>

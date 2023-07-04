@@ -1,4 +1,4 @@
-import { EmailIcon, PhoneIcon } from "@chakra-ui/icons";
+import { EmailIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
