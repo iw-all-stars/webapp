@@ -19,7 +19,8 @@ export const clientRouter = createTRPCRouter({
     .input(z.string().optional())
     .query(async ({ input }) => {
       const elkClient = new Client({
-        node: process.env.ELASTICSEARCH_URL ?? "http://localhost:9200",
+        node: process.env.ELASTICSEARCH_URL ?? "",
+        cloud: process.env.ELASTICSEARCH_CLOUD_ID ? { id: process.env.ELASTICSEARCH_CLOUD_ID } : undefined,
         auth: {
           username: process.env.ELASTICSEARCH_USERNAME ?? "",
           password: process.env.ELASTICSEARCH_PASSWORD ?? "",
@@ -63,7 +64,8 @@ export const clientRouter = createTRPCRouter({
       const { input: searchInput, limit, offset } = input;
 
       const elkClient = new Client({
-        node: process.env.ELASTICSEARCH_URL ?? "http://localhost:9200",
+        node: process.env.ELASTICSEARCH_URL ?? "",
+        cloud: process.env.ELASTICSEARCH_CLOUD_ID ? { id: process.env.ELASTICSEARCH_CLOUD_ID } : undefined,
         auth: {
           username: process.env.ELASTICSEARCH_USERNAME ?? "",
           password: process.env.ELASTICSEARCH_PASSWORD ?? "",
