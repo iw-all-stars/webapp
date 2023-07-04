@@ -94,7 +94,7 @@ export const Clients = () => {
 
   React.useEffect(() => {
     refetch();
-  }, [onClose, onImportClose]);
+  }, [isOpen, isImportOpen]);
 
   if (isLoading && !search)
     return (
