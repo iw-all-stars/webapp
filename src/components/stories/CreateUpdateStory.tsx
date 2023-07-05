@@ -216,7 +216,7 @@ const CreateUpdateStory = ({
         if (duration > 60) {
           toast({
             title: "Video is too long",
-            description: "Video should be less than 10 seconds",
+            description: "Video should be less than 60 seconds",
             status: "error",
             duration: 5000,
             isClosable: true,
@@ -268,7 +268,7 @@ const CreateUpdateStory = ({
           <form onSubmit={handleSubmit(createUpdateStory)}>
             <Box display="flex" flexDirection="column" gap="3">
               <FormControl isInvalid={!!errors.name}>
-                <FormLabel htmlFor="name">Nom de votre story</FormLabel>
+                <FormLabel htmlFor="name">Nom de votre story (4 charactères minimum)</FormLabel>
                 <Input
                   id="name"
                   placeholder="nom de votre story"
