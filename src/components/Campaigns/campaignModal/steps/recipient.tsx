@@ -89,7 +89,7 @@ export const RecipientStep = ({
       return recipient;
     }) as unknown as Recipient[];
     setRecipients(recipients);
-  }, [data]);
+  }, [data, page, sent, setRecipients]);
 
   return (
     <Box>

@@ -17,7 +17,7 @@ import { type NextPage } from "next";
 import { api } from "~/utils/api";
 import { type Invitation } from "@prisma/client";
 import { useRouter } from "next/router";
-import { NoDataFound } from "~/components/noDataFound";
+import { NoDataFound } from "~/components/NoDataFound";
 
 const Home: NextPage = () => {
     const router = useRouter();
