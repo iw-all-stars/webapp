@@ -175,7 +175,7 @@ const DashboardCampaign: React.FC = () => {
       >
         <Image alt="erreur" src="/assets/Error1.svg" width={90} height={98} />
         <Text fontSize={18} fontWeight={700}>
-          Il n'y aucun campagne par ici ...
+          Il n'y aucune campagne par ici ...
         </Text>
         <Text fontSize={13} fontWeight={400} mb={4}>
           Ajoutez une campagne pour commencer
