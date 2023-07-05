@@ -7,10 +7,7 @@ import {
     CardFooter,
     Center,
     Flex,
-    Grid,
-    GridItem,
     Heading,
-    Image,
     Skeleton,
     SkeletonCircle,
     Text,
@@ -20,6 +17,7 @@ import { type NextPage } from "next";
 import { api } from "~/utils/api";
 import { type Invitation } from "@prisma/client";
 import { useRouter } from "next/router";
+import { NoDataFound } from "~/components/noDataFound";
 
 const Home: NextPage = () => {
     const router = useRouter();
@@ -128,36 +126,19 @@ const Home: NextPage = () => {
                             ))}
                         </Box>
                     ) : (
-                        <Box
-                            h="full"
-                            w="full"
-                            display="flex"
-                            justifyContent="center"
-                            alignItems="center"
-                        >
-                            <Flex
-                                direction="column"
-                                alignItems="center"
-                                justifyContent="center"
-                                gap={4}
-                            >
-                                <Image
-                                    src="/assets/Error1.svg"
-                                    width={100}
-                                    height={100}
-                                    alt=""
-                                />
-                                <Text fontWeight="semibold">
-                                    Pas de notifications en attentes
-                                </Text>
-                                <Button
-                                    onClick={() => router.push("/")}
-                                    colorScheme="teal"
-                                >
-                                    Retourner à l'accueil
-                                </Button>
-                            </Flex>
-                        </Box>
+                        <Center h="75%">
+                            <NoDataFound
+                                text="Pas de notifications en attentes"
+                                button={
+                                    <Button
+                                        onClick={() => router.push("/")}
+                                        colorScheme="teal"
+                                    >
+                                        Retourner à l'accueil
+                                    </Button>
+                                }
+                            />
+                        </Center>
                     )
                 ) : (
                     <Box display="flex" gap={4}>
