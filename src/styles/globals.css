@@ -31,3 +31,11 @@ html, body, #__next {
 *::-webkit-scrollbar{
     display: none;
   }
+
+.carousel .slide img {
+	width: unset !important;
+}
+
+.carousel img {
+	width: unset !important;
+}

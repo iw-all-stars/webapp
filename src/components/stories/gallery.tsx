@@ -1,5 +1,4 @@
 import { PostType, type Post, type Story } from "@prisma/client";
-import "react-responsive-carousel/lib/styles/carousel.min.css"; // requires a loader
 import { Carousel } from "react-responsive-carousel";
 import {
     Image,
