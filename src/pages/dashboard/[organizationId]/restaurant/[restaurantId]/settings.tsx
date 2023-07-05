@@ -43,7 +43,7 @@ const DashboardSettings: NextPage = () => {
     onSuccess: () => {
       context.organization.getById.invalidate({ id: organizationId as string })
       context.organization.getByCurrentUser.invalidate()
-	  toast({
+	    toast({
         title: "Organisation mise à jour",
         description: "L'organisation a été mise à jour avec succès.",
         status: "success",

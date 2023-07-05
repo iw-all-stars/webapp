@@ -79,6 +79,17 @@ export const organizationRouter = createTRPCRouter({
             id: true,
             name: true,
           }
+        },
+        users: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true
+              }
+            }
+          }
         }
       },
       orderBy: {

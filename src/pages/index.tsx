@@ -21,7 +21,10 @@ import {
     useDisclosure,
     Select,
 	useToast,
-  Center
+  Center,
+  AvatarGroup,
+  Avatar,
+  Icon
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
@@ -31,6 +34,7 @@ import { api } from "~/utils/api";
 import Autocomplete from "react-google-autocomplete";
 import { useState } from "react";
 import { NoDataFound } from "~/components/noDataFound";
+import { AiFillShop } from "react-icons/ai";
 
 type RestaurantFormValues = {
   organizationName: string;
@@ -64,15 +68,15 @@ const Home: NextPage = () => {
 
   const addRestaurant = api.restaurant.add.useMutation({
     onSuccess: () => {
-		utils.organization.getByCurrentUser.invalidate();
-		toast({
-			title: "Restaurant créé.",
-			description: "Votre restaurant a bien été créé.",
-			status: "success",
-			duration: 5000,
-			isClosable: true,
-		  });
-	},
+      utils.organization.getByCurrentUser.invalidate();
+      toast({
+        title: "Restaurant créé.",
+        description: "Votre restaurant a bien été créé.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+	  },
   });
 
   const handleOrganization: SubmitHandler<RestaurantFormValues> = async (restaurantForm) => {
@@ -115,7 +119,17 @@ const Home: NextPage = () => {
                 <Card variant="filled" borderRadius={6} minH={32} cursor="pointer" _hover={{ bg: "gray.200" }} onClick={() => router.push(`/dashboard/${organization.id}/restaurant/${organization.restaurants[0]?.id}/stories`)}>
                   <CardBody display="flex" flexDirection="column" justifyContent="space-between">
                     <Text fontSize="2xl" fontWeight="bold">{organization.name}</Text>
-                    <Text fontSize="md" color="gray.500">{organization.restaurants.length} restaurant{organization.restaurants.length > 1 ? "s" : ""}</Text>
+                    <Flex justifyContent="space-between" gap={2}>
+                      <Flex alignItems="center" gap={2}>
+                        <Text fontSize="lg" color="gray.500">{organization.restaurants.length} restaurant{organization.restaurants.length > 1 ? "s" : ""}</Text>
+                        <Icon as={AiFillShop} mt={0.5} w={5} h={5} />
+                      </Flex>
+                      <AvatarGroup size="md" max={3}>
+                        {organization.users.map(({ user }) => (
+                          <Avatar key={user.id} name={user.name ?? ""} src={user.image ?? ""} />
+                        ))}
+                      </AvatarGroup>
+                    </Flex>
                   </CardBody>
                 </Card>
               </GridItem>
@@ -124,7 +138,14 @@ const Home: NextPage = () => {
                 <Card variant="filled" borderRadius={6} minH={32}>
                   <CardBody display="flex" flexDirection="column" justifyContent="space-between">
                     <Skeleton h={7} />
-                    <Skeleton h={5} />
+                    <Flex justifyContent="space-between" alignItems="center" gap={2}>
+                      <Skeleton h={5} w="50%" />
+                      <AvatarGroup size="md" max={3}>
+                        {Array(3).fill(0).map((_, index) => (
+                          <SkeletonCircle key={index} h={12} w={12} />
+                        ))}
+                      </AvatarGroup>
+                    </Flex>
                   </CardBody>
                 </Card>
               </GridItem>
