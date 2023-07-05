@@ -33,7 +33,7 @@ import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import { api } from "~/utils/api";
 import Autocomplete from "react-google-autocomplete";
 import { useState } from "react";
-import { NoDataFound } from "~/components/noDataFound";
+import { NoDataFound } from "~/components/NoDataFound";
 import { AiFillShop } from "react-icons/ai";
 
 type RestaurantFormValues = {
