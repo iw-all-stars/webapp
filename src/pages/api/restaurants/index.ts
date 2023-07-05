@@ -28,8 +28,6 @@ const deleteSchema = z.object({
   id: z.string(),
 });
 
-dbConnect();
-
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
@@ -55,6 +53,14 @@ const geocoder = NodeGeocoder({
 });
 
 const handler: NextApiHandler = async (req, res) => {
+  try {
+    await dbConnect();
+  } catch (e) {
+    console.log(e);
+
+    return res.status(500).json({ message: "Internal server error" });
+  }
+
   if (!req.headers.authorization) {
     return res.status(401).json({ message: "Unauthorized" });
   }
