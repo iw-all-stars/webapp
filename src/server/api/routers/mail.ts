@@ -15,7 +15,9 @@ const mailSchema = z.object({
 
 const sendCampaignSchema = z.object({
   campaignId: z.string(),
-  recipientIds: z.array(z.string()),
+  includeClients: z.array(z.string()).optional(),
+  excludeClients: z.array(z.string()).optional(),
+  selectAllRecipients: z.boolean().optional(),
 });
 
 export const mailRouter = createTRPCRouter({
@@ -82,7 +84,12 @@ export const mailRouter = createTRPCRouter({
     .input(sendCampaignSchema)
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.$transaction(async (_) => {
-        const { campaignId, recipientIds } = input;
+        const {
+          campaignId,
+          includeClients,
+          excludeClients,
+          selectAllRecipients,
+        } = input;
         const campaign = await ctx.prisma.campaign.findUnique({
           where: { id: campaignId },
           include: {
@@ -97,21 +104,42 @@ export const mailRouter = createTRPCRouter({
           throw new Error("Erreur lors de l'envoi de la campagne");
         }
 
-        if (!recipientIds.length) {
+        if (!selectAllRecipients && !includeClients && !excludeClients) {
           throw new Error("Aucun destinataire sélectionné");
         }
 
-        if (campaign.status !== "draft") {
+        if (campaign.status === "sent") {
           throw new Error("La campagne a déjà été envoyée");
         }
 
-        // Create mails for recipients
-        const mails = await ctx.prisma.$transaction(
-          recipientIds.map((id) =>
+        // if selectAllRecipients is true, get all clients except excludeClients
+        // if selectAllRecipients is false, get only includeClients
+
+        const clients = await ctx.prisma.client.findMany({
+          where: {
+            restaurantId: campaign.restaurantId,
+            ...(selectAllRecipients
+              ? {
+                  id: {
+                    notIn: excludeClients,
+                  },
+                }
+              : {
+                  id: {
+                    in: includeClients,
+                  },
+                }),
+          },
+        });
+
+        // Create mails for each client in clients array and link them to the campaign id and client id, don't use createMany because it doesn't return the created mails
+
+        const mails = await Promise.all(
+          clients.map((client) =>
             ctx.prisma.mail.create({
               data: {
                 campaignId,
-                clientId: id,
+                clientId: client.id,
                 status: "draft",
               },
               include: {
@@ -121,10 +149,9 @@ export const mailRouter = createTRPCRouter({
           )
         );
 
-        // Send emails
-        recipientIds.forEach((id) => {
+        clients.forEach((client) => {
           const mail = mails.find(
-            (m: { clientId: string }) => m.clientId === id
+            (m: { clientId: string }) => m.clientId === client.id
           );
           if (!mail) {
             throw new Error("Erreur lors de l'envoi de la campagne");
@@ -136,15 +163,12 @@ export const mailRouter = createTRPCRouter({
             )
             .replaceAll("@Nom_Etablissement", campaign.restaurant.name);
           sendEmail({
+            restaurant: campaign.restaurant.name,
             email: mail.client.email,
             firstname: mail.client.firstname || mail.client.name,
             subject: campaign.subject,
             body,
             mailId: mail.id,
-            restaurant: campaign.restaurant.name,
-            rateURL:
-              campaign.url ??
-              `https://www.google.com/search?q=${campaign.restaurant.name}`,
             logoURL: campaign.restaurant.logo
               ? campaign.restaurant.logo
               : undefined,

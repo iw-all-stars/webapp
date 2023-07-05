@@ -77,10 +77,6 @@ router
         "Nom",
         "Prenom",
         "Email",
-        "Téléphone",
-        "Adresse",
-        "Ville",
-        "Code postal",
       ];
 
       const firstRow = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName] as WorkSheet, {
@@ -115,10 +111,6 @@ router
           email: String(client.Email),
           firstname: String(client.Prenom),
           name: String(client.Nom),
-          phone: String(client.Téléphone),
-          address: String(client.Adresse),
-          city: String(client.Ville),
-          zip: String(client["Code postal"]),
           restaurantId: req.query.restaurantId as string,
         });
       }

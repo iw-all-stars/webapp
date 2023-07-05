@@ -5,10 +5,6 @@ export interface Client {
   Nom: string;
   Prenom: string;
   Email: string;
-  Téléphone: string;
-  Adresse: string;
-  Ville: string;
-  "Code postal": string;
 }
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -18,7 +14,7 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const columns = ["Nom", "Prenom", "Email", "Téléphone", "Adresse", "Ville", "Code postal"];
+    const columns = ["Nom", "Prenom", "Email"];
 
     const worksheet = XLSX.utils.json_to_sheet([], { header: columns });
 
