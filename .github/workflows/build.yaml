@@ -3,58 +3,55 @@ name: CI/CD
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Checkout
-      uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-  
-    - name: Login to Docker Hub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-    - name: Build and push
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/webapp:${{ github.sha }},${{ secrets.DOCKER_HUB_USERNAME }}/webapp:latest
-        build-args: |
-          SKIP_ENV_VALIDATION=1
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/webapp:${{ github.sha }},${{ secrets.DOCKER_HUB_USERNAME }}/webapp:latest
+          build-args: |
+            SKIP_ENV_VALIDATION=1
 
   tests:
-    needs: build
+    #needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Checkout
-      uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
 
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18.x'
-    
-    - name: Install dependencies
-      run: yarn
-    
-    - name: Run tests
-      run: yarn test
+      - name: Install dependencies
+        run: yarn --frozen-lockfile
+
+      - name: Run tests
+        run: yarn test
 
   deploy:
     needs: tests
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -66,8 +63,8 @@ jobs:
       - name: Set AKS context
         uses: azure/aks-set-context@v3
         with:
-          resource-group: '${{ secrets.AZURE_RESSOURCE_GROUP }}' 
-          cluster-name: '${{ secrets.AZURE_CLUSTER_NAME }}'
+          resource-group: "${{ secrets.AZURE_RESSOURCE_GROUP }}"
+          cluster-name: "${{ secrets.AZURE_CLUSTER_NAME }}"
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
@@ -75,11 +72,9 @@ jobs:
       - name: Deploy to AKS
         uses: Azure/k8s-deploy@v4
         with:
-          namespace: 'production'
+          namespace: "production"
           manifests: |
-             kube/production/webapp.yaml
+            kube/production/webapp.yaml
           images: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/webapp:${{ github.sha }}
-          pull-images: true 
-
-
+          pull-images: true

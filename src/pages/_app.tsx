@@ -9,6 +9,7 @@ import LayoutBase from "~/layouts/base";
 import { api } from "~/utils/api";
 
 import { theme } from "~/styles/globalTheme";
+import "react-responsive-carousel/lib/styles/carousel.min.css"; 
 import "~/styles/globals.css";
 import { useState } from "react";
 import { type Campaign } from "@prisma/client";

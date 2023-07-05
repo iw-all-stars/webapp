@@ -41,6 +41,7 @@ import { TiDelete } from "react-icons/ti";
 import { api } from "~/utils/api";
 import CreateUpdateStory from "./CreateUpdateStory";
 import { DateTime } from "luxon";
+import { StoriesGallery } from "./gallery";
 
 interface StoryCardProps {
     story: Story & { posts: Post[]; platform: Omit<Platform, "password"> };
@@ -49,6 +50,8 @@ interface StoryCardProps {
 
 export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const { isOpen: isOpenGallery, onOpen: onOpenGallery, onClose: onCloseGallery } = useDisclosure();
+
 
     const utils = api.useContext();
     // delete
@@ -236,7 +239,7 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                     </Box>
                 </Box>
 
-                <Box display="flex" height="180px" gap="1">
+                <Box onClick={onOpenGallery} cursor="pointer" display="flex" height="180px" gap="1">
                     {(story.posts.slice(0, 3) || []).map(
                         (post: Post, index) => (
                             <Box
@@ -333,6 +336,7 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                             </Box>
                         )
                     )}
+					<StoriesGallery isOpen={isOpenGallery} onClose={onCloseGallery} story={story} />
                 </Box>
                 <AlertDialog
                     isOpen={isOpenAlert}

@@ -1,8 +1,9 @@
-import { type PrismaClient, type Client as ModelClient } from "@prisma/client";
-import prismaInstance from "./client.prisma";
 import { Client as ClientElk } from "@elastic/elasticsearch";
-import { env } from "../env.mjs";
+import { type Client as ModelClient, type PrismaClient } from "@prisma/client";
+import prismaInstance from "./client.prisma";
+
 import { elkOptions } from "~/utils/elkClientOptions";
+import { env } from "../env.mjs";
 
 const clientElk = new ClientElk(elkOptions);
 

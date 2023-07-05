@@ -101,3 +101,4 @@ curl -XPOST 'http://localhost:9200/clients/_delete_by_query' -H 'Content-Type: a
     }
 }'
 ```
+.
