@@ -44,7 +44,7 @@ const DashboardCampaign: React.FC = () => {
 
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data: countClients } = api.customer.getCountClients.useQuery(undefined, {
+  const { data: countClients } = api.customer.getCountClients.useQuery({}, {
     initialData: 0,
   });
 
