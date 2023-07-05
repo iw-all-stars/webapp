@@ -3,10 +3,10 @@ import { Box, Icon, Image, Text } from "@chakra-ui/react";
 import { PostType, type Post } from "@prisma/client";
 import { useRef } from "react";
 import {
-	DragDropContext,
-	Draggable,
-	Droppable,
-	type DragUpdate,
+    DragDropContext,
+    Draggable,
+    Droppable,
+    type DragUpdate,
 } from "react-beautiful-dnd";
 import { BiImageAdd } from "react-icons/bi";
 import { BsCameraVideo } from "react-icons/bs";
@@ -59,9 +59,7 @@ export const DragFiles = ({
     const isStillConverting = (post: Post): boolean => {
         if (!error) return false;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        return !!error?.data?.zodError?.posts?.find(
-            (p: Post) => p.id === post.id
-        );
+        return !!error?.data?.cause?.posts?.find((p: Post) => p.id === post.id);
     };
 
     return (
@@ -168,7 +166,7 @@ export const DragFiles = ({
                                                     PostType.IMAGE ? (
                                                         <Image
                                                             height={200}
-															width="full"
+                                                            width="full"
                                                             objectFit="cover"
                                                             src={
                                                                 item.originalUrl
@@ -267,8 +265,8 @@ export const DragFiles = ({
                     </Text>
                 </Box>
             </Box>
-            {!!error?.data?.zodError?.posts && (
-                <Text fontSize="sm" color="orange.400">
+            {!!error?.data?.cause?.posts && (
+                <Text fontSize="sm" fontWeight="medium" color="orange.400">
                     Attendez quelques secondes que vos fichiers se convertissent
                     dans le bon format
                 </Text>
