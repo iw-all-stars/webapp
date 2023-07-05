@@ -3,43 +3,123 @@ import {
   Badge,
   Box,
   Button,
+  Flex,
   Heading,
   Input,
   InputGroup,
   InputRightElement,
-  Table,
-  TableContainer,
-  Tbody,
-  Td,
+  SkeletonCircle,
   Text,
-  Tfoot,
-  Th,
-  Thead,
-  Tr,
   useDisclosure,
 } from "@chakra-ui/react";
-import { type Campaign } from "@prisma/client";
+import { type Mail, type Campaign, type User } from "@prisma/client";
 import { SearchIcon } from "@chakra-ui/icons";
 import { format } from "date-fns";
 import React from "react";
-
 import { api } from "~/utils/api";
 import CampaignModal from "~/components/Campaigns/campaignModal";
 import CreateCustomerModal from "~/components/Campaigns/campaignModal/createCustomerModal";
-
 import { CampaignContext } from "./CampaignContext";
+import { createColumnHelper } from "@tanstack/react-table";
+import { DataTable } from "~/components/DataTable";
+
+const defaultLimit = 5;
 
 const DashboardCampaign: React.FC = () => {
-  const [search, setSearch] = useState("");
+
+  const context = useContext(CampaignContext);
+
   const { isOpen, onOpen, onClose } = useDisclosure();
+
   const {
     isOpen: isCreateCustomerModalOpen,
     onOpen: onOpenCreateCustomerModal,
     onClose: onCloseCreateCustomerModal,
   } = useDisclosure();
-  const getCampaigns = api.campaign.getCampaigns.useQuery(search);
+
+  const [pageIndex, setPageIndex] = React.useState(0);
+  const [search, setSearch] = useState("");
+
+  const { data: countCampaigns } = api.campaign.getCountCampaigns.useQuery(search, {
+    initialData: 0,
+  });
+
+  const { data: campaigns, refetch: refetchCampaigns, isLoading, isRefetching } = api.campaign.getCampaigns.useQuery(search);
   const getClients = api.customer.getClients.useQuery({});
-  const context = useContext(CampaignContext);
+
+  const columnHelper = createColumnHelper<Campaign & { mail: Mail[], user: User }>();
+
+  const columns = [
+    columnHelper.accessor("name", {
+      cell: (info) => info.getValue(),
+      header: "Nom"
+    }),
+    columnHelper.accessor("updatedAt", {
+      cell: (info) => format(new Date(info.getValue()), "dd/MM/yyyy"),
+      header: "Date de création"
+    }),
+    columnHelper.display({
+      id: "mails-sent",
+      header: "Mails envoyés",
+      cell: (campaign) => campaign.row.original.mail.length
+    }),
+    columnHelper.display({
+      id: "mails-opened",
+      header: "Taux d'overture",
+      cell: (campaign) => {
+        return campaign.row.original.mail.length === 0
+          ? 0
+          : ((campaign.row.original.mail
+              .map((mail) => mail.opened)
+              .filter((opened) => opened).length / campaign.row.original.mail.length)
+            * 100
+          ).toFixed(1) + " %"
+      }
+    }),
+    columnHelper.display({
+      id: "deliverability",
+      header: "Désabonnement",
+      cell: (campaign) => {
+        return campaign.row.original.mail.length === 0
+          ? 0
+          : ((campaign.row.original.mail
+              .map((mail) => mail.unsub)
+              .filter((unsub) => unsub).length / campaign.row.original.mail.length)
+            * 100
+          ).toFixed(1) + " %"
+      }
+    }),
+    columnHelper.accessor("status", {
+      cell: (campaign) => (
+        <Badge
+          colorScheme={
+            campaign.row.original.status === "draft"
+              ? "gray"
+              : campaign.row.original.status === "sent"
+              ? "green"
+              : "red"
+          }
+        >
+          {campaign.row.original.status === "draft" ? "Brouillon" : "Envoyée"}
+        </Badge>
+      ),
+      header: "Status"
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: (info) => (
+        <Button
+          size="sm"
+          variant="outline"
+          colorScheme="blue"
+          onClick={() => editCampaign(info.row.original)}
+        >
+          Modifier
+        </Button>
+      ),
+    }),
+  ];
 
   const editCampaign = (campaign: Campaign) => {
     if (!getClients.data?.length) {
@@ -59,19 +139,19 @@ const DashboardCampaign: React.FC = () => {
   };
 
   useEffect(() => {
-    getCampaigns.refetch();
+    refetchCampaigns();
     getClients.refetch();
   }, []);
 
   const closeModal = useCallback(() => {
     onClose();
     context?.setCampaign(undefined);
-    getCampaigns.refetch();
+    refetchCampaigns();
   }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      getCampaigns.refetch();
+      refetchCampaigns();
     }, 2000);
     return () => clearTimeout(timeout);
   }, [search]);
@@ -82,20 +162,22 @@ const DashboardCampaign: React.FC = () => {
         w="full"
         display="flex"
         justifyContent="space-between"
+        alignItems="center"
         gap={4}
-        alignItems={"center"}
       >
         <Heading
-          display={"flex"}
-          flexDirection={"row"}
+          display="flex"
+          flexDirection="row"
           gap={1}
           fontSize={18}
           fontWeight={400}
         >
-          <b>Campagnes</b>
-          <Text letterSpacing={"widest"} fontStyle={"italic"}>
-            ({getCampaigns.data?.length})
-          </Text>
+          <Text fontWeight="bold">Campagnes</Text>
+          <SkeletonCircle size="6" mt={0.5} isLoaded={!isRefetching} w="fit-content">
+            <Text letterSpacing="widest" fontStyle="italic">
+              ({countCampaigns})
+            </Text>
+          </SkeletonCircle>
         </Heading>
         <InputGroup>
           <Input
@@ -104,119 +186,28 @@ const DashboardCampaign: React.FC = () => {
           />
           <InputRightElement children={<SearchIcon />} />
         </InputGroup>
-        <Button
-          onClick={createCampaign}
-          fontSize={12}
-          colorScheme="green"
-          variant="solid"
-          minW={"min-content"}
-        >
-          Créer une campagne
-        </Button>
+        <Flex>
+          <Button
+            onClick={createCampaign}
+            colorScheme="green"
+            fontSize="sm"
+          >
+            Créer une campagne
+          </Button>
+        </Flex>
       </Box>
       <br />
-      <TableContainer>
-        <Table variant="striped" colorScheme="gray" size="md" fontSize={13}>
-          <Thead>
-            <Tr bg="gray.200" borderTopRadius={50}>
-              <Th
-                fontSize={12}
-                fontWeight={500}
-                textTransform="capitalize"
-                w="lg"
-              >
-                Nom
-              </Th>
-              <Th
-                fontSize={12}
-                fontWeight={500}
-                textTransform="capitalize"
-                w="40"
-              >
-                Date
-              </Th>
-              <Th fontSize={12} fontWeight={500} textTransform="capitalize">
-                Mails envoyés
-              </Th>
-              <Th fontSize={12} fontWeight={500} textTransform="capitalize">
-                Taux d'ouverture
-              </Th>
-              <Th fontSize={12} fontWeight={500} textTransform="capitalize">
-                Désabonnement
-              </Th>
-              <Th fontSize={12} fontWeight={500} textTransform="capitalize">
-                Status
-              </Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {(search ||
-              (getCampaigns?.data && getCampaigns?.data?.length > 0)) &&
-              getCampaigns.data?.map((campaign) => {
-                const sentMails = campaign.mail.length;
-                const openRate =
-                  campaign.mail.length === 0
-                    ? 0
-                    : (
-                        (campaign.mail
-                          .map((mail) => mail.opened)
-                          .filter((opened) => opened).length /
-                          sentMails) *
-                        100
-                      ).toFixed(1);
-                const unsubscribeRate =
-                  campaign.mail.length === 0
-                    ? 0
-                    : (
-                        (campaign.mail
-                          .map((mail) => mail.unsub)
-                          .filter((unsub) => unsub).length /
-                          sentMails) *
-                        100
-                      ).toFixed(1);
-                const date = format(new Date(campaign.createdAt), "dd/MM/yyyy");
-                return (
-                  <Tr
-                    key={campaign.id}
-                    cursor={"pointer"}
-                    onClick={() => editCampaign(campaign)}
-                  >
-                    <Td fontWeight={500}>{campaign.name}</Td>
-                    <Td fontWeight={500}>{date}</Td>
-                    <Td fontWeight={700}>{sentMails}</Td>
-                    <Td fontWeight={700}>{openRate} %</Td>
-                    <Td fontWeight={700}>{unsubscribeRate} %</Td>
-                    <Td>
-                      <Badge
-                        colorScheme={
-                          campaign.status === "draft"
-                            ? "gray"
-                            : campaign.status === "sent"
-                            ? "green"
-                            : "red"
-                        }
-                      >
-                        {campaign.status === "draft" ? "Brouillon" : "Envoyée"}
-                      </Badge>
-                    </Td>
-                  </Tr>
-                );
-              })}
-          </Tbody>
-          {getCampaigns.data && getCampaigns.data?.length > 20 ? (
-            <Tfoot>
-              <Tr>
-                <Th w="lg">Nom</Th>
-                <Th w="40">Date</Th>
-                <Th isNumeric>Mails envoyés</Th>
-                <Th isNumeric>Taux d'ouverture</Th>
-                <Th isNumeric>Désabonnement</Th>
-                <Th>Status</Th>
-              </Tr>
-            </Tfoot>
-          ) : null}
-        </Table>
-      </TableContainer>
+      <DataTable
+        columns={columns}
+        data={campaigns}
+        countTotal={countCampaigns}
+        isLoading={isLoading}
+        pagination={{
+          pageSize: defaultLimit,
+          pageIndex,
+          setPageIndex
+        }}
+      />
       <CampaignModal isOpen={isOpen} onClose={closeModal} />
       <CreateCustomerModal
         isOpen={isCreateCustomerModalOpen}

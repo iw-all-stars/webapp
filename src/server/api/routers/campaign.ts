@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import { createTRPCRouter, hasAccessToRestaurantProcedure } from "~/server/api/trpc";
 
 const campaignSchema = z.object({
@@ -26,6 +25,20 @@ const updateCampaignSchema = z.object({
 });
 
 export const campaignRouter = createTRPCRouter({
+
+  getCountCampaigns: hasAccessToRestaurantProcedure
+    .input(z.string().optional())
+    .query(({ ctx, input = "" }) => {
+      return ctx.prisma.campaign.count({
+        where: {
+          OR: [
+            { name: { contains: input, mode: "insensitive" } },
+            { subject: { contains: input, mode: "insensitive" } },
+          ],
+        },
+      });
+    }),
+
   getCampaigns: hasAccessToRestaurantProcedure
     .input(z.string().optional())
     .query(({ ctx, input = "" }) => {
