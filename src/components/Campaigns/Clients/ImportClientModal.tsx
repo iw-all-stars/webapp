@@ -28,14 +28,18 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
   const router = useRouter();
   const { restaurantId } = router.query;
 
+  const [isLoading, setIsLoading] = React.useState(false);
+
   const importFile = async (file: File) => {
+    setIsLoading(true);
     const formData = new FormData();
     formData.append("file", file);
     const response = await fetch(`/api/xlsx/${restaurantId}/clients/upload`, {
       method: "POST",
       body: formData,
     });
-    if (response.ok) {
+    const res = await response.json() as { success: boolean; message: string };
+    if (res.success) {
       utils.customer.getCountClients.invalidate();
       utils.customer.getClients.invalidate();
       onClose();
@@ -49,12 +53,13 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
     } else {
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'importation.",
+        description: res.message || "Une erreur est survenue.",
         status: "error",
         duration: 5000,
         isClosable: true,
       });
     }
+    setIsLoading(false);
   };
 
   return (
@@ -91,6 +96,7 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
           <Button
             colorScheme="blue"
             mr={3}
+            isLoading={isLoading}
             onClick={() => {
               const fileInput = document.createElement("input");
               fileInput.type = "file";
