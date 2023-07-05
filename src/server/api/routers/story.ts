@@ -123,9 +123,9 @@ export const storyRouter = createTRPCRouter({
 
             if (input.data.status === StoryStatus.NOW) {
                 publishedAt = DateTime.fromJSDate(new Date())
-                    .plus({ minutes: 2 })
+                    .plus({ minutes: 1 })
                     .toJSDate();
-            } else {
+            } else if (input.data.status === StoryStatus.SCHEDULED) {
                 publishedAt = new Date(input.data.publishedAt as string);
             }
 
