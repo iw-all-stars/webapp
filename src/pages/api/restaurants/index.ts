@@ -24,6 +24,10 @@ const postSchema = z.object({
   longitude: z.number(),
 });
 
+const deleteSchema = z.object({
+  id: z.string(),
+});
+
 dbConnect();
 
 const globalForPrisma = globalThis as unknown as {
@@ -47,22 +51,24 @@ const doc = new GoogleSpreadsheet(
 
 const geocoder = NodeGeocoder({
   provider: "google",
-  apiKey: "AIzaSyA5knwv6v-Ah2Pz5lGEMLoR0ehAydiO4QM",
+  apiKey: process.env.GOOGLE_API_KEY,
 });
 
 const handler: NextApiHandler = async (req, res) => {
-  try {
-    if (
-      !req.headers.authorization ||
-      !(await validateAuth0(req.headers.authorization))
-    ) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-  } catch (e) {
-    console.error(e);
-
+  if (!req.headers.authorization) {
     return res.status(401).json({ message: "Unauthorized" });
   }
+
+  let user: { sub: string } | undefined;
+
+  try {
+    user = (await validateAuth0(req.headers.authorization)) as { sub: string };
+  } catch (e) {
+    console.log(e);
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  console.log(user);
 
   if (req.method === "GET") {
     const { categoryId, name, latitude, longitude, radius } = getSchema.parse(
@@ -91,6 +97,24 @@ const handler: NextApiHandler = async (req, res) => {
     return res.json(restaurants);
   }
 
+  if (req.method === "DELETE") {
+    const { id } = deleteSchema.parse(req.body);
+
+    if (user.sub !== id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    await prismaClient.prospect.delete({
+      where: {
+        id,
+      },
+    });
+
+    await RestaurantModel.deleteOne({ _id: id }).exec();
+
+    return res.status(204).end();
+  }
+
   if (req.method === "POST") {
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
@@ -115,6 +139,7 @@ const handler: NextApiHandler = async (req, res) => {
       address: address[0]?.formattedAddress,
       location: [longitude, latitude],
       isProspect: true,
+      createdBy: user.sub,
     });
 
     await sheet?.addRow(
