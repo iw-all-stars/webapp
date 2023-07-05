@@ -49,6 +49,9 @@ type ClientSchema = {
 };
 
 export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
+
+  const utils = api.useContext();
+
   const [client, setClient] = React.useState<Partial<Client> | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const toast = useToast();
@@ -56,6 +59,13 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
   const createClient = api.customer.createClient.useMutation();
   const updateClient = api.customer.updateClient.useMutation();
   const deleteClient = api.customer.deleteClient.useMutation();
+
+  const routesToRefetch = () => {
+    utils.campaign.getCountCampaigns.invalidate();
+    utils.campaign.getCampaigns.invalidate();
+    utils.customer.getClients.invalidate();
+    utils.customer.getCountClients.invalidate();
+  }
 
   const parseJSON = (response: string) => {
     try {
@@ -102,6 +112,7 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
     if (!client?.id) {
       return createClient.mutate(client as ClientSchema, {
         onSuccess: () => {
+          routesToRefetch();
           onClose();
           toast({
             title: "Client créé",
@@ -119,6 +130,7 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
     }
     updateClient.mutate(client as ClientSchema, {
       onSuccess: () => {
+        routesToRefetch();
         onClose();
         toast({
           title: "Client modifié",
@@ -141,6 +153,7 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
     }
     deleteClient.mutate(client.id, {
       onSuccess: () => {
+        routesToRefetch();
         onClose();
         toast({
           title: "Client supprimé",

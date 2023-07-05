@@ -5,6 +5,7 @@ import {
   Button,
   Flex,
   Heading,
+  Image,
   Input,
   InputGroup,
   InputRightElement,
@@ -22,6 +23,7 @@ import CreateCustomerModal from "~/components/Campaigns/campaignModal/createCust
 import { CampaignContext } from "./CampaignContext";
 import { createColumnHelper } from "@tanstack/react-table";
 import { DataTable } from "~/components/DataTable";
+import { useDebounce } from "usehooks-ts";
 
 const defaultLimit = 5;
 
@@ -37,14 +39,20 @@ const DashboardCampaign: React.FC = () => {
     onClose: onCloseCreateCustomerModal,
   } = useDisclosure();
 
-  const [pageIndex, setPageIndex] = React.useState(0);
   const [search, setSearch] = useState("");
+  const [pageIndex, setPageIndex] = React.useState(0);
 
-  const { data: countCampaigns } = api.campaign.getCountCampaigns.useQuery(search, {
+  const debouncedSearch = useDebounce(search, 300);
+
+  const { data: countClients } = api.customer.getCountClients.useQuery(undefined, {
     initialData: 0,
   });
 
-  const { data: campaigns, refetch: refetchCampaigns, isLoading, isRefetching } = api.campaign.getCampaigns.useQuery(search);
+  const { data: countCampaigns } = api.campaign.getCountCampaigns.useQuery(debouncedSearch, {
+    initialData: 0,
+  });
+
+  const { data: campaigns, refetch: refetchCampaigns, isLoading, isRefetching } = api.campaign.getCampaigns.useQuery(debouncedSearch);
   const getClients = api.customer.getClients.useQuery({});
 
   const columnHelper = createColumnHelper<Campaign & { mail: Mail[], user: User }>();
@@ -143,18 +151,46 @@ const DashboardCampaign: React.FC = () => {
     getClients.refetch();
   }, []);
 
+  React.useEffect(() => {
+    setPageIndex(0);
+  }, [debouncedSearch]);
+
   const closeModal = useCallback(() => {
     onClose();
     context?.setCampaign(undefined);
     refetchCampaigns();
   }, []);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      refetchCampaigns();
-    }, 2000);
-    return () => clearTimeout(timeout);
-  }, [search]);
+  if (countCampaigns === 0 && !isLoading && !debouncedSearch)
+    return (
+      <Box
+        pt={20}
+        pb={12}
+        w="100%"
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        textAlign="center"
+        gap={5}
+      >
+        <Image alt="erreur" src="/assets/Error1.svg" width={90} height={98} />
+        <Text fontSize={18} fontWeight={700}>
+          Il n'y aucun campagne par ici ...
+        </Text>
+        <Text fontSize={13} fontWeight={400} mb={4}>
+          Ajoutez une campagne pour commencer
+        </Text>
+        <Button onClick={countClients === 0 ? onOpenCreateCustomerModal : onOpen} colorScheme="purple">
+          Ajouter des campagnes
+        </Button>
+        <CampaignModal isOpen={isOpen} onClose={closeModal} />
+        <CreateCustomerModal
+          isOpen={isCreateCustomerModalOpen}
+          onClose={onCloseCreateCustomerModal}
+          onOpen={onOpenCreateCustomerModal}
+        />
+      </Box>
+    );
 
   return (
     <Box h="full" w="full" pt={2}>
