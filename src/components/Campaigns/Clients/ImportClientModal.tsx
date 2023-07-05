@@ -12,6 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import React from "react";
+import { api } from "~/utils/api";
 
 interface ImportClientModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const utils = api.useContext();
   const toast = useToast();
   const router = useRouter();
   const { restaurantId } = router.query;
@@ -34,6 +36,8 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
       body: formData,
     });
     if (response.ok) {
+      utils.customer.getCountClients.invalidate();
+      utils.customer.getClients.invalidate();
       onClose();
       toast({
         title: "Importation réussie",

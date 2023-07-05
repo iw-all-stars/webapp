@@ -130,6 +130,7 @@ router
 
       await clientElk.bulk({
         index: "clients",
+        refresh: true,
         body: clientsCreated.flatMap(client => [
           { index: { _index: "clients", _id: client.id } },
           client
