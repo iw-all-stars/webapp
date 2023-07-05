@@ -5,3 +5,15 @@ export default withAuth({
     signIn: "/auth/signin",
   },
 });
+export const config = {
+  matcher: [
+    "/dashboard/:page*",
+    "/",
+    "/notifications",
+    "/404",
+    "/auth/:page*",
+    "/api/s3/:page*",
+    "/api/trpc/:page*",
+    "/api/xlsx/:page*",
+  ],
+};
