@@ -168,6 +168,7 @@ export const DragFiles = ({
                                                     PostType.IMAGE ? (
                                                         <Image
                                                             height={200}
+															width="full"
                                                             objectFit="cover"
                                                             src={
                                                                 item.originalUrl
