@@ -239,7 +239,7 @@ export const StoryCard = ({ story, connectedPlatforms }: StoryCardProps) => {
                     </Box>
                 </Box>
 
-                <Box onClick={onOpenGallery} display="flex" height="180px" gap="1">
+                <Box onClick={onOpenGallery} cursor="pointer" display="flex" height="180px" gap="1">
                     {(story.posts.slice(0, 3) || []).map(
                         (post: Post, index) => (
                             <Box
