@@ -19,9 +19,11 @@ export interface RestaurantType {
   address: string;
   organizationId: string;
   categoryId: string;
+  categoryName?: string;
   location: [number, number];
   isProspect?: boolean;
   comment?: string;
+  createdBy?: string;
 }
 
 const RestaurantSchema = new mongoose.Schema({
@@ -30,6 +32,7 @@ const RestaurantSchema = new mongoose.Schema({
   address: String,
   organizationId: String,
   categoryId: String,
+  categoryName: String,
   isProspect: Boolean,
   comment: String,
   location: {
@@ -37,6 +40,7 @@ const RestaurantSchema = new mongoose.Schema({
     index: "2dsphere",
     required: true,
   },
+  createdBy: String,
 });
 
 export const RestaurantModel = (mongoose.models.Restaurant ||

@@ -21,10 +21,14 @@ export const restaurantRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const restaurant = await ctx.prisma.restaurant.create({ data: input });
+      const restaurant = await ctx.prisma.restaurant.create({
+        data: input,
+        include: { category: true },
+      });
       await RestaurantModel.create({
         _id: restaurant.id,
         categoryId: restaurant.categoryId,
+        categoryName: restaurant.category?.name,
         name: restaurant.name,
         address: restaurant.address,
         organizationId: restaurant.organizationId,
@@ -52,12 +56,18 @@ export const restaurantRouter = createTRPCRouter({
       const restaurant = await ctx.prisma.restaurant.update({
         where: { id },
         data: data,
+        include: { category: true },
       });
       await RestaurantModel.updateOne(
         { _id: id },
         {
           location: [restaurant.longitude, restaurant.latitude],
-          ...data,
+          categoryId: restaurant.categoryId,
+          categoryName: restaurant.category?.name,
+          name: restaurant.name,
+          address: restaurant.address,
+          organizationId: restaurant.organizationId,
+          isProspect: false,
         }
       );
 
