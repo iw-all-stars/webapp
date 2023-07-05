@@ -76,7 +76,7 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
   const elkClient = new Client(elkOptions);
 
   // Connect mongoose to the database
-  // await dbConnect();
+  await dbConnect();
 
   return createInnerTRPCContext({
     session,
@@ -97,6 +97,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import { getParamFromPathName } from "~/utils/getParamFromPathName";
+import dbConnect from "../mongoose";
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
@@ -107,9 +108,9 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
         ...shape.data,
         zodError:
           error.cause instanceof ZodError ? error.cause.flatten() : error.cause,
-		cause: {
-			...error.cause,
-		}
+        cause: {
+          ...error.cause,
+        },
       },
     };
   },
