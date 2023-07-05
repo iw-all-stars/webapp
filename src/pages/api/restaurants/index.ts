@@ -68,8 +68,6 @@ const handler: NextApiHandler = async (req, res) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  console.log(user);
-
   if (req.method === "GET") {
     const { categoryId, name, latitude, longitude, radius } = getSchema.parse(
       req.query
@@ -100,7 +98,11 @@ const handler: NextApiHandler = async (req, res) => {
   if (req.method === "DELETE") {
     const { id } = deleteSchema.parse(req.body);
 
-    if (user.sub !== id) {
+    const restaurant = await RestaurantModel.findOne({
+      _id: id,
+    });
+
+    if (!restaurant || user.sub !== restaurant.createdBy) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
