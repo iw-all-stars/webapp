@@ -20,20 +20,30 @@ export const clientRouter = createTRPCRouter({
 
       const countResult = await ctx.elkClient.count({
         index: "clients",
-        body: input
+        query: input
           ? {
-              query: {
-                multi_match: {
-                  query: input,
-                  fields: ["name", "firstname", "email"],
-                  operator: "or",
-                  type: "bool_prefix",
-                },
+              bool: {
+                minimum_should_match: 2,
+                should: [
+                  {
+                    match: {
+                      restaurantId: ctx.restaurant.id,
+                    },
+                  },
+                  {
+                    multi_match: {
+                      query: input,
+                      fields: ["name", "firstname", "email"],
+                      operator: "or",
+                      type: "bool_prefix",
+                    },
+                  },
+                ],
               },
             }
           : {
-              query: {
-                match_all: {},
+              match: {
+                restaurantId: ctx.restaurant.id,
               },
             },
       });
