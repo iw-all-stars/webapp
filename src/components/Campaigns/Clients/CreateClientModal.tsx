@@ -1,4 +1,4 @@
-import { EmailIcon, PhoneIcon } from "@chakra-ui/icons";
+import { EmailIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -205,6 +205,7 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
               <FormControl>
                 <FormLabel>Prénom</FormLabel>
                 <Input
+                isInvalid={!!error?.includes("prénom")}
                   placeholder="Juste"
                   value={client?.firstname || ""}
                   onChange={(e) => {
@@ -213,9 +214,10 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
                   }}
                 />
               </FormControl>
-              <FormControl>
+              <FormControl isRequired>
                 <FormLabel>Nom</FormLabel>
                 <Input
+                  isInvalid={!!error?.includes("(nom)")}
                   placeholder="Leblanc"
                   value={client?.name || ""}
                   onChange={(e) => {
@@ -226,13 +228,15 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
                 <FormErrorMessage>Le nom est obligatoire</FormErrorMessage>
               </FormControl>
             </Flex>
-            <FormControl>
+            <FormControl isRequired>
               <FormLabel>Email</FormLabel>
               <InputGroup>
                 <InputLeftElement pointerEvents="none">
                   <EmailIcon color="gray.300" />
                 </InputLeftElement>
                 <Input
+                  isInvalid={!!error?.includes("email")}
+                  type="email"
                   placeholder="Email"
                   value={client?.email || ""}
                   onChange={(e) => {
@@ -243,65 +247,9 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
               </InputGroup>
               <FormErrorMessage>L'email est obligatoire</FormErrorMessage>
             </FormControl>
-            <FormControl>
-              <FormLabel>Numéro de téléphone</FormLabel>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <PhoneIcon color="gray.300" />
-                </InputLeftElement>
-                <Input
-                  type="tel"
-                  placeholder="Numéro de téléphone"
-                  value={client?.phone || ""}
-                  onChange={(e) => {
-                    const phone = e.target.value;
-                    setClient({ ...client, phone });
-                  }}
-                />
-              </InputGroup>
-            </FormControl>
-            <FormControl>
-              <FormLabel>Adresse</FormLabel>
-              <Input
-                placeholder="Adresse"
-                value={client?.address || ""}
-                onChange={(e) => {
-                  const address = e.target.value;
-                  setClient({ ...client, address });
-                }}
-              />
-            </FormControl>
-            <Flex w="100%" justifyContent="space-between" gap="4">
-              <FormControl>
-                <FormLabel>Ville</FormLabel>
-                <Input
-                  placeholder="Ville"
-                  value={client?.city || ""}
-                  onChange={(e) => {
-                    const city = e.target.value;
-                    setClient({ ...client, city });
-                  }}
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Code postal</FormLabel>
-                <Input
-                  placeholder="Code postal"
-                  value={client?.zip || ""}
-                  onChange={(e) => {
-                    const zip = e.target.value;
-                    setClient({ ...client, zip });
-                  }}
-                />
-              </FormControl>
-            </Flex>
           </Box>
         </ModalBody>
-        <ModalFooter
-          display="flex"
-          justifyContent="space-between"
-          gap={4}
-        >
+        <ModalFooter display="flex" justifyContent="space-between" gap={4}>
           {client?.id ? (
             <Button
               colorScheme={"red"}
@@ -310,7 +258,9 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
             >
               Supprimer
             </Button>
-          ) : <div></div>}
+          ) : (
+            <div></div>
+          )}
           <Flex gap={4} align="right">
             <Button onClick={onClose}>Annuler</Button>
             <Button

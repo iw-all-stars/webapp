@@ -3,10 +3,10 @@ import { Box, Icon, Image, Text } from "@chakra-ui/react";
 import { PostType, type Post } from "@prisma/client";
 import { useRef } from "react";
 import {
-    DragDropContext,
-    Draggable,
-    Droppable,
-    type DragUpdate,
+	DragDropContext,
+	Draggable,
+	Droppable,
+	type DragUpdate,
 } from "react-beautiful-dnd";
 import { BiImageAdd } from "react-icons/bi";
 import { BsCameraVideo } from "react-icons/bs";

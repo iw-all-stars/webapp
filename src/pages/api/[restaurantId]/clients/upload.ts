@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import type { NextApiRequest, NextApiResponse } from "next";
-import { createRouter } from "next-connect";
+import { type Prisma } from "@prisma/client";
 import { IncomingForm, type File as FormidableFile } from "formidable";
 import { promises as fs } from "fs";
+import type { NextApiRequest, NextApiResponse } from "next";
+import { createRouter } from "next-connect";
 import XLSX, { type WorkSheet } from "xlsx";
 import { prisma } from "~/server/db";
 import { type Client } from "./template";
-import { type Prisma } from "@prisma/client";
+import { Client as ClientElk } from "@elastic/elasticsearch";
+import { elkOptions } from "~/utils/elkClientOptions";
 
 interface File extends FormidableFile {
   path?: string;
@@ -50,8 +52,12 @@ router
     next();
   })
   .post(async (req, res) => {
-    if (!req.file || !req.file.filepath) {
-      return res.status(400).json({ message: "Missing file" });
+    if (!req.file || !req.file.filepath || !req.query.restaurantId) {
+      return res.status(400).json({ message: "Bad request" });
+    }
+
+    if (!req.file.mimetype?.includes("sheet")) {
+      return res.status(400).json({ message: "Le fichier doit être au format Excel (.xslx)." });
     }
 
     try {
@@ -59,13 +65,45 @@ router
       const workbook = XLSX.read(buffer, { type: "buffer" });
 
       if (!workbook.SheetNames.length) {
-        return res.status(400).json({ message: "File is empty" });
+        return res.status(400).json({ message: "Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer." });
       }
 
       const firstSheetName = workbook.SheetNames[0];
       if (!firstSheetName) {
-        return res.status(400).json({ message: "File is empty" });
+        return res.status(400).json({ message: "Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer." });
       }
+
+      const expectedHeaders = [
+        "Nom",
+        "Prenom",
+        "Email",
+        "Téléphone",
+        "Adresse",
+        "Ville",
+        "Code postal",
+      ];
+
+      const firstRow = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName] as WorkSheet, {
+        header: 1,
+        range: 0,
+      })[0];
+
+      if (!firstRow) {
+        return res.status(400).json({ message: "Fichier invalide. Veuillez télécharger le fichier modèle et réessayer." });
+      }
+      const headers = Object.values(firstRow);
+
+      if (headers.length !== expectedHeaders.length) {
+        return res.status(400).json({ message: "Le format des colonnes n'est pas respecté. Veuillez télécharger le fichier modèle et réessayer." });
+      }
+
+      for (let i = 0; i < headers.length; i++) {
+        if (headers[i] !== expectedHeaders[i]) {
+          return res.status(400).json({ message: "Le format des colonnes n'est pas respecté. Veuillez télécharger le fichier modèle et réessayer." });
+        }
+      }
+
+      const clientElk = new ClientElk(elkOptions);
 
       const worksheet: WorkSheet = workbook.Sheets[firstSheetName] as WorkSheet;
       const data: Client[] = XLSX.utils.sheet_to_json(worksheet);
@@ -81,8 +119,19 @@ router
           address: String(client.Adresse),
           city: String(client.Ville),
           zip: String(client["Code postal"]),
+          restaurantId: req.query.restaurantId as string,
         });
       }
+
+      await clientElk.bulk({
+        index: "clients",
+        body: createClients.flatMap((client) => [
+          { index: { _index: "clients" } },
+          client,
+        ]),
+      });
+
+      await clientElk.close();
 
       await prisma.client.createMany({
         data: createClients,

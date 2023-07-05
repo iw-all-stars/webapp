@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { createTRPCRouter, hasAccessToOrganizationProcedure, isAdminOfOrganizationProcedure, protectedProcedure, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToOrganizationProcedure, isAdminOfOrganizationProcedure, protectedProcedure } from "~/server/api/trpc";
 
 export const invitationRouter = createTRPCRouter({
 

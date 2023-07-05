@@ -1,4 +1,4 @@
-import { Modal, ModalOverlay, ModalContent, FormControl, FormErrorMessage, ModalHeader, ModalCloseButton, ModalBody, Input, FormLabel, Select, ModalFooter, Button } from "@chakra-ui/react";
+import { Modal, ModalOverlay, ModalContent, FormControl, FormErrorMessage, ModalHeader, ModalCloseButton, ModalBody, Input, FormLabel, Select, ModalFooter, Button, useToast } from "@chakra-ui/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -15,6 +15,8 @@ type RestaurantFormValues = {
 }
 
 const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+
+  const toast = useToast();
 
   const [placeId, setPlaceId] = useState<string | null>(null);
 
@@ -36,7 +38,13 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
         ...newRestaurantForm,
         organizationId: router.query.organizationId as string,
       });
-
+	  toast({
+		title: "Restaurant créé.",
+		description: "Votre restaurant a bien été créé.",
+		status: "success",
+		duration: 5000,
+		isClosable: true,
+	  });
       reset();
       onClose();
       router.push(`/dashboard/${router.query.organizationId}/restaurant/${newRestaurant.id}/stories`);
@@ -108,7 +116,9 @@ const ModalNewRestaurant = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
             </FormControl>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" mr={3} type="submit" isDisabled={
+            <Button colorScheme="blue" mr={3} type="submit" isLoading={
+				addRestaurant.isLoading
+			} isDisabled={
 				!isValid || !placeId
 			}>
               Valider

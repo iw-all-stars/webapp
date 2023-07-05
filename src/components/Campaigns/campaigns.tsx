@@ -18,12 +18,15 @@ import {
   Tr,
   useDisclosure,
 } from "@chakra-ui/react";
-import { api } from "~/utils/api";
-import { format } from "date-fns";
-import CampaignModal from "~/components/Campaigns/campaignModal";
 import { type Campaign } from "@prisma/client";
 import { SearchIcon } from "@chakra-ui/icons";
+import { format } from "date-fns";
+import React from "react";
+
+import { api } from "~/utils/api";
+import CampaignModal from "~/components/Campaigns/campaignModal";
 import CreateCustomerModal from "~/components/Campaigns/campaignModal/createCustomerModal";
+
 import { CampaignContext } from "./CampaignContext";
 
 const DashboardCampaign: React.FC = () => {
@@ -147,7 +150,8 @@ const DashboardCampaign: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {(search || (getCampaigns?.data && getCampaigns?.data?.length > 0)) &&
+            {(search ||
+              (getCampaigns?.data && getCampaigns?.data?.length > 0)) &&
               getCampaigns.data?.map((campaign) => {
                 const sentMails = campaign.mail.length;
                 const openRate =

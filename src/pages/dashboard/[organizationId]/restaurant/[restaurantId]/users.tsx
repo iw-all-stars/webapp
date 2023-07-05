@@ -1,4 +1,4 @@
-import { Button, Heading, Flex, Divider, Avatar, Text, Skeleton, Center } from "@chakra-ui/react";
+import { Button, Heading, Flex, Divider, Avatar, Text, Skeleton, Center, useToast } from "@chakra-ui/react";
 import { type GetServerSideProps, type NextPage } from "next";
 import { Box } from "@chakra-ui/react";
 import { api } from "~/utils/api";
@@ -17,6 +17,7 @@ const DashboardInvitations: NextPage = () => {
   const utils = api.useContext();
   const router = useRouter();
   const { organizationId } = router.query;
+  const toast = useToast();
 
   const [usersToInvite, setUsersToInvite] = useState<string[]>([]);
 
@@ -62,15 +63,40 @@ const DashboardInvitations: NextPage = () => {
     onSuccess: () => {
       utils.user.getAll.invalidate()
       utils.invitation.getByOrganizationId.invalidate({ organizationId: organizationId as string })
+	  toast({
+        title: "Invitation envoyée",
+        description: "L'invitation a été envoyée avec succès.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   })
 
   const removeUserFromOrganization = api.organization.removeUser.useMutation({
-    onSuccess: () => utils.user.getAll.invalidate()
+    onSuccess: () => {
+		utils.user.getAll.invalidate()
+		toast({
+			title: "Utilisateur supprimé",
+			description: "L'utilisateur a été supprimé avec succès.",
+			status: "success",
+			duration: 5000,
+			isClosable: true,
+		  });
+	}
   });
 
   const deleteInvitation = api.invitation.delete.useMutation({
-    onSuccess: () => utils.invitation.getByOrganizationId.invalidate({ organizationId: organizationId as string })
+    onSuccess: () => {
+		utils.invitation.getByOrganizationId.invalidate({ organizationId: organizationId as string })
+		toast({
+			title: "Invitation supprimée",
+			description: "L'invitation a été supprimée avec succès.",
+			status: "success",
+			duration: 5000,
+			isClosable: true,
+		  });
+	}
   })
 
   const handleAddInvitation = async () => {
@@ -121,7 +147,7 @@ const DashboardInvitations: NextPage = () => {
                 }),
               }}
             />
-            <Button ml={4} colorScheme="blue" onClick={() => handleAddInvitation()}>Inviter</Button>
+            <Button ml={4} colorScheme="blue" isLoading={addInvitation.isLoading} onClick={() => handleAddInvitation()}>Inviter</Button>
           </Flex>
         )}
         {!usersFromOrganization.length ? (
@@ -156,7 +182,7 @@ const DashboardInvitations: NextPage = () => {
         <>
           <Heading mt={6} mb={5}>Invitations en attente</Heading>
           <Flex direction="column" bg="white" rounded="lg" border="1px solid" borderColor="gray.400">
-            <Flex alignItems="center" py={6} px={4}>
+            <Flex direction="column" gap={4} alignItems="center" py={6} px={4}>
               {isLoadingInvitations ? (
                 <Skeleton height="96px" />
               ) :

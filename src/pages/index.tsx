@@ -19,7 +19,8 @@ import {
     ModalOverlay,
     Skeleton, SkeletonCircle, Text,
     useDisclosure,
-    Select
+    Select,
+	useToast
 } from "@chakra-ui/react";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
@@ -39,6 +40,7 @@ type RestaurantFormValues = {
 };
 
 const Home: NextPage = () => {
+  const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { register, formState: { errors, isValid }, handleSubmit, control, reset } = useForm<RestaurantFormValues>();
 
@@ -57,7 +59,16 @@ const Home: NextPage = () => {
   });
 
   const addRestaurant = api.restaurant.add.useMutation({
-    onSuccess: () => utils.organization.getByCurrentUser.invalidate(),
+    onSuccess: () => {
+		utils.organization.getByCurrentUser.invalidate();
+		toast({
+			title: "Restaurant créé.",
+			description: "Votre restaurant a bien été créé.",
+			status: "success",
+			duration: 5000,
+			isClosable: true,
+		  });
+	},
   });
 
   const handleOrganization: SubmitHandler<RestaurantFormValues> = async (restaurantForm) => {

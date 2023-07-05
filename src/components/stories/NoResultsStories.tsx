@@ -1,13 +1,10 @@
-import {
-	Box,
-	Text
-} from "@chakra-ui/react";
+import { Box, Text, Image } from "@chakra-ui/react";
 
 export const NoResultsStories = () => {
     return (
         <Box
             h="full"
-			w="full"
+            w="full"
             display="flex"
             justifyContent="center"
             alignItems="center"
@@ -19,6 +16,7 @@ export const NoResultsStories = () => {
                 flexDirection="column"
                 gap="4"
             >
+                <Image src="/assets/Error1.svg" width={50} height={50} alt="" />
                 <Text fontSize="lg" fontWeight="bold">
                     Pas de stories par ici ...
                 </Text>

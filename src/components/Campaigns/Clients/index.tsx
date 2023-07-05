@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Flex,
   Heading,
   Image,
   Input,
@@ -37,7 +38,7 @@ export const Clients = () => {
 
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data: countClients } = api.customer.getCountClients.useQuery(debouncedSearch, {
+  const { data: countClients, refetch: refetchCountClients } = api.customer.getCountClients.useQuery(debouncedSearch, {
     initialData: 0,
   });
 
@@ -45,7 +46,7 @@ export const Clients = () => {
     input: debouncedSearch,
     limit: defaultLimit,
     offset: pageIndex * defaultLimit,
-  }, { initialData: [], enabled: !!countClients });
+  });
 
   const columnHelper = createColumnHelper<Client>();
 
@@ -93,10 +94,18 @@ export const Clients = () => {
   };
 
   React.useEffect(() => {
-    refetch();
+    setPageIndex(0);
+  }, [debouncedSearch])
+
+  React.useEffect(() => {
+    if (!isOpen && !isImportOpen) {
+      refetch();
+      refetchCountClients();
+      setSearch("");
+    }
   }, [isOpen, isImportOpen]);
 
-  if (isLoading && !search)
+  if (countClients === 0 && !isLoading && !debouncedSearch)
     return (
       <Box
         pt={20}
@@ -138,22 +147,20 @@ export const Clients = () => {
       <Box
         w="full"
         display="flex"
-        justifyContent="space-between"
+        alignItems="center"
         gap={4}
-        alignItems={"center"}
       >
         <Heading
-          display={"flex"}
+          display="flex"
           alignItems="center"
-          flexDirection={"row"}
           gap={1}
           fontSize={18}
           fontWeight={400}
         >
           <Text fontWeight="bold">Clients</Text> 
-          <SkeletonCircle size="6" mt={0.5} isLoaded={!isRefetching}>
+          <SkeletonCircle size="6" mt={0.5} isLoaded={!isRefetching} w="fit-content">
             <Text letterSpacing="widest" fontStyle="italic">
-              ({data.length})
+              ({countClients})
             </Text>
           </SkeletonCircle>
         </Heading>
@@ -161,30 +168,29 @@ export const Clients = () => {
           <Input placeholder="Recherche" onChange={(e) => setSearch(e.target.value)} />
           <InputRightElement children={<SearchIcon />} />
         </InputGroup>
-        <Button
-          onClick={onCreateClient}
-          fontSize={12}
-          colorScheme="green"
-          variant="solid"
-          minW={"min-content"}
-        >
-          Ajouter un client
-        </Button>
-        <Button
-          onClick={onImportClient}
-          fontSize={12}
-          colorScheme="blue"
-          variant="solid"
-          minW={"min-content"}
-        >
-          Importer des clients (XSLX)
-        </Button>
+        <Flex gap={4}>
+          <Button
+            onClick={onCreateClient}
+            colorScheme="green"
+            fontSize="sm"
+          >
+            Ajouter un client
+          </Button>
+          <Button
+            onClick={onImportClient}
+            colorScheme="blue"
+            fontSize="sm"
+          >
+            Importer des clients (XSLX)
+          </Button>
+        </Flex>
       </Box>
       <br />
       <DataTable
         columns={columns}
         data={data}
         countTotal={countClients}
+        isLoading={isLoading}
         pagination={{
           pageSize: defaultLimit,
           pageIndex,

@@ -1,18 +1,11 @@
 import { Client as ClientElk } from "@elastic/elasticsearch";
 import { type Client as ModelClient, type PrismaClient } from "@prisma/client";
-import { env } from "../env.mjs";
 import prismaInstance from "./client.prisma";
-import dbConnect from "./mongoose";
 
-const clientElk = new ClientElk({
-  node: process.env.ELASTICSEARCH_URL ?? "http://localhost:9200",
-  auth: {
-    username: process.env.ELASTICSEARCH_USERNAME ?? "elastic",
-    password: process.env.ELASTICSEARCH_PASSWORD ?? "changeme",
-  },
-});
+import { elkOptions } from "~/utils/elkClientOptions";
+import { env } from "../env.mjs";
 
-dbConnect().catch(console.error);
+const clientElk = new ClientElk(elkOptions);
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -51,23 +44,30 @@ prismaClient.$use(async (params, next) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       const { id, ...restUpdatedClient } = updatedClient;
 
-      await clientElk.update({
-        index: "clients",
-        id,
-        refresh: true,
-        doc: { ...restUpdatedClient },
-      });
+      try {
+        await clientElk.update({
+          index: "clients",
+          id,
+          refresh: true,
+          doc: { ...restUpdatedClient },
+        });
+      } catch (error) {
+        return error;
+      }
     } else if (params.action === "delete") {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const deletedClient: ModelClient = result;
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const { id } = deletedClient;
-      await clientElk.delete({
-        index: "clients",
-        refresh: true,
-        id,
-      });
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const { id } = deletedClient;
+        await clientElk.delete({
+          index: "clients",
+          refresh: true,
+          id,
+        });
+      } catch (error) {
+        return error;
+      }
     }
   }
 
