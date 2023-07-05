@@ -1,12 +1,12 @@
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter,
   Button,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Text,
   useToast,
 } from "@chakra-ui/react";
@@ -29,7 +29,7 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
   const importFile = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch(`/api/${restaurantId}/clients/upload`, {
+    const response = await fetch(`/api/xlsx/${restaurantId}/clients/upload`, {
       method: "POST",
       body: formData,
     });
@@ -45,8 +45,7 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
     } else {
       toast({
         title: "Erreur",
-        description:
-          "Une erreur est survenue lors de l'importation.",
+        description: "Une erreur est survenue lors de l'importation.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -69,7 +68,8 @@ export const ImportClientModal: React.FC<ImportClientModalProps> = ({
               colorScheme="blue"
               onClick={() => {
                 window.open(
-                  window.location.origin + `/api/${restaurantId}/clients/template`,
+                  window.location.origin +
+                    `/api/xlsx/${restaurantId}/clients/template`,
                   "_blank"
                 );
               }}
