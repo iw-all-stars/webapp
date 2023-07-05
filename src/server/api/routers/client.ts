@@ -220,7 +220,7 @@ export const clientRouter = createTRPCRouter({
     .mutation(({ ctx, input }) => {
       const { email } = input;
       return ctx.prisma.client
-        .findUnique({ where: { email } })
+        .findUnique({ where: { email_restaurantId: { email, restaurantId: ctx.restaurant.id }} })
         .then((client) => {
           if (client) {
             throw new Error("Un client avec cet email existe déjà");
@@ -240,7 +240,7 @@ export const clientRouter = createTRPCRouter({
     .mutation(({ ctx, input }) => {
       const { id, email, ...data } = input;
       return ctx.prisma.client
-        .findUnique({ where: { email } })
+        .findUnique({ where: { email_restaurantId: { email, restaurantId: ctx.restaurant.id }} })
         .then((client) => {
           if (client && client.id !== id) {
             throw new Error("Un client avec cet email existe déjà");
