@@ -46,7 +46,7 @@ docker build -t webapp --build-arg NEXT_PUBLIC_CLIENTVAR=clientvar --build-arg S
 
 ## Create client index
 ```
-curl -X PUT -H 'Content-Type: application/json' http://localhost:9200/clients -u elastic:${ELASTIC_PASSWORD} -d '{
+curl -X PUT -H 'Content-Type: application/json' http://localhost:9200/clients -u elastic:elastic_password -d '{
    "mappings": {
      "properties": {
        "email": {
@@ -90,12 +90,12 @@ curl -X PUT -H 'Content-Type: application/json' http://localhost:9200/clients -u
 
 ## Search data in client index
 ```
-curl http://localhost:9200/clients/_search -u elastic:${ELASTIC_PASSWORD}
+curl http://localhost:9200/clients/_search -u elastic:elastic_password
 ```
 
 ## Delete data in client index
 ```
-curl -XPOST 'http://localhost:9200/clients/_delete_by_query' -H 'Content-Type: application/json' -u elastic:${ELASTIC_PASSWORD} -d '{
+curl -XPOST 'http://localhost:9200/clients/_delete_by_query' -H 'Content-Type: application/json' -u elastic:elastic_password -d '{
     "query" : {
         "match_all" : {}
     }

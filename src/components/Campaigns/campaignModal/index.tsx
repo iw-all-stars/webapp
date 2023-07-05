@@ -87,6 +87,7 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
     input: search,
   });
   const createCampaign = api.campaign.createCampaign.useMutation();
+  const initializeCampaign = api.campaign.initializeCampaign.useMutation();
   const updateCampaign = api.campaign.updateCampaign.useMutation();
   const sendCampaign = api.mail.sendCampaign.useMutation();
   const sentEmails = api.mail.getMails.useQuery(context?.campaign?.id);
@@ -265,13 +266,10 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
       const campaign = {
         name: context?.campaign.name,
         restaurantId: router.query.restaurantId as string,
-        template: Number(5),
-        subject: context?.campaign.subject || "",
-        body: context?.campaign.body || "",
-        url: context?.campaign.url || "",
+        template: Number(5), // Change this to the template id from env
       };
 
-      const newCampaign = await createCampaign.mutateAsync(campaign);
+      const newCampaign = await initializeCampaign.mutateAsync(campaign);
 
       if (newCampaign?.id) {
         context?.setCampaign(newCampaign);
@@ -294,7 +292,7 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
         status,
         subject,
         body,
-        url,
+        url: url ? url : undefined,
       };
 
       if (campaign.status === "draft") {

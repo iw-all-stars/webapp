@@ -131,7 +131,7 @@ export const Clients = () => {
           </MenuButton>
           <MenuList>
             <MenuItem onClick={onCreateClient}>Manuellement</MenuItem>
-            <MenuItem>Importer un fichier</MenuItem>
+            <MenuItem onClick={onImportClient}>Importer un fichier (XSLX)</MenuItem>
           </MenuList>
         </Menu>
         <CreateClientModal
@@ -139,6 +139,7 @@ export const Clients = () => {
           onClose={onClose}
           editClient={editClient}
         />
+        <ImportClientModal isOpen={isImportOpen} onClose={onImportClose} />
       </Box>
     );
 

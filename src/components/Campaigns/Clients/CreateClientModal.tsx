@@ -162,7 +162,7 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
       return setClient(editClient);
     }
     setClient(null);
-  }, [editClient]);
+  }, [isOpen, editClient]);
 
   useEffect(() => {
     if (!isOpen) {

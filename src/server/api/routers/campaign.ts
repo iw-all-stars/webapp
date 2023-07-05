@@ -8,7 +8,7 @@ const campaignSchema = z.object({
   template: z.number(),
   subject: z.string(),
   body: z.string(),
-  url: z.string().url(),
+  url: z.string().optional(),
   creatorId: z.string(),
   restaurantId: z.string(),
   status: z.string(),
@@ -20,7 +20,7 @@ const updateCampaignSchema = z.object({
   status: z.string(),
   subject: z.string().optional(),
   body: z.string().optional(),
-  url: z.string().url().optional(),
+  url: z.string().optional(),
   fromName: z.string().optional(),
   fromEmail: z.string().email().optional()
 });
@@ -30,7 +30,7 @@ export const campaignRouter = createTRPCRouter({
     .input(z.string().optional())
     .query(({ ctx, input = "" }) => {
       return ctx.prisma.campaign.findMany({
-        include: { mail: true },
+        include: { mail: true, user: true },
         where: {
           OR: [
             { name: { contains: input, mode: "insensitive" } },
@@ -74,7 +74,7 @@ export const campaignRouter = createTRPCRouter({
           template: input.template,
           subject: input.subject,
           body: input.body,
-          url: input.url,
+          url: input.url || "",
           status: "draft",
         },
       });
