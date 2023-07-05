@@ -51,6 +51,7 @@ export interface Columns {
 export type Recipient = Client & { selected: boolean };
 
 export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
+
   const context = useContext(CampaignContext);
 
   const steps = [
