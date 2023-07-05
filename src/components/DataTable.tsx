@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import * as React from "react";
-import { Table, Thead, Tbody, Tr, Th, Td, chakra, Tfoot, Button, Flex, Skeleton } from "@chakra-ui/react";
-import { ChevronLeftIcon, ChevronRightIcon, TriangleDownIcon, TriangleUpIcon } from "@chakra-ui/icons";
+import { Table, Thead, Tbody, Tr, Th, Td, chakra, Tfoot, Button, Flex, Skeleton, IconButton } from "@chakra-ui/react";
+import { ArrowLeftIcon, ArrowRightIcon, ChevronLeftIcon, ChevronRightIcon, TriangleDownIcon, TriangleUpIcon } from "@chakra-ui/icons";
 import {
   useReactTable,
   flexRender,
@@ -65,6 +65,24 @@ export function DataTable<Data extends object>({
     pageCount: Math.ceil(countTotal / pagination.pageSize),
   });
 
+  const { pageSize, pageIndex, setPageIndex } = pagination;
+
+  const numberOfPages = React.useMemo(() => (
+    Math.ceil(countTotal / pageSize)
+  ), [countTotal, pageSize]);
+
+  const arrPagination: number[] = React.useMemo(() => {
+    const paginationArray = [];
+    const lowerBound = Math.max(pageIndex === numberOfPages - 1 ? pageIndex - 2 : pageIndex - 1, 0);
+    const upperBound = Math.min(pageIndex === 0 ? 2 : pageIndex === numberOfPages - 1 ? pageIndex : pageIndex + 1, countTotal - 1);
+
+    for (let i = lowerBound; i <= upperBound; i++) {
+      paginationArray.push(i);
+    }
+
+    return paginationArray;
+  }, [countTotal, pageIndex]);
+
   return (
     <Table>
       <Thead>
@@ -117,42 +135,57 @@ export function DataTable<Data extends object>({
       <Tfoot>
         <Tr>
           <Th colSpan={columns.length}>
-            <Flex gap={2} mt={2}>
-              <Button
-                ml="auto"
-                onClick={() => pagination.setPageIndex(pagination.pageIndex - 1)}
-                isDisabled={pagination.pageIndex === 0}
+            <Flex gap={2} mt={2} justifyContent="end" alignItems="center">
+              <IconButton
+                icon={<ArrowLeftIcon w={2} h={2} />}
+                aria-label="Go to first page"
+                onClick={() => setPageIndex(0)}
+                isDisabled={pageIndex === 0}
                 size="sm"
                 color="gray.600"
                 variant="ghost"
-                leftIcon={<ChevronLeftIcon />}
-              >
-                Précédent
-              </Button>
-              <Flex gap={2}>
-                {[...Array(Math.ceil(countTotal / pagination.pageSize))].map((_, i) => (
+              />
+              <IconButton
+                icon={<ChevronLeftIcon w={5} h={5} />}
+                aria-label="Go to last page"
+                onClick={() => setPageIndex(pageIndex - 1)}
+                isDisabled={pageIndex === 0}
+                size="sm"
+                color="gray.600"
+                variant="ghost"
+              />
+              <Flex gap={1}>
+                {arrPagination.map(i => (
                   <Button
                     key={i}
-                    onClick={() => pagination.setPageIndex(i)}
+                    onClick={() => setPageIndex(i)}
                     size="sm"
-                    color={i === pagination.pageIndex ? "black" : "gray.600"}
-                    fontWeight={i === pagination.pageIndex ? "bold" : "normal"}
-                    variant={i === pagination.pageIndex ? "solid" : "ghost"}
+                    color={i === pageIndex ? "black" : "gray.600"}
+                    fontWeight={i === pageIndex ? "bold" : "normal"}
+                    variant={i === pageIndex ? "solid" : "ghost"}
                   >
                     {i + 1}
                   </Button>
                 ))}
               </Flex>
-              <Button
-                onClick={() => pagination.setPageIndex(pagination.pageIndex + 1)}
-                isDisabled={pagination.pageSize * (pagination.pageIndex + 1) >= countTotal}
+              <IconButton
+                icon={<ChevronRightIcon w={5} h={5} />}
+                aria-label="Go to next page"
+                onClick={() => setPageIndex(pageIndex + 1)}
+                isDisabled={pageSize * (pageIndex + 1) >= countTotal}
                 size="sm"
                 color="gray.600"
                 variant="ghost"
-                rightIcon={<ChevronRightIcon />}
-              >
-                Suivant
-              </Button>
+              />
+              <IconButton
+                icon={<ArrowRightIcon w={2} h={2} />}
+                aria-label="Go to last page"
+                onClick={() => setPageIndex(numberOfPages - 1)}
+                isDisabled={pageSize * (pageIndex + 1) >= countTotal}
+                size="sm"
+                color="gray.600"
+                variant="ghost"
+              />
             </Flex>
           </Th>
         </Tr>

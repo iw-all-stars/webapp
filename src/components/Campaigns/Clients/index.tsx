@@ -94,6 +94,10 @@ export const Clients = () => {
   };
 
   React.useEffect(() => {
+    setPageIndex(0);
+  }, [debouncedSearch])
+
+  React.useEffect(() => {
     if (!isOpen && !isImportOpen) {
       refetch();
       refetchCountClients();
