@@ -123,20 +123,29 @@ router
         });
       }
 
+      await prisma.client.createMany({
+        data: createClients,
+        skipDuplicates: true,
+      });
+
+      const clientsCreated = await prisma.client.findMany({
+        where: {
+          email: {
+            in: createClients.map((client) => client.email),
+          }
+        }
+      });
+
       await clientElk.bulk({
         index: "clients",
-        body: createClients.flatMap((client) => [
-          { index: { _index: "clients" } },
-          client,
+        body: clientsCreated.flatMap(client => [
+          { index: { _index: "clients", _id: client.id } },
+          client
         ]),
       });
 
       await clientElk.close();
 
-      await prisma.client.createMany({
-        data: createClients,
-        skipDuplicates: true,
-      });
       res.status(200).json({ success: true });
     } catch (err) {
       console.log(err);
