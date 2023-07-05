@@ -46,7 +46,7 @@ model Mail {
 
 model Client {
   id           String     @id @default(uuid()) @db.Uuid
-  email        String     @unique
+  email        String     
   name         String
   firstname    String?
   phone        String?
@@ -61,6 +61,7 @@ model Client {
   updatedAt    DateTime   @updatedAt
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   Mail         Mail[]
+  @@unique([email, restaurantId])
 }
 
 model Category {
