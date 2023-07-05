@@ -55,7 +55,9 @@ const geocoder = NodeGeocoder({
 });
 
 const handler: NextApiHandler = async (req, res) => {
+  console.log(req.headers);
   if (!req.headers.authorization) {
+    console.log("here");
     return res.status(401).json({ message: "Unauthorized" });
   }
 
@@ -67,8 +69,6 @@ const handler: NextApiHandler = async (req, res) => {
     console.log(e);
     return res.status(401).json({ message: "Unauthorized" });
   }
-
-  console.log(user);
 
   if (req.method === "GET") {
     const { categoryId, name, latitude, longitude, radius } = getSchema.parse(
@@ -100,7 +100,13 @@ const handler: NextApiHandler = async (req, res) => {
   if (req.method === "DELETE") {
     const { id } = deleteSchema.parse(req.body);
 
-    if (user.sub !== id) {
+    console.log(id, user.sub);
+
+    const restaurant = await RestaurantModel.findOne({
+      _id: id,
+    });
+
+    if (!restaurant || user.sub !== restaurant.createdBy) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
