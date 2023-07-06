@@ -20,6 +20,7 @@ import {
 	MdAdd,
 	MdCampaign,
 	MdCheck,
+	MdHomeFilled,
 	MdPhotoFilter,
 	MdSettings
 } from "react-icons/md";
@@ -53,6 +54,11 @@ export default function DashboardSidebar() {
   );
 
   const links = [
+    {
+      name: "Accueil",
+      slug: "home",
+      icon: MdHomeFilled,
+    },
     {
       name: "Stories",
       slug: "stories",
@@ -161,9 +167,9 @@ export default function DashboardSidebar() {
               <Button
                 w="full"
                 justifyContent="start"
-				color={
-					pathName.includes(slug) ? "teal" : "black"
-				}
+                color={
+                  pathName.includes(slug) ? "teal" : "black"
+                }
                 variant="ghost"
                 leftIcon={<Icon as={icon} w={5} h={5} />}
               >

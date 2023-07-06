@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, hasAccessToRestaurantProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToRestaurantProcedure, hasAccessToOrganizationProcedure } from "~/server/api/trpc";
 
 const campaignSchema = z.object({
   id: z.string(),
@@ -37,6 +37,29 @@ export const campaignRouter = createTRPCRouter({
           ],
         },
       });
+    }),
+
+  getCountCampaignsByRestaurant: hasAccessToOrganizationProcedure
+    .query(async ({ ctx }) => {
+
+      const restaurantsOfOrganization = await ctx.prisma.restaurant.findMany({
+        where: {
+          organizationId: ctx.userToOrga.organizationId,
+        },
+      });
+
+      const campaignOfOrganization = await ctx.prisma.campaign.findMany({
+        where: {
+          restaurantId: {
+            in: restaurantsOfOrganization.map((restaurant) => restaurant.id),
+          },
+        },
+      })
+
+      return restaurantsOfOrganization.map(restaurant => ({
+        restaurantName: restaurant.name,
+        count: campaignOfOrganization.filter(campaign => campaign.restaurantId === restaurant.id).length
+      }))
     }),
 
   getCampaigns: hasAccessToRestaurantProcedure

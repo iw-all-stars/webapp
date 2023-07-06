@@ -4,7 +4,9 @@ import { type Mail, type Client as ClientModel } from "@prisma/client";
 import {
   createTRPCRouter,
   hasAccessToRestaurantProcedure,
+  hasAccessToOrganizationProcedure,
 } from "~/server/api/trpc";
+import { type Client } from "@elastic/elasticsearch";
 
 const clientSchema = z.object({
   id: z.string().optional(),
@@ -103,6 +105,46 @@ export const clientRouter = createTRPCRouter({
 
       return countResult.count;
     }),
+
+  getCountClientsByRestaurant: hasAccessToOrganizationProcedure.query(async ({ ctx }) => {
+
+    const restaurantsOfOrganization = await ctx.prisma.restaurant.findMany({
+      where: {
+        organizationId: ctx.userToOrga.organizationId,
+      },
+    });
+
+    const clientsByRestaurant = await ctx.elkClient.search<Client>({
+      index: "clients",
+      size: 0,
+      query: {
+        bool: {
+          minimum_should_match: 1,
+          should: restaurantsOfOrganization.map((restaurant) => ({
+            match: {
+              restaurantId: restaurant.id,
+            },
+          })),
+        },
+      },
+      aggs: {
+        restaurants: {
+          terms: {
+            field: "restaurantId.keyword",
+            size: 10000,
+          },
+        },
+      }
+    });
+
+    if (clientsByRestaurant?.aggregations?.restaurants) {
+      const aggs = clientsByRestaurant.aggregations.restaurants as { buckets: { key: string; doc_count: number }[] };
+      return aggs.buckets.map((bucket) => ({
+        restaurantName: restaurantsOfOrganization.find((restaurant) => restaurant.id === bucket.key)?.name,
+        count: bucket.doc_count,
+      }));
+    }
+  }),
 
   getClients: hasAccessToRestaurantProcedure
     .input(
