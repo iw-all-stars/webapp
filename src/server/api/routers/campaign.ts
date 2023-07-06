@@ -35,6 +35,7 @@ export const campaignRouter = createTRPCRouter({
             { name: { contains: input, mode: "insensitive" } },
             { subject: { contains: input, mode: "insensitive" } },
           ],
+          restaurantId: ctx.restaurant.id,
         },
       });
     }),
@@ -49,6 +50,7 @@ export const campaignRouter = createTRPCRouter({
             { name: { contains: input, mode: "insensitive" } },
             { subject: { contains: input, mode: "insensitive" } },
           ],
+          restaurantId: ctx.restaurant.id,
         },
       });
     }),
