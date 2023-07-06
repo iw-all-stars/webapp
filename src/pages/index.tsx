@@ -228,7 +228,9 @@ const Home: NextPage = () => {
                 </FormControl>
             </ModalBody>
             <ModalFooter>
-              <Button colorScheme='blue' mr={3} type="submit" isDisabled={!isValid || !placeId}>
+              <Button colorScheme='blue' mr={3} type="submit" isLoading={
+				addOrganization.isLoading || addRestaurant.isLoading
+			  } isDisabled={!isValid || !placeId}>
                 Valider
               </Button>
               <Button onClick={onClose}>Annuler</Button>

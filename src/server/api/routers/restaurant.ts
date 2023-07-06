@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   createTRPCRouter,
   hasAccessToRestaurantProcedure,
+  isAdminOfOrganizationProcedure,
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
@@ -134,4 +135,42 @@ export const restaurantRouter = createTRPCRouter({
 
       return !!restaurant;
     }),
+
+	deleteById: isAdminOfOrganizationProcedure
+		.input(
+			z.object({
+				id: z.string(),
+			})
+		)
+		.mutation(async ({ ctx, input }) => {
+			await RestaurantModel.deleteOne({ _id: input.id });
+			const restaurant = await ctx.prisma.restaurant.findUnique({
+				where: {
+					id: input.id,
+				},
+				include: {
+					organization: {
+						include: {
+							restaurants: true,
+						}
+					},
+				}
+			});
+
+			if (restaurant?.organization?.restaurants.length === 1) {
+				await ctx.prisma.organization.delete({
+					where: {
+						id: restaurant.organizationId,
+					},
+				});
+			} else {
+				await ctx.prisma.restaurant.delete({
+					where: {
+						id: input.id,
+					},
+				});
+			}
+			return true;
+		}
+	),
 });

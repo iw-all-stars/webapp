@@ -131,7 +131,7 @@ model Restaurant {
   logo      String?
 
   organizationId String     @db.Uuid
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   categoryId     String?      @db.Uuid
   category       Category?    @relation(fields: [categoryId], references: [id])
   campaigns      Campaign[]
