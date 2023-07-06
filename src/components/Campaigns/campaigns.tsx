@@ -130,9 +130,6 @@ const DashboardCampaign: React.FC = () => {
   ];
 
   const editCampaign = (campaign: Campaign) => {
-    if (!getClients.data?.length) {
-      return;
-    }
     context?.setCampaign(campaign);
     onOpen();
   };
