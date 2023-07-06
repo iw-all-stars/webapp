@@ -16,8 +16,11 @@ export type Campaign = {
   subject: string;
   body: string;
   url: string;
+  user: {
+    id: string | null;
+    name: string | null;
+  };
   fromName: string;
-  fromEmail: string;
   createdAt: Date;
   updatedAt: Date;
 };

@@ -22,7 +22,6 @@ model Campaign {
   body         String
   url          String
   fromName     String     @default("Jone's burgers")
-  fromEmail    String     @default("jonesburgers@gmail.com")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   user         User       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
