@@ -94,7 +94,7 @@ const DashboardCampaign: React.FC = () => {
             header: "Taux d'overture",
             cell: (campaign) => {
                 return campaign.row.original.mail.length === 0
-                    ? 0
+                    ? Number(0).toFixed(1) + " %"
                     : (
                           (campaign.row.original.mail
                               .map((mail) => mail.opened)
@@ -109,7 +109,7 @@ const DashboardCampaign: React.FC = () => {
             header: "Désabonnement",
             cell: (campaign) => {
                 return campaign.row.original.mail.length === 0
-                    ? 0
+                    ? Number(0).toFixed(1) + " %"
                     : (
                           (campaign.row.original.mail
                               .map((mail) => mail.unsub)
