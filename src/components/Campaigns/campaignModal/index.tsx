@@ -57,7 +57,7 @@ export const campaignStep2 = z.object({
     fromName: z.string().min(1),
     subject: z.string().min(1),
     body: z.string().min(1),
-    url: z.string().url(),
+    url: z.string().url()
 });
 
 campaignStep2.pick

@@ -8,7 +8,6 @@ import {
 	Input,
 	Textarea
 } from "@chakra-ui/react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
 import { useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -157,7 +156,7 @@ export const MailStep = ({ disabled }: MailProps) => {
             {...register("url", { required: false })}
             defaultValue={context?.campaign?.url}
             readOnly={disabled}
-            placeholder="https://monsite.fr"
+            placeholder="Entrez votre url google my business"
           />
 		  <FormErrorMessage>Votre url de redirection n'est pas dans le bon format</FormErrorMessage>
       </FormControl>
