@@ -41,6 +41,13 @@ docker build -t webapp --build-arg NEXT_PUBLIC_CLIENTVAR=clientvar --build-arg S
 ```
 
 
+# Scripts utiles
+
+##### Lancer le script de création des clients
+
+```bash
+npx ts-node --esm scripts/generateXlxs.ts
+```
 
 # ELK
 
