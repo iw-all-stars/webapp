@@ -4,7 +4,7 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { type NextApiHandler } from "next";
 import NodeGeocoder from "node-geocoder";
 import { z } from "zod";
-import { RestaurantModel } from "~/server/mongoose";
+import dbConnect, { RestaurantModel } from "~/server/mongoose";
 import { validateAuth0 } from "~/utils/validateAuth0";
 import key from "../../../key.json";
 import prismaInstance from "../../../server/client.prisma";
@@ -53,13 +53,13 @@ const geocoder = NodeGeocoder({
 });
 
 const handler: NextApiHandler = async (req, res) => {
-  // try {
-  //   await dbConnect();
-  // } catch (e) {
-  //   console.log(e);
+  try {
+    await dbConnect();
+  } catch (e) {
+    console.log(e);
 
-  //   return res.status(500).json({ message: "Internal server error" });
-  // }
+    return res.status(500).json({ message: "Internal server error" });
+  }
 
   if (!req.headers.authorization) {
     return res.status(401).json({ message: "Unauthorized" });
