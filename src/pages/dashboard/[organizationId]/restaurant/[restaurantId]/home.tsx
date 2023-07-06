@@ -1,8 +1,13 @@
-import { type NextPage } from "next";
+import { type NextPage, type GetServerSideProps } from "next";
 import { Box, Grid, StatGroup, Stat, StatLabel, StatNumber, TableContainer, Table, Thead, Tbody, Tr, Th, GridItem, Skeleton, Heading } from "@chakra-ui/react";
 import { api } from "~/utils/api";
 import { useMemo } from "react";
 import { useRouter } from "next/router";
+import { hasAccessToRestaurant } from "~/utils/hasAccessToRestaurantServerSideProps";
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  return hasAccessToRestaurant(context);
+};
 
 const DashboardHome: NextPage = () => {
 
