@@ -125,7 +125,7 @@ const DashboardInvitations: NextPage = () => {
 
   return (
     <Box py={8}>
-      <Heading mb={5}>Utilisateurs</Heading>
+      <Heading mb={5} fontSize={18}>Utilisateurs</Heading>
       <Flex direction="column" bg="white" rounded="lg" border="1px solid" borderColor="gray.400">
         {isAdmin && (
           <Flex alignItems="center" py={6} px={4}>
@@ -146,7 +146,7 @@ const DashboardInvitations: NextPage = () => {
                 }),
               }}
             />
-            <Button ml={4} colorScheme="blue" isLoading={addInvitation.isLoading} onClick={() => handleAddInvitation()}>Inviter</Button>
+            <Button ml={4} colorScheme="blue" fontSize={14} isLoading={addInvitation.isLoading} onClick={() => handleAddInvitation()}>Inviter</Button>
           </Flex>
         )}
         {!usersFromOrganization.length ? (
@@ -179,7 +179,7 @@ const DashboardInvitations: NextPage = () => {
       </Flex>
       {isAdmin && (
         <>
-          <Heading mt={6} mb={5}>Invitations en attente</Heading>
+          <Heading mt={6} mb={5} fontSize={18}>Invitations en attente</Heading>
           <Flex direction="column" bg="white" rounded="lg" border="1px solid" borderColor="gray.400">
             <Flex direction="column" gap={4} alignItems="center" py={6} px={4}>
               {isLoadingInvitations ? (
