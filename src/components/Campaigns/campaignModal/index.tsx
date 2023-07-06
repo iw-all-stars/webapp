@@ -96,6 +96,7 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
     setError(undefined);
     setActiveStep(0);
     setIsSaved(false);
+    setIsSending(false);
     initializeCampaign.reset();
     updateCampaign.reset();
     sendCampaign.reset();
@@ -107,7 +108,7 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
       context?.campaign?.status?.toLowerCase() !== "draft" &&
         context?.campaign?.id !== undefined
     );
-  }, [context?.campaign]);
+  }, [context?.campaign?.id, context?.campaign?.status]);
 
   useEffect(() => {
     setLastStep(activeStep === steps.length - 1);
@@ -118,10 +119,6 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
       setActiveStep(3);
     }
   }, [context?.campaign?.id, context?.campaign?.status]);
-
-  useEffect(() => {
-    setIsSending(false);
-  }, [isOpen]);
 
   useEffect(() => {
     if (updateCampaign.isSuccess) {
@@ -207,6 +204,10 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
 
   const save = async () => {
     if (lastStep) {
+      if (!selectAllRecipients && includeClients.length === 0) {
+        setError("Veuillez sélectionner au moins un client");
+        return;
+      }
       return sendCampaignToClients();
     }
 
