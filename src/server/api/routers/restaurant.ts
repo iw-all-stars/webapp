@@ -107,7 +107,7 @@ export const restaurantRouter = createTRPCRouter({
       });
     }),
 
-  userHasAccessToRestaurant: publicProcedure
+  userHasAccessToRestaurant: protectedProcedure
     .input(
       z.object({
         restaurantId: z.string(),

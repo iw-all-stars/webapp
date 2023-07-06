@@ -17,13 +17,14 @@ import {
     AlertDialogBody,
     AlertDialogFooter,
 } from "@chakra-ui/react";
-import { type NextPage } from "next";
+import { type GetServerSideProps, type NextPage } from "next";
 import { Box } from "@chakra-ui/react";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import Autocomplete from "react-google-autocomplete";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { hasAccessToRestaurant } from "~/utils/hasAccessToRestaurantServerSideProps";
 
 type OrganizationFormValues = {
     name: string;
@@ -35,6 +36,10 @@ type RestaurantFormValues = {
     address: string;
     latitude: number;
     longitude: number;
+};
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    return hasAccessToRestaurant(context);
 };
 
 const DashboardSettings: NextPage = () => {
