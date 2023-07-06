@@ -1,4 +1,4 @@
-import { PostType, StoryStatus } from "@prisma/client";
+import { PostType, type Restaurant, StoryStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { DateTime } from "luxon";
 import { z } from "zod";
@@ -251,9 +251,29 @@ export const storyRouter = createTRPCRouter({
                 },
             });
 
-            return platformsOfOrganizationWithStories.flatMap(platform => ({
-                restaurantName: restaurantsOfOrganization.find(restaurant => restaurant.id === platform.restaurantId)?.name,
-                count: platform.stories.length,
+            const restaurants = platformsOfOrganizationWithStories.flatMap(platform => {
+                const currentRestaurant = restaurantsOfOrganization.find(restaurant => restaurant.id === platform.restaurantId) as Restaurant;
+                return {
+                    restaurantName: currentRestaurant.name,
+                    createdAt: currentRestaurant.createdAt,
+                    count: platform.stories.length
+                }
+            });
+
+            const restaurantsWithoutStories = restaurantsOfOrganization.filter(restaurant => 
+                !platformsOfOrganizationWithStories.find(platform => platform.restaurantId === restaurant.id)
+            );
+
+            const restaurantsWithoutStoriesData = restaurantsWithoutStories.map(restaurant => ({
+                restaurantName: restaurant.name,
+                createdAt: restaurant.createdAt,
+                count: 0
             }));
+
+            const dataToReturn = [...restaurants, ...restaurantsWithoutStoriesData];
+
+            dataToReturn.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+            return dataToReturn;
         })
 });

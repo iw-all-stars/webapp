@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type Mail, type Client as ClientModel } from "@prisma/client";
+import { type Mail, type Client as ClientModel, type Restaurant } from "@prisma/client";
 
 import {
   createTRPCRouter,
@@ -139,10 +139,26 @@ export const clientRouter = createTRPCRouter({
 
     if (clientsByRestaurant?.aggregations?.restaurants) {
       const aggs = clientsByRestaurant.aggregations.restaurants as { buckets: { key: string; doc_count: number }[] };
-      return aggs.buckets.map((bucket) => ({
-        restaurantName: restaurantsOfOrganization.find((restaurant) => restaurant.id === bucket.key)?.name,
-        count: bucket.doc_count,
-      }));
+      const restaurantsWithClientsCount = aggs.buckets.map((bucket) => {
+        const { name, createdAt } = restaurantsOfOrganization.find((restaurant) => restaurant.id === bucket.key) as Restaurant;
+        return {
+          restaurantName: name,
+          createdAt: createdAt,
+          count: bucket.doc_count,
+        }
+      });
+
+      restaurantsOfOrganization.forEach(restaurant => {
+        if (!restaurantsWithClientsCount.find(restaurantWithCount => restaurantWithCount.restaurantName === restaurant.name)) {
+          restaurantsWithClientsCount.push({
+            restaurantName: restaurant.name,
+            createdAt: restaurant.createdAt,
+            count: 0,
+          });
+        }
+      });
+
+      return restaurantsWithClientsCount;
     }
   }),
 
