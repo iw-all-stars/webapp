@@ -8,6 +8,7 @@ import {
   StatNumber,
   Icon,
   Text,
+  Spinner,
 } from "@chakra-ui/react";
 import React, { useContext, useEffect } from "react";
 import { CampaignContext } from "../../CampaignContext";
@@ -18,19 +19,18 @@ export const StatsStep = () => {
   const context = useContext(CampaignContext);
   const [mailData, setMailData] = React.useState<any[]>([]);
 
-  const mails = api.mail.getMails.useQuery(context?.campaign?.id);
+  const { data, isLoading } = api.mail.getMails.useQuery(context?.campaign?.id);
 
   useEffect(() => {
-    mails.refetch();
-    if (mails?.data) {
+    if (data) {
       setMailData(
-        mails.data.filter(
+        data.filter(
           (mail) =>
             mail.status === "sent" && mail.campaignId === context?.campaign?.id
         )
       );
     }
-  }, [context?.campaign?.id]);
+  }, [data]);
 
   const renderStars = (key: string, activeStars: number) => {
     const stars = [];
@@ -85,6 +85,14 @@ export const StatsStep = () => {
     }
     return stars;
   };
+
+  if (isLoading) {
+    return (
+      <Box w="full" h="md" justifyContent="center" alignContent="center">
+        <Spinner size="xl" />
+      </Box>
+    );
+  }
 
   return (
     <Box display="flex" w="full" p={8}>
