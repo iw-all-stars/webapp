@@ -64,7 +64,11 @@ const DashboardCampaign: React.FC = () => {
         refetch: refetchCampaigns,
         isLoading,
         isRefetching,
-    } = api.campaign.getCampaigns.useQuery(debouncedSearch);
+    } = api.campaign.getCampaigns.useQuery({
+		input: debouncedSearch,
+		limit: defaultLimit,
+		offset: pageIndex * defaultLimit,
+	  });
     const getClients = api.customer.getClients.useQuery({});
 
     const columnHelper = createColumnHelper<

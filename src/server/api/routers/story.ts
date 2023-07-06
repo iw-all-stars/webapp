@@ -2,7 +2,7 @@ import { PostType, StoryStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { DateTime } from "luxon";
 import { z } from "zod";
-import { createTRPCRouter, hasAccessToRestaurantProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToRestaurantProcedure, hasAccessToOrganizationProcedure } from "~/server/api/trpc";
 import { StoryStatusHandler } from "~/server/services/storyStatusHandler.service";
 
 const createPost = z.object({
@@ -229,4 +229,31 @@ export const storyRouter = createTRPCRouter({
             },
         });
     }),
+
+
+    getCountByRestaurant: hasAccessToOrganizationProcedure
+        .query(async ({ ctx }) => {
+
+            const restaurantsOfOrganization = await ctx.prisma.restaurant.findMany({
+                where: {
+                    organizationId: ctx.userToOrga.organizationId,
+                },
+            });
+
+            const platformsOfOrganizationWithStories = await ctx.prisma.platform.findMany({
+                where: {
+                    restaurantId: {
+                        in: restaurantsOfOrganization.map((restaurant) => restaurant.id),
+                    }
+                },
+                include: {
+                    stories: true,
+                },
+            });
+
+            return platformsOfOrganizationWithStories.flatMap(platform => ({
+                restaurantName: restaurantsOfOrganization.find(restaurant => restaurant.id === platform.restaurantId)?.name,
+                count: platform.stories.length,
+            }));
+        })
 });

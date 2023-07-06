@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, hasAccessToRestaurantProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, hasAccessToRestaurantProcedure, hasAccessToOrganizationProcedure } from "~/server/api/trpc";
 
 const campaignSchema = z.object({
   id: z.string(),
@@ -40,15 +40,48 @@ export const campaignRouter = createTRPCRouter({
       });
     }),
 
+  getCountCampaignsByRestaurant: hasAccessToOrganizationProcedure
+    .query(async ({ ctx }) => {
+
+      const restaurantsOfOrganization = await ctx.prisma.restaurant.findMany({
+        where: {
+          organizationId: ctx.userToOrga.organizationId,
+        },
+      });
+
+      const campaignOfOrganization = await ctx.prisma.campaign.findMany({
+        where: {
+          restaurantId: {
+            in: restaurantsOfOrganization.map((restaurant) => restaurant.id),
+          },
+        },
+      })
+
+      return restaurantsOfOrganization.map(restaurant => ({
+        restaurantName: restaurant.name,
+        count: campaignOfOrganization.filter(campaign => campaign.restaurantId === restaurant.id).length
+      }))
+    }),
+
   getCampaigns: hasAccessToRestaurantProcedure
-    .input(z.string().optional())
-    .query(({ ctx, input = "" }) => {
+    .input(
+      z.object({
+        input: z.string().optional(),
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }))
+    .query(({ ctx, input }) => {
+
+      const { input: searchInput = "", limit, offset } = input;
+
       return ctx.prisma.campaign.findMany({
+        skip: offset,
+        take: limit,
         include: { mail: true, user: true },
         where: {
           OR: [
-            { name: { contains: input, mode: "insensitive" } },
-            { subject: { contains: input, mode: "insensitive" } },
+            { name: { contains: searchInput, mode: "insensitive" } },
+            { subject: { contains: searchInput, mode: "insensitive" } },
           ],
           restaurantId: ctx.restaurant.id,
         },
