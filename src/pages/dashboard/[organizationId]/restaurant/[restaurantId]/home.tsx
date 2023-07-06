@@ -7,9 +7,10 @@ const DashboardHome: NextPage = () => {
 
   const { data: countClientsByRestaurant, isLoading: isLoadingCountClientsByRestaurant } = api.customer.getCountClientsByRestaurant.useQuery();
   const { data: countCampaignsByRestaurant, isLoading: isLoadingCountCampaignsByRestaurant } = api.campaign.getCountCampaignsByRestaurant.useQuery();
+  const { data: countStoriesByRestaurant, isLoading: isLoadingCountStoriesByRestaurant } = api.story.getCountByRestaurant.useQuery();
 
   const topMetrics = useMemo(() => {
-    if (!(countClientsByRestaurant && countCampaignsByRestaurant)) return Array(2).fill({}) as { name: string, slug: string, total: number, byRestaurants: { restaurantName: string, count: number }[] }[];
+    if (!(countClientsByRestaurant && countCampaignsByRestaurant && countStoriesByRestaurant)) return Array(3).fill({}) as { name: string, slug: string, total: number, byRestaurants: { restaurantName: string, count: number }[] }[];
     return [
       {
         name: "Clients",
@@ -22,22 +23,28 @@ const DashboardHome: NextPage = () => {
         slug: "campaigns",
         total: countCampaignsByRestaurant.reduce((sum, a) => sum + a.count, 0),
         byRestaurants: countCampaignsByRestaurant
+      },
+      {
+        name: "Stories",
+        slug: "stories",
+        total: countStoriesByRestaurant.reduce((sum, a) => sum + a.count, 0),
+        byRestaurants: countStoriesByRestaurant
       }
     ];
-  }, [countClientsByRestaurant, countCampaignsByRestaurant]);
+  }, [countClientsByRestaurant, countCampaignsByRestaurant, countStoriesByRestaurant]);
 
   return (
     <Box mt={8}>
       <Grid templateColumns="repeat(3, 1fr)" gap={8} px={4}>
-        {topMetrics.map((metric, index) => !isLoadingCountClientsByRestaurant && !isLoadingCountCampaignsByRestaurant ? (
+        {topMetrics.map((metric, index) => !isLoadingCountClientsByRestaurant && !isLoadingCountCampaignsByRestaurant && !isLoadingCountStoriesByRestaurant ? (
           <GridItem key={metric.slug} py={4} px={6} shadow="md" bg="white" rounded="xl">
             <StatGroup>
               <Stat>
                 <StatLabel fontSize="xl">{metric.name}</StatLabel>
-                <StatNumber fontSize="4xl">{metric.total}</StatNumber>
+                <StatNumber lineHeight="normal" fontSize="4xl">{metric.total}</StatNumber>
               </Stat>
             </StatGroup>
-            <TableContainer>
+            <TableContainer mt={3}>
               <Table size="md">
                 <Thead>
                   <Tr>
@@ -73,7 +80,7 @@ const DashboardHome: NextPage = () => {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {Array(3).fill(0).map((_, index) => (
+                  {Array(2).fill(0).map((_, index) => (
                     <Tr key={index}>
                       <Th><Skeleton h={3} w={20} /></Th>
                       <Th><Skeleton h={3} w={20} /></Th>
