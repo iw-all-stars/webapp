@@ -170,7 +170,7 @@ const Home: NextPage = () => {
                   <FormErrorMessage>Le nom de l'organisation est obligatoire !</FormErrorMessage>
                 </FormControl>
                 <Divider mt={8} mb={6} />
-                <Heading size="md">Restaurant par défaut</Heading>
+                <Heading fontSize={18}>Restaurant par défaut</Heading>
                 <FormControl mt={4} isInvalid={!!errors.name}>
                   <FormLabel>Nom de votre restaurant</FormLabel>
                   <Input {...register("name", { required: true })} />
