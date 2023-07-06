@@ -64,14 +64,24 @@ export const campaignRouter = createTRPCRouter({
     }),
 
   getCampaigns: hasAccessToRestaurantProcedure
-    .input(z.string().optional())
-    .query(({ ctx, input = "" }) => {
+    .input(
+      z.object({
+        input: z.string().optional(),
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }))
+    .query(({ ctx, input }) => {
+
+      const { input: searchInput = "", limit, offset } = input;
+
       return ctx.prisma.campaign.findMany({
+        skip: offset,
+        take: limit,
         include: { mail: true, user: true },
         where: {
           OR: [
-            { name: { contains: input, mode: "insensitive" } },
-            { subject: { contains: input, mode: "insensitive" } },
+            { name: { contains: searchInput, mode: "insensitive" } },
+            { subject: { contains: searchInput, mode: "insensitive" } },
           ],
           restaurantId: ctx.restaurant.id,
         },
