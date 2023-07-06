@@ -5,7 +5,7 @@ import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import Autocomplete from "react-google-autocomplete";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type OrganizationFormValues = {
   name: string;
@@ -28,6 +28,15 @@ const DashboardSettings: NextPage = () => {
   const { organizationId, restaurantId } = router.query;
 
   const [placeId, setPlaceId] = useState<string | null>(null)
+
+  const { data: currentUser } = api.user.getCurrent.useQuery();
+
+  const isAdminOfOrganization = useMemo(() => {
+    if (!currentUser || !organizationId) return false;
+    return currentUser.organizations
+      .find((organization) => organization.organizationId === organizationId)
+      ?.role === 'ADMIN'
+  }, [currentUser, organizationId])
 
   const { data: currentRestaurant } = api.restaurant.getById.useQuery(
     { id: restaurantId as string },
@@ -56,7 +65,7 @@ const DashboardSettings: NextPage = () => {
     onSuccess: () => {
       context.restaurant.getById.invalidate({ id: restaurantId as string })
       context.restaurant.getByOrganizationId.invalidate({ organizationId: organizationId as string })
-	  toast({
+	    toast({
         title: "Restaurant mis à jour",
         description: "Le restaurant a été mis à jour avec succès.",
         status: "success",
@@ -67,9 +76,7 @@ const DashboardSettings: NextPage = () => {
   });
 
   const { register: registerOrganization, formState: { errors: errorsOrganization, isSubmitting: isSubmittingOrganization }, handleSubmit: handleSubmitOrganization, reset: resetOrganization } = useForm<OrganizationFormValues>();
-  const { register: registerRestaurant, formState: { errors: errorsRestaurant, isSubmitting: isSubmittingRestaurant, isValid: isValidFormRestaurant }, handleSubmit: handleSubmitRestaurant, control, reset: resetRestaurant } = useForm<RestaurantFormValues>({
-
-  });
+  const { register: registerRestaurant, formState: { errors: errorsRestaurant, isSubmitting: isSubmittingRestaurant, isValid: isValidFormRestaurant }, handleSubmit: handleSubmitRestaurant, control, reset: resetRestaurant } = useForm<RestaurantFormValues>();
 
   const { data: categories } = api.category.getAll.useQuery();
 
@@ -117,21 +124,23 @@ const DashboardSettings: NextPage = () => {
       <Box display="flex" overflowY="auto" flexDirection="column">
 	  <Heading pb={5}>Paramètres</Heading>
       <Flex direction="column" gap={8}>
-        <Box as="form" onSubmit={handleSubmitOrganization(handleUpdateOrganization)} bg="white" shadow="sm" rounded="xl" ringColor="gray.900">
-          <Box px={4} py={6}>
-            <Heading as="h4" size="lg" pb={6}>Modifier l'organisation</Heading>
-            <FormControl isInvalid={!!errorsOrganization.name}>
-              <FormLabel>Nom de votre organisation</FormLabel>
-              <Input {...registerOrganization("name", { required: true })} />
-              <FormErrorMessage>Le nom du restaurant est obligatoire !</FormErrorMessage>
-            </FormControl>
-            <Flex justify="flex-end" mt={8}>
-              <Button type="submit" colorScheme="blue" isLoading={isSubmittingOrganization}>
-                Enregistrer
-              </Button>
-            </Flex>
+        {isAdminOfOrganization && (
+          <Box as="form" onSubmit={handleSubmitOrganization(handleUpdateOrganization)} bg="white" shadow="sm" rounded="xl" ringColor="gray.900">
+            <Box px={4} py={6}>
+              <Heading as="h4" size="lg" pb={6}>Modifier l'organisation</Heading>
+              <FormControl isInvalid={!!errorsOrganization.name}>
+                <FormLabel>Nom de votre organisation</FormLabel>
+                <Input {...registerOrganization("name", { required: true })} />
+                <FormErrorMessage>Le nom du restaurant est obligatoire !</FormErrorMessage>
+              </FormControl>
+              <Flex justify="flex-end" mt={8}>
+                <Button type="submit" colorScheme="blue" isLoading={isSubmittingOrganization}>
+                  Enregistrer
+                </Button>
+              </Flex>
+            </Box>
           </Box>
-        </Box>
+        )}
         <Box as="form" onSubmit={handleSubmitRestaurant(handleUpdateRestaurant)} bg="white" shadow="sm" rounded="xl" ringColor="gray.900">
           <Box px={4} py={6}>
             <Heading as="h4" size="lg" pb={6}>Modifier le restaurant</Heading>

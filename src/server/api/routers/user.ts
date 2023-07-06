@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const userRouter = createTRPCRouter({
 
-  getAll: publicProcedure.query(({ ctx }) => {
+  getAll: protectedProcedure.query(({ ctx }) => {
     return ctx.prisma.user.findMany({
       include: {
         organizations: {
@@ -15,7 +15,7 @@ export const userRouter = createTRPCRouter({
     });
   }),
 
-  getByOrganizationId: publicProcedure
+  getByOrganizationId: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -31,6 +31,23 @@ export const userRouter = createTRPCRouter({
           }
         },
       });
+  }),
+
+
+  getCurrent: protectedProcedure.query(({ ctx }) => {
+    return ctx.prisma.user.findUnique({
+      where: {
+        id: ctx.session.user.id,
+      },
+      include: {
+        organizations: {
+          include: {
+            organization: true,
+            user: true,
+          }
+        },
+      },
+    });
   })
 
 });

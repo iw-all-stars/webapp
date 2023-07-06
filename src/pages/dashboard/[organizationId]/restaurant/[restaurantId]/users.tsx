@@ -23,7 +23,6 @@ const DashboardInvitations: NextPage = () => {
 
   const { data: session } = useSession();
 
-  // mouais
   const { data: users } = api.user.getAll.useQuery();
   const { data: invitations, isLoading: isLoadingInvitations } = api.invitation.getByOrganizationId.useQuery({
     organizationId: organizationId as string
