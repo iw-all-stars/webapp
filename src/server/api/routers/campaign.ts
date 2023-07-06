@@ -160,9 +160,11 @@ export const campaignRouter = createTRPCRouter({
       return ctx.prisma.campaign.update({ where: { id }, data });
     }),
   deleteCampaign: hasAccessToRestaurantProcedure
-    .input(z.string().nonempty())
+    .input(z.object({
+		id: z.string().nonempty()
+	}))
     .mutation(({ ctx, input }) => {
-      return ctx.prisma.campaign.delete({ where: { id: input } });
+      return ctx.prisma.campaign.delete({ where: { id: input.id } });
     }),
 });
 
