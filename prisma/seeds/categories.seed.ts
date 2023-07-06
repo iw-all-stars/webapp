@@ -35,4 +35,15 @@ export default async function seedCategories() {
   });
 
 	console.log({ seedCategories });
+
+
+//	prisma.client.deleteMany({}).then(() => {
+//		console.log("All clients deleted");
+//	prisma.$disconnect();
+//  }
+//  ).catch((err) => {
+//		console.log(err);
+//	prisma.$disconnect();
+//  }
+//  );
 }

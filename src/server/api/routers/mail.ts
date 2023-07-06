@@ -132,6 +132,10 @@ export const mailRouter = createTRPCRouter({
           },
         });
 
+        if (!clients.length) {
+          throw new Error("Aucun destinataire sélectionné");
+        }
+
         // Create mails for each client in clients array and link them to the campaign id and client id, don't use createMany because it doesn't return the created mails
 
         const mails = await Promise.all(
