@@ -27,7 +27,7 @@ const DashboardSettings: NextPage = () => {
   const router = useRouter();
   const { organizationId, restaurantId } = router.query;
 
-  const [placeId, setPlaceId] = useState<string | null>(null)
+  const [placeId, setPlaceId] = useState<string | null>("firstLoad")
 
   const { data: currentUser } = api.user.getCurrent.useQuery();
 
@@ -167,11 +167,11 @@ const DashboardSettings: NextPage = () => {
                   const { onChange, ...tmpField } = field;
                   return (
                     <Autocomplete
-					placeholder="Entrez l'adresse de votre établissement"
+					            placeholder="Entrez l'adresse de votre établissement"
                       apiKey="AIzaSyC4tPk2jjqzK6lXe6xCwCE6RGtLtIyh858"
                       onPlaceSelected={(place: { place_id: string, formatted_address: string, geometry: { location: { lat: () => number, lng: () => number }}}) => {
-						setPlaceId(place.place_id);
-						field.onChange(place.formatted_address);
+                        setPlaceId(place.place_id);
+                        field.onChange(place.formatted_address);
                         registerRestaurant("latitude", { value: place.geometry.location.lat(), required: true });
                         registerRestaurant("longitude", { value: place.geometry.location.lng(), required: true });
                       }}
@@ -189,9 +189,9 @@ const DashboardSettings: NextPage = () => {
                         componentRestrictions: { country: "fr" },
                       }}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-						setPlaceId(null);
-						onChange(e.target.value)
-					  }}
+                        setPlaceId(null);
+                        onChange(e.target.value)
+                      }}
                       {...tmpField}
                     />
                   )
