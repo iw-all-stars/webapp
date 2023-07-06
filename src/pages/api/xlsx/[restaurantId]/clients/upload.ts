@@ -5,10 +5,12 @@ import { promises as fs } from "fs";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createRouter } from "next-connect";
 import XLSX, { type WorkSheet } from "xlsx";
-import { prisma } from "~/server/db";
-import { type Client } from "./template";
+import z from "zod";
+
 import { Client as ClientElk } from "@elastic/elasticsearch";
+import { prisma } from "~/server/db";
 import { elkOptions } from "~/utils/elkClientOptions";
+import { type Client } from "./template";
 
 interface File extends FormidableFile {
   path?: string;
@@ -65,40 +67,50 @@ router
       const workbook = XLSX.read(buffer, { type: "buffer" });
 
       if (!workbook.SheetNames.length) {
-        throw new Error("Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer.");
+        throw new Error(
+          "Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer."
+        );
       }
 
       const firstSheetName = workbook.SheetNames[0];
       if (!firstSheetName) {
-        throw new Error("Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer.");
+        throw new Error(
+          "Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer."
+        );
       }
 
-      const expectedHeaders = [
-        "Nom",
-        "Prenom",
-        "Email",
-      ];
+      const expectedHeaders = ["Nom", "Prenom", "Email"];
 
-      const firstRow = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName] as WorkSheet, {
-        header: 1,
-        range: 0,
-      })[0];
+      const firstRow = XLSX.utils.sheet_to_json(
+        workbook.Sheets[firstSheetName] as WorkSheet,
+        {
+          header: 1,
+          range: 0,
+        }
+      )[0];
 
       if (!firstRow) {
-        throw new Error("Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer.");
+        throw new Error(
+          "Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer."
+        );
       }
       const headers = Object.values(firstRow);
 
       if (headers.length !== expectedHeaders.length) {
-        throw new Error("Le format des colonnes n'est pas respecté. Veuillez télécharger le fichier modèle et réessayer.");
+        throw new Error(
+          "Le format des colonnes n'est pas respecté. Veuillez télécharger le fichier modèle et réessayer."
+        );
       }
 
       for (let i = 0; i < headers.length; i++) {
         if (headers[i] !== expectedHeaders[i]) {
-          throw new Error("Le format des colonnes n'est pas respecté. Veuillez télécharger le fichier modèle et réessayer.");
+          throw new Error(
+            "Le format des colonnes n'est pas respecté. Veuillez télécharger le fichier modèle et réessayer."
+          );
         }
       }
 
+      const emailSchema = z.string().email();
       const clientElk = new ClientElk(elkOptions);
 
       const worksheet: WorkSheet = workbook.Sheets[firstSheetName] as WorkSheet;
@@ -107,8 +119,23 @@ router
       const createClients: Prisma.ClientCreateManyInput[] = [];
 
       for (const client of data) {
+        if (!client.Email || !client.Nom || !client.Prenom) {
+          continue;
+        }
+
+        const email = String(client.Email).toLowerCase().trim();
+
+        try {
+          emailSchema.parse(email);
+        } catch (error) {
+          continue;
+        }
+
+        client.Nom = String(client.Nom).trim();
+        client.Prenom = String(client.Prenom).trim();
+
         createClients.push({
-          email: String(client.Email),
+          email,
           firstname: String(client.Prenom),
           name: String(client.Nom),
           restaurantId: req.query.restaurantId as string,
@@ -124,16 +151,16 @@ router
         where: {
           email: {
             in: createClients.map((client) => client.email),
-          }
-        }
+          },
+        },
       });
 
       await clientElk.bulk({
         index: "clients",
         refresh: true,
-        body: clientsCreated.flatMap(client => [
+        body: clientsCreated.flatMap((client) => [
           { index: { _index: "clients", _id: client.id } },
-          client
+          client,
         ]),
       });
 
