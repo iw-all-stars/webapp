@@ -122,12 +122,12 @@ const DashboardSettings: NextPage = () => {
   return (
     <Box py={8} display="flex" flexDirection="column" h="full" w="full">
       <Box display="flex" overflowY="auto" flexDirection="column">
-	  <Heading pb={5}>Paramètres</Heading>
+	  <Heading pb={5} fontSize={18}>Paramètres</Heading>
       <Flex direction="column" gap={8}>
         {isAdminOfOrganization && (
           <Box as="form" onSubmit={handleSubmitOrganization(handleUpdateOrganization)} bg="white" shadow="sm" rounded="xl" ringColor="gray.900">
             <Box px={4} py={6}>
-              <Heading as="h4" size="lg" pb={6}>Modifier l'organisation</Heading>
+              <Heading as="h4" pb={6} fontSize={18}>Modifier l'organisation</Heading>
               <FormControl isInvalid={!!errorsOrganization.name}>
                 <FormLabel>Nom de votre organisation</FormLabel>
                 <Input {...registerOrganization("name", { required: true })} />
@@ -143,7 +143,7 @@ const DashboardSettings: NextPage = () => {
         )}
         <Box as="form" onSubmit={handleSubmitRestaurant(handleUpdateRestaurant)} bg="white" shadow="sm" rounded="xl" ringColor="gray.900">
           <Box px={4} py={6}>
-            <Heading as="h4" size="lg" pb={6}>Modifier le restaurant</Heading>
+            <Heading as="h4" size="lg" pb={6} fontSize={18}>Modifier le restaurant</Heading>
             <FormControl isInvalid={!!errorsRestaurant.name}>
               <FormLabel>Nom de votre restaurant</FormLabel>
               <Input {...registerRestaurant("name", { required: true })} />
