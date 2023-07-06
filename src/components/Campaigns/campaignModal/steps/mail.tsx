@@ -1,21 +1,20 @@
 import {
-  Box,
-  FormControl,
-  FormLabel,
-  Input,
-  FormErrorMessage,
-  InputGroup,
-  InputLeftAddon,
-  Textarea,
-  Flex,
-  Button,
+	Box,
+	Button,
+	Flex,
+	FormControl,
+	FormErrorMessage,
+	FormLabel,
+	Input,
+	Textarea
 } from "@chakra-ui/react";
-import React, { useContext } from "react";
-import { useForm } from "react-hook-form";
-import { type FormValues } from "..";
-import { CampaignContext } from "../../CampaignContext";
-import { api } from "~/utils/api";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
+import { useContext, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { api } from "~/utils/api";
+import { campaignStep2, type FormValues } from "..";
+import { CampaignContext } from "../../CampaignContext";
 
 interface MailProps {
   disabled: boolean;
@@ -24,9 +23,23 @@ interface MailProps {
 export const MailStep = ({ disabled }: MailProps) => {
   const {
     register,
-    formState: { errors },
-  } = useForm<FormValues>();
+	watch,
+    formState: { errors, dirtyFields },
+  } = useForm<FormValues>({
+  });
   const context = useContext(CampaignContext);
+
+  useEffect(() => {
+	const subscription = watch((values) => {
+		context?.setCampaign({
+			...context?.campaign,
+			...values
+		})
+	});
+	return () => subscription.unsubscribe();
+}, [watch]);
+
+  
 
   const addMailParam = (param: string) => {
     const textarea = document.getElementById("body") as HTMLTextAreaElement;
@@ -56,17 +69,14 @@ export const MailStep = ({ disabled }: MailProps) => {
   return (
     <Box>
       <Flex gap={4} mb={8}>
-        <FormControl isInvalid={!!errors.subject}>
-          <FormLabel>De la part de</FormLabel>
+        <FormControl isInvalid={dirtyFields.fromName && !campaignStep2.pick({ fromName: true }).safeParse(
+		{ fromName: context?.campaign?.fromName}
+	  ).success}>
+          <FormLabel>De la part de (@Nom_Etablissement)</FormLabel>
           <Input
             {...register("fromName", { required: true })}
             defaultValue={currentRestaurant?.name}
             readOnly={disabled}
-            placeholder={currentRestaurant?.name}
-            onChange={(e) => {
-              const fromName = e.target.value;
-              context?.setCampaign({ ...context?.campaign, fromName });
-            }}
           />
           <FormErrorMessage>
             Le nom de l'expéditeur est obligatoire !
@@ -74,22 +84,22 @@ export const MailStep = ({ disabled }: MailProps) => {
         </FormControl>
       </Flex>
 
-      <FormControl mb={8} isInvalid={!!errors.subject}>
+      <FormControl mb={8} isInvalid={dirtyFields.subject && !campaignStep2.pick({ subject: true }).safeParse(
+		{ subject: context?.campaign?.subject}
+	  ).success}>
         <FormLabel>Objet</FormLabel>
         <Input
           {...register("subject", { required: true })}
           defaultValue={context?.campaign?.subject}
           readOnly={disabled}
           placeholder="Enquête de satisfaction"
-          onChange={(e) => {
-            const subject = e.target.value;
-            context?.setCampaign({ ...context?.campaign, subject });
-          }}
         />
         <FormErrorMessage>Le sujet du mail est obligatoire !</FormErrorMessage>
       </FormControl>
 
-      <FormControl mb={8} isInvalid={!!errors.body}>
+      <FormControl mb={8} isInvalid={dirtyFields.body && !campaignStep2.pick({ body: true }).safeParse(
+		{ body: context?.campaign?.body}
+	  ).success}>
         <FormLabel>Votre message</FormLabel>
         {!disabled && (
           <Flex gap={2} mt={4} mb={4}>
@@ -135,29 +145,21 @@ export const MailStep = ({ disabled }: MailProps) => {
             "\n" +
             "Dites-nous comment s'est passé votre expérience ?"
           }
-          onChange={(e) => {
-            const body = e.target.value;
-            context?.setCampaign({ ...context?.campaign, body });
-          }}
         />
         <FormErrorMessage>Le corps du mail est obligatoire !</FormErrorMessage>
       </FormControl>
 
-      <FormControl>
+      <FormControl isInvalid={dirtyFields.url && !campaignStep2.pick({ url: true }).safeParse(
+		{ url: context?.campaign?.url}
+	  ).success}>
         <FormLabel>URL de redirection</FormLabel>
-        <InputGroup size="sm">
-          <InputLeftAddon>https://</InputLeftAddon>
           <Input
             {...register("url", { required: false })}
             defaultValue={context?.campaign?.url}
             readOnly={disabled}
-            placeholder="monsite.fr"
-            onChange={(e) => {
-              const url = e.target.value;
-              context?.setCampaign({ ...context?.campaign, url });
-            }}
+            placeholder="https://monsite.fr"
           />
-        </InputGroup>
+		  <FormErrorMessage>Votre url de redirection n'est pas dans le bon format</FormErrorMessage>
       </FormControl>
     </Box>
   );

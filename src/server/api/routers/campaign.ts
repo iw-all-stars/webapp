@@ -7,7 +7,7 @@ const campaignSchema = z.object({
   template: z.number(),
   subject: z.string(),
   body: z.string(),
-  url: z.string().optional(),
+  url: z.string().url(),
   creatorId: z.string(),
   restaurantId: z.string(),
   status: z.string(),
@@ -19,7 +19,7 @@ const updateCampaignSchema = z.object({
   status: z.string(),
   subject: z.string().optional(),
   body: z.string().optional(),
-  url: z.string().optional(),
+  url: z.string().url().optional(),
   fromName: z.string().optional(),
   fromEmail: z.string().email().optional()
 });
