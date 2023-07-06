@@ -52,35 +52,31 @@ router
     next();
   })
   .post(async (req, res) => {
-    if (!req.file || !req.file.filepath || !req.query.restaurantId) {
-      return res.status(400).json({ message: "Bad request" });
-    }
-
-    if (!req.file.mimetype?.includes("sheet")) {
-      return res.status(400).json({ message: "Le fichier doit être au format Excel (.xslx)." });
-    }
-
     try {
+      if (!req.file || !req.file.filepath || !req.query.restaurantId) {
+        throw new Error("Bad request");
+      }
+
+      if (!req.file.mimetype?.includes("sheet")) {
+        throw new Error("Le fichier doit être au format Excel (.xslx).");
+      }
+
       const buffer = await fs.readFile(req.file.filepath);
       const workbook = XLSX.read(buffer, { type: "buffer" });
 
       if (!workbook.SheetNames.length) {
-        return res.status(400).json({ message: "Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer." });
+        throw new Error("Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer.");
       }
 
       const firstSheetName = workbook.SheetNames[0];
       if (!firstSheetName) {
-        return res.status(400).json({ message: "Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer." });
+        throw new Error("Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer.");
       }
 
       const expectedHeaders = [
         "Nom",
         "Prenom",
         "Email",
-        "Téléphone",
-        "Adresse",
-        "Ville",
-        "Code postal",
       ];
 
       const firstRow = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName] as WorkSheet, {
@@ -89,17 +85,17 @@ router
       })[0];
 
       if (!firstRow) {
-        return res.status(400).json({ message: "Fichier invalide. Veuillez télécharger le fichier modèle et réessayer." });
+        throw new Error("Le fichier est vide. Veuillez télécharger le fichier modèle et réessayer.");
       }
       const headers = Object.values(firstRow);
 
       if (headers.length !== expectedHeaders.length) {
-        return res.status(400).json({ message: "Le format des colonnes n'est pas respecté. Veuillez télécharger le fichier modèle et réessayer." });
+        throw new Error("Le format des colonnes n'est pas respecté. Veuillez télécharger le fichier modèle et réessayer.");
       }
 
       for (let i = 0; i < headers.length; i++) {
         if (headers[i] !== expectedHeaders[i]) {
-          return res.status(400).json({ message: "Le format des colonnes n'est pas respecté. Veuillez télécharger le fichier modèle et réessayer." });
+          throw new Error("Le format des colonnes n'est pas respecté. Veuillez télécharger le fichier modèle et réessayer.");
         }
       }
 
@@ -115,10 +111,6 @@ router
           email: String(client.Email),
           firstname: String(client.Prenom),
           name: String(client.Nom),
-          phone: String(client.Téléphone),
-          address: String(client.Adresse),
-          city: String(client.Ville),
-          zip: String(client["Code postal"]),
           restaurantId: req.query.restaurantId as string,
         });
       }
@@ -138,6 +130,7 @@ router
 
       await clientElk.bulk({
         index: "clients",
+        refresh: true,
         body: clientsCreated.flatMap(client => [
           { index: { _index: "clients", _id: client.id } },
           client
@@ -148,8 +141,9 @@ router
 
       res.status(200).json({ success: true });
     } catch (err) {
-      console.log(err);
-      res.status(400).json({ message: String(err) });
+      if (err instanceof Error) {
+        res.status(400).json({ success: false, message: err.message });
+      }
     }
   });
 

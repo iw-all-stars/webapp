@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type Client as ClientModel } from "@prisma/client";
+import { type Mail, type Client as ClientModel } from "@prisma/client";
 
 import {
   createTRPCRouter,
@@ -15,24 +15,61 @@ const clientSchema = z.object({
 
 export const clientRouter = createTRPCRouter({
   getCountClients: hasAccessToRestaurantProcedure
-    .input(z.string().optional())
+    .input(
+      z.object({
+        search: z.string().optional(),
+        campaignId: z.string().optional(),
+      })
+    )
     .query(async ({ ctx, input }) => {
+      const { search, campaignId } = input;
+      let sentMails: Mail[] = [];
+
+      if (campaignId) {
+        sentMails = await ctx.prisma.mail.findMany({
+          where: {
+            campaignId: campaignId,
+          },
+        });
+
+        const campaign = await ctx.prisma.campaign.findUnique({
+          where: {
+            id: campaignId,
+          },
+        });
+
+        // if campaign is sent and no mail is sent, return empty array
+        if (campaign?.status === "sent" && sentMails.length === 0) {
+          return 0;
+        }
+      }
+
+      const clientIds = sentMails.map((mail) => mail.clientId);
 
       const countResult = await ctx.elkClient.count({
         index: "clients",
-        query: input
+        query: search
           ? {
               bool: {
-                minimum_should_match: 2,
+                minimum_should_match: clientIds.length > 0 ? 3 : 2,
                 should: [
                   {
                     match: {
                       restaurantId: ctx.restaurant.id,
                     },
                   },
+                  ...(clientIds.length > 0
+                    ? [
+                        {
+                          terms: {
+                            _id: clientIds,
+                          },
+                        },
+                      ]
+                    : []),
                   {
                     multi_match: {
-                      query: input,
+                      query: search,
                       fields: ["name", "firstname", "email"],
                       operator: "or",
                       type: "bool_prefix",
@@ -42,8 +79,24 @@ export const clientRouter = createTRPCRouter({
               },
             }
           : {
-              match: {
-                restaurantId: ctx.restaurant.id,
+              bool: {
+                minimum_should_match: clientIds.length > 0 ? 2 : 1,
+                should: [
+                  {
+                    match: {
+                      restaurantId: ctx.restaurant.id,
+                    },
+                  },
+                  ...(clientIds.length > 0
+                    ? [
+                        {
+                          terms: {
+                            _id: clientIds,
+                          },
+                        },
+                      ]
+                    : []),
+                ],
               },
             },
       });
@@ -57,12 +110,35 @@ export const clientRouter = createTRPCRouter({
         input: z.string().optional(),
         limit: z.number().optional(),
         offset: z.number().optional(),
+        campaignId: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
-      const { input: searchInput, limit, offset } = input;
+      const { input: searchInput, limit, offset, campaignId } = input;
 
-      const searchResult = await ctx.elkClient.search<ClientModel>({
+      let sentMails: Mail[] = [];
+
+      if (campaignId) {
+        sentMails = await ctx.prisma.mail.findMany({
+          where: {
+            campaignId,
+          },
+        });
+        const campaign = await ctx.prisma.campaign.findUnique({
+          where: {
+            id: campaignId,
+          },
+        });
+
+        // if campaign is sent and no mail is sent, return empty array
+        if (campaign?.status === "sent" && sentMails.length === 0) {
+          return [];
+        }
+      }
+
+      const clientIds = sentMails.map((mail) => mail.clientId);
+
+      const searchResults = await ctx.elkClient.search<ClientModel>({
         index: "clients",
         from: offset,
         size: limit,
@@ -76,13 +152,22 @@ export const clientRouter = createTRPCRouter({
         query: searchInput
           ? {
               bool: {
-                minimum_should_match: 2,
+                minimum_should_match: clientIds.length > 0 ? 3 : 2,
                 should: [
                   {
                     match: {
                       restaurantId: ctx.restaurant.id,
                     },
                   },
+                  ...(clientIds.length > 0
+                    ? [
+                        {
+                          terms: {
+                            _id: clientIds,
+                          },
+                        },
+                      ]
+                    : []),
                   {
                     multi_match: {
                       query: searchInput,
@@ -95,19 +180,36 @@ export const clientRouter = createTRPCRouter({
               },
             }
           : {
-              match: {
-                restaurantId: ctx.restaurant.id,
+              bool: {
+                minimum_should_match: clientIds.length > 0 ? 2 : 1,
+                should: [
+                  {
+                    match: {
+                      restaurantId: ctx.restaurant.id,
+                    },
+                  },
+                  ...(clientIds.length > 0
+                    ? [
+                        {
+                          terms: {
+                            _id: clientIds,
+                          },
+                        },
+                      ]
+                    : []),
+                ],
               },
             },
       });
 
-      const clients = searchResult.hits.hits.map((client) => ({
+      const clients = searchResults.hits.hits.map((client) => ({
         id: client._id,
         ...(client._source as Omit<ClientModel, "id">),
       }));
 
       return clients;
     }),
+
   getClient: hasAccessToRestaurantProcedure
     .input(z.string().nonempty())
     .query(({ ctx, input }) => {
@@ -118,7 +220,7 @@ export const clientRouter = createTRPCRouter({
     .mutation(({ ctx, input }) => {
       const { email } = input;
       return ctx.prisma.client
-        .findUnique({ where: { email } })
+        .findUnique({ where: { email_restaurantId: { email, restaurantId: ctx.restaurant.id }} })
         .then((client) => {
           if (client) {
             throw new Error("Un client avec cet email existe déjà");
@@ -138,7 +240,7 @@ export const clientRouter = createTRPCRouter({
     .mutation(({ ctx, input }) => {
       const { id, email, ...data } = input;
       return ctx.prisma.client
-        .findUnique({ where: { email } })
+        .findUnique({ where: { email_restaurantId: { email, restaurantId: ctx.restaurant.id }} })
         .then((client) => {
           if (client && client.id !== id) {
             throw new Error("Un client avec cet email existe déjà");

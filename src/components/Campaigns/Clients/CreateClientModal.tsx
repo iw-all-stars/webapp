@@ -41,11 +41,6 @@ type ClientSchema = {
   email: string;
   name: string;
   firstname?: string;
-  phone?: string;
-  image?: string;
-  address?: string;
-  city?: string;
-  zip?: string;
 };
 
 export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
@@ -84,12 +79,8 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
 
     const fieldNames = {
       email: "email",
-      phone: "numéro de téléphone",
       name: "nom",
       firstname: "prénom",
-      address: "adresse",
-      zip: "code postal",
-      city: "ville",
     };
 
     const errorMessages = responseError.map((error) => {
@@ -103,7 +94,7 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
   }
 
   const createOrUpdateCustomer = () => {
-    if (!client || !client.email || !client.name) {
+    if (!client || !client.email || !client.name || !client.firstname) {
       setError("Veuillez remplir tous les champs");
       return;
     }
@@ -215,7 +206,7 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
             gap={5}
           >
             <Flex w="100%" justifyContent="space-between" gap="4">
-              <FormControl>
+              <FormControl isRequired>
                 <FormLabel>Prénom</FormLabel>
                 <Input
                 isInvalid={!!error?.includes("prénom")}
@@ -226,6 +217,7 @@ export const CreateClientModal = ({ isOpen, onClose, editClient }: Props) => {
                     setClient({ ...client, firstname });
                   }}
                 />
+                <FormErrorMessage>Le prénom est obligatoire</FormErrorMessage>
               </FormControl>
               <FormControl isRequired>
                 <FormLabel>Nom</FormLabel>

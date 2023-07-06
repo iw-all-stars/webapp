@@ -74,7 +74,7 @@ export function DataTable<Data extends object>({
   const arrPagination: number[] = React.useMemo(() => {
     const paginationArray = [];
     const lowerBound = Math.max(pageIndex === numberOfPages - 1 ? pageIndex - 2 : pageIndex - 1, 0);
-    const upperBound = Math.min(pageIndex === 0 ? 2 : pageIndex === numberOfPages - 1 ? pageIndex : pageIndex + 1, countTotal - 1);
+    const upperBound = Math.min(pageIndex === 0 ? 2 : pageIndex === numberOfPages - 1 ? pageIndex : pageIndex + 1, numberOfPages - 1);
 
     for (let i = lowerBound; i <= upperBound; i++) {
       paginationArray.push(i);

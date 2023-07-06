@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import {
   Box,
   Button,
@@ -21,7 +20,6 @@ import { useSteps } from "@chakra-ui/stepper";
 import MailStep from "./steps/mail";
 import RecipientStep from "./steps/recipient";
 import { api } from "~/utils/api";
-import { type Row, type Column } from "react-table";
 import { CheckIcon, CloseIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/router";
 import { CampaignContext } from "../CampaignContext";
@@ -80,18 +78,17 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
-  const [search, setSearch] = useState<string | undefined>(undefined);
 
-  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [selectAllRecipients, setSelectAllRecipients] = useState(true);
 
-  const customers = api.customer.getClients.useQuery({
-    input: search,
-  });
-  const createCampaign = api.campaign.createCampaign.useMutation();
+  // list of clients ID to include in the campaign (if selectAllRecipients is false)
+  const [includeClients, setIncludeClients] = React.useState<string[]>([]);
+  // list of clients ID to exclude from the campaign (if selectAllRecipients is true)
+  const [excludeClients, setExcludeClients] = React.useState<string[]>([]);
+
   const initializeCampaign = api.campaign.initializeCampaign.useMutation();
   const updateCampaign = api.campaign.updateCampaign.useMutation();
   const sendCampaign = api.mail.sendCampaign.useMutation();
-  const sentEmails = api.mail.getMails.useQuery(context?.campaign?.id);
   const router = useRouter();
 
   const close = useCallback(() => {
@@ -99,11 +96,10 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
     setError(undefined);
     setActiveStep(0);
     setIsSaved(false);
-    setRecipients([]);
-    createCampaign.reset();
+    initializeCampaign.reset();
     updateCampaign.reset();
     sendCampaign.reset();
-  }, [onClose, setActiveStep, createCampaign, updateCampaign, sendCampaign]);
+  }, [onClose, setActiveStep, initializeCampaign, updateCampaign, sendCampaign]);
 
   useEffect(() => {
     setEdit(!!context?.campaign?.id);
@@ -124,7 +120,6 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
   }, [context?.campaign?.id, context?.campaign?.status]);
 
   useEffect(() => {
-    customers.refetch();
     setIsSending(false);
   }, [isOpen]);
 
@@ -160,74 +155,30 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
     }
   }, [sendCampaign]);
 
-  useEffect(() => {
-    const debounce = setTimeout(() => {
-      customers?.refetch();
-    }, 2000);
-    return () => clearTimeout(debounce);
-  }, [search]);
-
-  const sendCampaignToClients = React.useCallback(
-    (recipients: Recipient[]) => {
-      const selectedRecipients = recipients.filter(
-        (recipient) => recipient.selected
-      );
-
-      const campaignId = context?.campaign?.id;
-      if (!campaignId) {
-        return;
-      }
-
-      const data = {
-        campaignId,
-        recipientIds: selectedRecipients.map((recipient) => recipient.id),
-      };
-
-      sendCampaign.mutate(data, {
-        onSuccess: () => {
-          close();
-        },
-        onError: (error) => {
-          setError(error.message);
-        },
-      });
-    },
-    [context?.campaign?.id, sendCampaign]
-  );
-
-  const data = React.useMemo(() => {
-    if (!customers?.data) return [];
-    if (context?.campaign?.id && context?.campaign?.status === "draft") {
-      const Recipients = customers?.data;
-      return Recipients as unknown as Row<object>[];
-    } else {
-      const sentEmail = sentEmails?.data;
-      const Recipients = sentEmail?.map((email) => email.client);
-      return Recipients as unknown as Row<object>[];
+  const sendCampaignToClients = () => {
+    const campaignId = context?.campaign?.id;
+    if (!campaignId) {
+      return;
     }
-  }, [customers?.data, sentEmails?.data, context?.campaign?.id]);
 
-  const columns: Column<object>[] = React.useMemo(
-    () => [
-      {
-        Header: "Nom",
-        accessor: "name" as keyof Columns,
+    // if selectAllRecipients is true, we send the campaign to all clients except the ones in excludeClients
+    // if selectAllRecipients is false, we send the campaign to the clients in includeClients
+    const data = {
+      campaignId,
+      includeClients: selectAllRecipients ? undefined : includeClients,
+      excludeClients: selectAllRecipients ? excludeClients : undefined,
+      selectAllRecipients,
+    };
+
+    sendCampaign.mutate(data, {
+      onSuccess: () => {
+        close();
       },
-      {
-        Header: "Prénom",
-        accessor: "firstname" as keyof Columns,
+      onError: (error) => {
+        setError(error.message);
       },
-      {
-        Header: "Email",
-        accessor: "email" as keyof Columns,
-      },
-      {
-        Header: "Envoi",
-        accessor: "selected" as keyof Columns,
-      },
-    ],
-    []
-  );
+    });
+  };
 
   const renderSteps = () => {
     const steps = new Map<number, React.ReactNode>([
@@ -237,16 +188,13 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
         2,
         <RecipientStep
           key={2}
-          sent={
-            sentEmails && sentEmails?.data && sentEmails?.data?.length > 0
-              ? true
-              : false
-          }
-          columns={columns}
-          data={data}
-          recipients={recipients}
-          setRecipients={setRecipients}
-          setSearch={setSearch}
+          isCampaignSent={context?.campaign?.status?.toLowerCase() === "sent"}
+          selectAllRecipients={selectAllRecipients}
+          setSelectAllRecipients={setSelectAllRecipients}
+          includeClients={includeClients}
+          setIncludeClients={setIncludeClients}
+          excludeClients={excludeClients}
+          setExcludeClients={setExcludeClients}
         />,
       ],
     ]);
@@ -259,7 +207,7 @@ export const CampaignModal = ({ isOpen, onClose }: ICampaignModal) => {
 
   const save = async () => {
     if (lastStep) {
-      return sendCampaignToClients(recipients);
+      return sendCampaignToClients();
     }
 
     // If no campaign id and basic details are present, create a new campaign
