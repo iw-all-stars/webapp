@@ -114,7 +114,7 @@ export default function DashboardSidebar() {
               <Link
                 href={`/dashboard/${
                   router.query.organizationId as string
-                }/restaurant/${restaurant.id}/stories`}
+                }/restaurant/${restaurant.id}/home`}
                 key={restaurant.id}
               >
                 <MenuItem>
